@@ -1,0 +1,22 @@
+export async function onRequestPost({ request, env }) {
+  if (!env.DEEPSEEK_API_KEY) return Response.json({ error: "DEEPSEEK_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 });
+  let body;
+  try { body = await request.json(); } catch { return Response.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  if (!text || text.length > 5000) return Response.json({ error: "Masukkan teks maksimal 5.000 karakter." }, { status: 400 });
+  const system = "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
+  try {
+    const upstream = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + env.DEEPSEEK_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: system }, { role: "user", content: text }], temperature: .7, max_tokens: 2500, stream: false })
+    });
+    const data = await upstream.json();
+    if (!upstream.ok) return Response.json({ error: data.error?.message || "DeepSeek gagal memproses naskah." }, { status: upstream.status });
+    const output = data.choices?.[0]?.message?.content?.trim();
+    if (!output) return Response.json({ error: "DeepSeek tidak mengembalikan naskah." }, { status: 502 });
+    return Response.json({ text: output });
+  } catch {
+    return Response.json({ error: "Tidak dapat terhubung ke DeepSeek." }, { status: 502 });
+  }
+}

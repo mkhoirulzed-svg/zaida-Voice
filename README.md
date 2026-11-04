@@ -10,7 +10,7 @@ AI Voice Studio by ZAIDA Labs.
 
 ## Deploy
 1. Connect this repository to Cloudflare Pages.
-2. Set the build command to empty / none and the build output directory to `/` (repository root).
+2. Leave the build command empty and set the build output directory to `.` (repository root).
 3. Add the following environment variables in Cloudflare Pages > Settings > Environment variables:
    - `ELEVENLABS_API_KEY`
    - `DEEPSEEK_API_KEY`

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b12">
+  <meta name="description" content="ZAIDA Voice — studio suara AI untuk narasi, konten, dan kreativitas.">
+  <title>ZAIDA Voice — AI Voice Studio</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="/" aria-label="ZAIDA Voice beranda">
+        <span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11.5C8 9.6 9.6 8 11.5 8h17C30.4 8 32 9.6 32 11.5v17c0 1.9-1.6 3.5-3.5 3.5h-17C9.6 32 8 30.4 8 28.5v-17Z" fill="currentColor" opacity=".18"/><path d="M12 25.5 25.5 12H14m2 16h12" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span><strong>ZAIDA <i>Voice</i></strong><small>AI VOICE STUDIO</small></span>
+      </a>
+      <button class="new-project" id="newProject"><span>＋</span> Proyek baru</button>
+      <div class="nav-label">WORKSPACE</div>
+      <button class="nav-item active" data-view="studio"><span>◉</span> Voice Studio</button>
+      <button class="nav-item" data-view="history"><span>◷</span> Riwayat audio</button>
+      <div class="sidebar-bottom">
+        <div class="engine-card"><span class="status-dot"></span><div><b>AI Engine</b><small>DeepSeek + ElevenLabs</small></div><span class="engine-live">READY</span></div>
+        <div class="profile"><div class="avatar">Z</div><div><b>ZAIDA Labs</b><small>Creator workspace</small></div><button title="Pengaturan" id="settingsButton">⚙</button></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Buka menu">☰</button>
+        <div class="breadcrumb">Workspace <span>/</span> <b id="breadcrumbPage">Voice Studio</b></div>
+        <div class="top-actions"><span class="secure-label">⌑ API terlindungi</span><div class="top-avatar">Z</div></div>
+      </header>
+
+      <section class="page active" id="studioPage">
+        <div class="welcome">
+          <div><div class="eyebrow"><span></span> YOUR CREATIVE VOICE</div><h1>Suara hebat,<br><em>dimulai dari sini.</em></h1><p>Ubah tulisan menjadi suara yang natural, ekspresif, dan berkarakter.</p></div>
+          <div class="welcome-art" aria-hidden="true"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="wave-visual"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>VOICE<br>IN MOTION</span></div>
+        </div>
+
+        <div class="studio-grid">
+          <section class="panel editor-panel">
+            <div class="panel-heading"><div><span class="step">01</span><div><h2>Text to Speech</h2><p>Tulis atau tempel teks yang ingin kamu ubah.</p></div></div><span class="live-pill"><i></i> STUDIO</span></div>
+            <label class="field-label" for="scriptText">NASKAH AUDIO <span id="charCount">0 karakter</span></label>
+            <textarea id="scriptText" maxlength="5000" placeholder="Ketik naskah di sini...&#10;&#10;Contoh: Halo, selamat datang di ZAIDA Voice. Mari mulai membuat sesuatu yang luar biasa hari ini."></textarea>
+            <div class="editor-tools"><button class="text-tool" id="clearText">Hapus teks</button><button class="text-tool ai-tool" id="improveScript">✦ Bantu tulis dengan AI</button></div>
+            <div class="voice-row">
+              <div class="voice-select-wrap"><label class="field-label" for="voiceSelect">PILIH KARAKTER SUARA</label><select id="voiceSelect"><option value="">Memuat daftar suara...</option></select><small id="voiceStatus">Menghubungkan ke ElevenLabs…</small></div>
+              <button class="preview-button" id="previewVoice" title="Preview suara">▶ <span>Preview</span></button>
+            </div>
+            <div class="advanced">
+              <button class="advanced-toggle" id="advancedToggle" aria-expanded="false"><span>Pengaturan suara</span><span>⌄</span></button>
+              <div class="advanced-content" id="advancedContent" hidden>
+                <div class="range-field"><div><label for="stability">Stability</label><output id="stabilityValue">50%</output></div><input id="stability" type="range" min="0" max="100" value="50"><small>Rendah lebih ekspresif; tinggi lebih konsisten.</small></div>
+                <div class="range-field"><div><label for="similarity">Similarity</label><output id="similarityValue">75%</output></div><input id="similarity" type="range" min="0" max="100" value="75"><small>Seberapa dekat hasil dengan karakter suara asli.</small></div>
+                <div class="range-field"><div><label for="style">Style exaggeration</label><output id="styleValue">0%</output></div><input id="style" type="range" min="0" max="100" value="0"><small>Penekanan karakter penyampaian suara.</small></div>
+              </div>
+            </div>
+            <button class="generate-button" id="generateButton"><span>✧</span> Generate suara <b>→</b></button>
+            <p class="privacy-note">⌑ Audio diproses melalui koneksi API aman. Jangan masukkan informasi rahasia.</p>
+          </section>
+
+          <aside class="right-column">
+            <section class="panel tips-panel"><div class="tip-icon">✳</div><div class="tip-eyebrow">VOICE TIP</div><h3>Suara natural<br>berawal dari naskah.</h3><p>Gunakan tanda baca, paragraf pendek, dan kalimat yang mengalir agar narasi terdengar lebih hidup.</p><button id="sampleText" class="subtle-button">Coba contoh naskah <span>↗</span></button></section>
+            <section class="panel output-panel"><div class="panel-heading compact"><div><span class="step">02</span><div><h2>Hasil audio</h2><p>Preview dan unduh hasil suaramu.</p></div></div></div>
+              <div class="empty-output" id="emptyOutput"><div class="audio-orbit"><span>♫</span></div><b>Belum ada audio</b><p>Hasil generate akan muncul di sini.</p></div>
+              <div class="audio-result" id="audioResult" hidden><div class="result-meta"><span class="result-icon">♫</span><div><b id="resultTitle">Audio baru</b><small id="resultDetails">MP3 · ZAIDA Voice</small></div></div><audio id="audioPlayer" controls></audio><a class="download-button" id="downloadButton" download="zaida-voice.mp3">↓ Unduh MP3</a></div>
+              <div class="progress-wrap" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div>
+            </section>
+          </aside>
+        </div>
+        <footer class="footer">BUILT WITH <span>♥</span> BY ZAIDA LABS <i>·</i> BETA VERSION</footer>
+      </section>
+
+      <section class="page" id="historyPage">
+        <div class="history-heading"><div class="eyebrow"><span></span> YOUR WORKSPACE</div><h1>Riwayat <em>audio.</em></h1><p>Audio yang dibuat di perangkat ini tersimpan di browser.</p></div>
+        <div class="panel history-panel" id="historyList"><div class="empty-output"><div class="audio-orbit"><span>◷</span></div><b>Belum ada riwayat</b><p>Audio yang berhasil dibuat akan muncul di sini.</p></div></div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

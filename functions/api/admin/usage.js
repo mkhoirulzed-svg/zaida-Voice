@@ -79,3 +79,55 @@ async function createServiceAssertion(env) {
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(unsigned));
   return unsigned + "." + b64(new Uint8Array(signature));
 }
+
+
+export async function onRequestPost({ request, env }) {
+  const auth = await verifyFirebaseUser(request, env);
+  if (auth.error) return auth.error;
+  try {
+    const admin = await getOrCreateAccount(auth.user, env);
+    if (admin.role !== "admin") return Response.json({ error: "Akses admin diperlukan." }, { status: 403 });
+    const body = await request.json();
+    const email = String(body.email || "").trim().toLowerCase();
+    const credits = Number(body.credits);
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return Response.json({ error: "Masukkan email pengguna yang valid." }, { status: 400 });
+    if (!Number.isSafeInteger(credits) || credits < 1 || credits > 1000000) return Response.json({ error: "Jumlah kredit harus 1 sampai 1.000.000." }, { status: 400 });
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: await createServiceAssertion(env) })
+    });
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok || !tokenData.access_token) throw new Error("Tidak dapat mengakses Firestore.");
+    const base = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(env.FIREBASE_PROJECT_ID) + "/databases/(default)/documents";
+    const query = await fetch(base + ":runQuery", {
+      method: "POST", headers: { Authorization: "Bearer " + tokenData.access_token, "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "users" }], where: { fieldFilter: { field: { fieldPath: "email" }, op: "EQUAL", value: { stringValue: email } } }, limit: 1 } })
+    });
+    const found = await query.json();
+    if (!query.ok) throw new Error(found.error?.message || "Gagal mencari akun.");
+    const userDoc = Array.isArray(found) ? found.find(x => x.document)?.document : null;
+    if (!userDoc) return Response.json({ error: "Akun dengan email tersebut belum ditemukan. Pengguna harus mendaftar terlebih dahulu." }, { status: 404 });
+    const fields = userDoc.fields || {};
+    const current = Number(fields.credits?.integerValue || 0);
+    const next = current + credits;
+    const userUid = fields.uid?.stringValue || userDoc.name.split("/").pop();
+    const now = new Date().toISOString();
+    const ledgerId = crypto.randomUUID().replace(/-/g, "");
+    const ledgerName = base + "/credit_ledger/" + ledgerId;
+    const commit = await fetch(base + ":commit", {
+      method: "POST", headers: { Authorization: "Bearer " + tokenData.access_token, "Content-Type": "application/json" },
+      body: JSON.stringify({ writes: [
+        { update: { name: userDoc.name, fields: { credits: { integerValue: String(next) }, updatedAt: { stringValue: now } } }, updateMask: { fieldPaths: ["credits", "updatedAt"] }, currentDocument: { updateTime: userDoc.updateTime } },
+        { update: { name: ledgerName, fields: { uid: { stringValue: userUid }, email: { stringValue: email }, type: { stringValue: "grant" }, amount: { integerValue: String(credits) }, description: { stringValue: "Penambahan kredit oleh admin" }, provider: { stringValue: "admin" }, model: { stringValue: "manual-credit" }, providerCostIdr: { integerValue: "0" }, providerCostUsd: { stringValue: "0" }, inputTokens: { integerValue: "0" }, outputTokens: { integerValue: "0" }, characters: { integerValue: "0" }, requestId: { stringValue: "" }, createdAt: { stringValue: now } } }, currentDocument: { exists: false } }
+      ] })
+    });
+    const committed = await commit.json().catch(() => ({}));
+    if (!commit.ok) {
+      if (commit.status === 409 || commit.status === 400) return Response.json({ error: "Saldo akun berubah bersamaan. Muat ulang dan coba lagi." }, { status: 409 });
+      throw new Error(committed.error?.message || "Gagal menambahkan kredit.");
+    }
+    return Response.json({ success: true, email, creditsAdded: credits, balance: next });
+  } catch (error) {
+    return Response.json({ error: error.message || "Gagal menambahkan kredit." }, { status: 503 });
+  }
+}

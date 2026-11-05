@@ -65,6 +65,17 @@ async function loadAdminDashboard(){
   finally{button.disabled=false;button.textContent="↻ Perbarui data";}
 }
 $("refreshAdmin").addEventListener("click",loadAdminDashboard);
+$("adminCreditForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(accountInfo?.role!=="admin"){toast("Akses admin diperlukan.");return;}
+  const button=$("adminCreditSubmit");button.disabled=true;button.textContent="Memproses…";
+  try{
+    const result=await api("/api/admin/usage",{method:"POST",authRequired:true,body:JSON.stringify({email:$("adminCreditEmail").value,credits:Number($("adminCreditAmount").value)})});
+    toast("Berhasil! "+result.email+" mendapat "+Number(result.creditsAdded).toLocaleString("id-ID")+" kredit. Saldo: "+Number(result.balance).toLocaleString("id-ID")+".");
+    $("adminCreditForm").reset();$("adminCreditAmount").value=10000;await loadAdminDashboard();
+  }catch(error){toast("Gagal menambah kredit: "+error.message);}
+  finally{button.disabled=false;button.textContent="＋ Tambahkan kredit";}
+});
 
 function showView(view){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$(view==="history"?"historyPage":view==="writer"?"writerPage":view==="admin"?"adminPage":"studioPage").classList.add("active");$("breadcrumbPage").textContent=view==="history"?"Riwayat audio":view==="writer"?"AI Script Assistant":view==="admin"?"Dashboard Admin":"Studio Suara";if(view==="admin")loadAdminDashboard();$("sidebar").classList.remove("open")}
 $("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("sampleText").addEventListener("click",()=>{$("scriptText").value=$("scriptLanguage").value==="en"?"Hello, welcome to ZAIDA Voice.\n\nHere, every word can have its own character. Share your message with a warm, clear, and confident voice. Let's create something together.":SAMPLE;updateCount();toast("Contoh naskah ditambahkan.")});$("newProject").addEventListener("click",()=>{$("scriptText").value="";updateCount();showView("studio");$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=> $("sidebar").classList.toggle("open"));$("settingsButton").addEventListener("click",()=>{$("advancedContent").hidden=false;$("advancedToggle").setAttribute("aria-expanded","true");$("advancedContent").scrollIntoView({behavior:"smooth",block:"center"})});$("advancedToggle").addEventListener("click",()=>{const hidden=$("advancedContent").hidden;$("advancedContent").hidden=!hidden;$("advancedToggle").setAttribute("aria-expanded",String(hidden))});

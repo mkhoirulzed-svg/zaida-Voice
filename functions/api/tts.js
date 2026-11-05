@@ -1,23 +1,4 @@
-async function verifyFirebaseUser(request, env) {
-  const header = request.headers.get("Authorization") || "";
-  const match = header.match(/^Bearer\s+(.+)$/i);
-  if (!match) return { error: Response.json({ error: "Silakan masuk untuk menggunakan fitur ini." }, { status: 401 }) };
-  const apiKey = env.FIREBASE_WEB_API_KEY;
-  if (!apiKey) return { error: Response.json({ error: "FIREBASE_WEB_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 }) };
-  try {
-    const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(apiKey), {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: match[1] })
-    });
-    const data = await response.json();
-    const user = data.users?.[0];
-    if (!response.ok || !user || user.emailVerified !== true) {
-      return { error: Response.json({ error: "Sesi tidak valid atau email belum diverifikasi. Silakan masuk kembali setelah verifikasi." }, { status: 401 }) };
-    }
-    return { user: { uid: user.localId, email: user.email } };
-  } catch {
-    return { error: Response.json({ error: "Gagal memverifikasi sesi pengguna." }, { status: 502 }) };
-  }
-}
+import { verifyFirebaseUser, getOrCreateAccount, chargeCredits } from "../lib/firebase.js";
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
@@ -58,7 +39,14 @@ export async function onRequestPost({ request, env }) {
       try { const e = await upstream.json(); message = e.detail?.message || e.detail || e.message || message; } catch {}
       return Response.json({ error: String(message) }, { status: upstream.status });
     }
-    return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+    try {
+      await getOrCreateAccount(auth.user, env);
+      const cost = Math.max(1, Math.ceil(text.length / 1000));
+      const remaining = await chargeCredits(auth.user, env, cost, "text-to-speech:"+text.length+" chars");
+      return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
+    } catch (creditError) {
+      return Response.json({ error: creditError.message || "Tidak dapat memproses kredit." }, { status: creditError.status || 503 });
+    }
   } catch {
     return Response.json({ error: "Koneksi ke ElevenLabs gagal. Coba lagi." }, { status: 502 });
   }

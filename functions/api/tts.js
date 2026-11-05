@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, getOrCreateAccount, chargeCredits } from "../lib/firebase.js";
+import { verifyFirebaseUser, getOrCreateAccount, calculateTtsCharge, billUsage } from "../lib/firebase.js";
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
@@ -40,9 +40,8 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: String(message) }, { status: upstream.status });
     }
     try {
-      await getOrCreateAccount(auth.user, env);
-      const cost = Math.max(1, Math.ceil(text.length / 1000));
-      const remaining = await chargeCredits(auth.user, env, cost, "text-to-speech:"+text.length+" chars");
+      const charged = await billUsage(auth.user, env, billing.credits, "text-to-speech:elevenlabs:"+billing.characters+" characters");
+      const remaining = charged.remaining;
       return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
     } catch (creditError) {
       return Response.json({ error: creditError.message || "Tidak dapat memproses kredit." }, { status: creditError.status || 503 });

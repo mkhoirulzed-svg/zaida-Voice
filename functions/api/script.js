@@ -40,7 +40,11 @@ export async function onRequestPost({ request, env }) {
     if (!upstream.ok) return Response.json({ error: data.error?.message || "DeepSeek gagal memproses naskah." }, { status: upstream.status });
     const output = data.choices?.[0]?.message?.content?.trim();
     if (!output) return Response.json({ error: "DeepSeek tidak mengembalikan naskah." }, { status: 502 });
-    return Response.json({ text: output });
+    const account = await getOrCreateAccount(auth.user, env);
+    const billing = calculateDeepSeekCharge(data.usage || {}, env);
+    if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi untuk menyempurnakan naskah. Saldo kamu "+account.credits+" kredit; kebutuhan proses ini "+billing.credits+" kredit."},{status:402});
+    const charged = await billUsage(auth.user, env, billing.credits, "ai-script-edit:deepseek-chat:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens");
+    return Response.json({ text: output, creditsCharged: charged.charged, creditsRemaining: charged.remaining, usage: {inputTokens:billing.inputTokens,outputTokens:billing.outputTokens} });
   } catch {
     return Response.json({ error: "Tidak dapat terhubung ke DeepSeek." }, { status: 502 });
   }

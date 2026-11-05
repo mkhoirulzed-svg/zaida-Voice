@@ -1,4 +1,26 @@
+async function verifyFirebaseUser(request, env) {
+  const header = request.headers.get("Authorization") || "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  if (!match) return { error: Response.json({ error: "Silakan masuk untuk menggunakan fitur ini." }, { status: 401 }) };
+  const apiKey = env.FIREBASE_WEB_API_KEY;
+  if (!apiKey) return { error: Response.json({ error: "FIREBASE_WEB_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 }) };
+  try {
+    const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(apiKey), {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: match[1] })
+    });
+    const data = await response.json();
+    const user = data.users?.[0];
+    if (!response.ok || !user || user.emailVerified !== true) {
+      return { error: Response.json({ error: "Sesi tidak valid atau email belum diverifikasi. Silakan masuk kembali setelah verifikasi." }, { status: 401 }) };
+    }
+    return { user: { uid: user.localId, email: user.email } };
+  } catch {
+    return { error: Response.json({ error: "Gagal memverifikasi sesi pengguna." }, { status: 502 }) };
+  }
+}
 export async function onRequestPost({ request, env }) {
+  const auth = await verifyFirebaseUser(request, env);
+  if (auth.error) return auth.error;
   if (!env.DEEPSEEK_API_KEY) return Response.json({ error: "DEEPSEEK_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 });
   let body;
   try { body = await request.json(); } catch { return Response.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }

@@ -22,6 +22,7 @@
       <button class="nav-item active" data-view="studio"><span>◉</span> Studio Suara</button>
       <button class="nav-item" data-view="writer"><span>✦</span> AI Script Assistant</button>
       <button class="nav-item" data-view="history"><span>◷</span> Riwayat audio</button>
+      <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden><span>▦</span> Dashboard Admin</button>
       <div class="sidebar-bottom">
         <div class="engine-card"><span class="status-dot"></span><div><b>Mesin AI</b><small>DeepSeek + ElevenLabs</small></div><span class="engine-live">AKTIF</span></div>
         <div class="profile"><div class="avatar" id="profileAvatar">Z</div><div><b id="profileName">Pengunjung</b><small id="profileEmail">Belum masuk</small></div><button title="Pengaturan" id="settingsButton">⚙</button></div>
@@ -73,6 +74,14 @@
         <footer class="footer">AI SCRIPT ASSISTANT <i>·</i> POWERED BY DEEPSEEK <i>·</i> ZAIDA LABS</footer>
       </section>
       <section class="page" id="historyPage"><div class="history-heading"><div class="eyebrow"><span></span> RUANG KERJAMU</div><h1>Riwayat <em>audio.</em></h1><p>Audio yang dibuat di perangkat ini tersimpan di browser.</p></div><div class="panel history-panel" id="historyList"><div class="empty-output"><div class="audio-orbit"><span>◷</span></div><b>Belum ada riwayat</b><p>Audio yang berhasil dibuat akan muncul di sini.</p></div></div></section>
+      <section class="page" id="adminPage">
+        <div class="history-heading"><div class="eyebrow"><span></span> PUSAT KENDALI</div><h1>Dashboard <em>Admin.</em></h1><p>Pantau pemakaian kredit dan estimasi biaya layanan ZAIDA Voice.</p></div>
+        <div class="admin-toolbar"><span id="adminUpdated">Data belum dimuat</span><button class="subtle-button" id="refreshAdmin">↻ Perbarui data</button></div>
+        <div class="admin-metrics" id="adminMetrics"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div>
+        <div class="admin-provider-grid" id="adminProviders"></div>
+        <section class="panel admin-transactions"><div class="panel-heading"><div><span class="step">01</span><div><h2>Transaksi terbaru</h2><p>Maksimal 100 transaksi terakhir yang tercatat.</p></div></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b><p>Tekan Perbarui data untuk memuat laporan.</p></div></div></section>
+        <footer class="footer">ZAIDA LABS <i>·</i> ADMIN CONSOLE</footer>
+      </section>
     </main>
   </div>
   <div class="auth-overlay" id="authOverlay">

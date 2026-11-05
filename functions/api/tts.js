@@ -18,7 +18,8 @@ async function verifyFirebaseUser(request, env) {
     return { error: Response.json({ error: "Gagal memverifikasi sesi pengguna." }, { status: 502 }) };
   }
 }
-export async function onRequestPost({ request, env }) {\n  const auth = await verifyFirebaseUser(request, env);\n  if (auth.error) return auth.error;
+export async function onRequestPost({ request, env }) {
+  const auth = await verifyFirebaseUser(request, env);\n  if (auth.error) return auth.error;
   if (!env.ELEVENLABS_API_KEY) return Response.json({ error: "ELEVENLABS_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 });
   let body;
   try { body = await request.json(); } catch { return Response.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }

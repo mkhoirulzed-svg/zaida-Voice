@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
     const upstream = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + env.DEEPSEEK_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "deepseek-flash", messages: [{ role: "system", content: system }, { role: "user", content: text }], temperature: .7, max_tokens: 2500, stream: false })
+      body: JSON.stringify({ model: (env.ZAIDA_AI_MODEL || "deepseek-chat"), messages: [{ role: "system", content: system }, { role: "user", content: text }], temperature: .7, max_tokens: 2500, stream: false })
     });
     const data = await upstream.json();
     if (!upstream.ok) return Response.json({ error: data.error?.message || "DeepSeek gagal memproses naskah." }, { status: upstream.status });
@@ -25,7 +25,7 @@ export async function onRequestPost({ request, env }) {
     const account = await getOrCreateAccount(auth.user, env);
     const billing = calculateDeepSeekCharge(data.usage || {}, env);
     if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi untuk menyempurnakan naskah. Saldo kamu "+account.credits+" kredit; kebutuhan proses ini "+billing.credits+" kredit."},{status:402});
-    const charged = await billUsage(auth.user, env, billing.credits, "ai-script-edit:deepseek-flash:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens", {provider:"deepseek",model:"deepseek-flash",providerCostIdr:billing.providerCostIdr,providerCostUsd:billing.providerUsd,inputTokens:billing.inputTokens,outputTokens:billing.outputTokens});
+    const charged = await billUsage(auth.user, env, billing.credits, "ai-script-edit:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens", {provider:"deepseek",model:(env.ZAIDA_AI_MODEL || "deepseek-chat"),providerCostIdr:billing.providerCostIdr,providerCostUsd:billing.providerUsd,inputTokens:billing.inputTokens,outputTokens:billing.outputTokens});
     return Response.json({ text: output, creditsCharged: charged.charged, creditsRemaining: charged.remaining, usage: {inputTokens:billing.inputTokens,outputTokens:billing.outputTokens} });
   } catch {
     return Response.json({ error: "Tidak dapat terhubung ke DeepSeek." }, { status: 502 });

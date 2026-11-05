@@ -84,3 +84,29 @@ export async function chargeCredits(user,env,amount,description="text-to-speech"
   }
   const e=new Error("Saldo sedang diperbarui. Silakan coba kembali.");e.status=409;throw e;
 }
+
+
+// Provider-independent ZAIDA billing helpers.
+// Rates are configurable in Cloudflare Pages environment variables.
+export function calculateDeepSeekCharge(usage, env) {
+  const input = Math.max(0, Number(usage?.prompt_tokens ?? usage?.input_tokens) || 0);
+  const output = Math.max(0, Number(usage?.completion_tokens ?? usage?.output_tokens) || 0);
+  const cached = Math.max(0, Math.min(input, Number(usage?.prompt_cache_hit_tokens ?? usage?.cached_tokens) || 0));
+  const usdToIdr = Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000);
+  const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 2);
+  const inputMissRate = Math.max(0, Number(env.DEEPSEEK_INPUT_USD_PER_MILLION) || 0.15);
+  const inputHitRate = Math.max(0, Number(env.DEEPSEEK_CACHED_INPUT_USD_PER_MILLION) || 0.003);
+  const outputRate = Math.max(0, Number(env.DEEPSEEK_OUTPUT_USD_PER_MILLION) || 0.60);
+  const providerUsd = ((input - cached) * inputMissRate + cached * inputHitRate + output * outputRate) / 1000000;
+  const providerCostIdr = Math.ceil(providerUsd * usdToIdr);
+  return { inputTokens: input, cachedInputTokens: cached, outputTokens: output, providerUsd, providerCostIdr, credits: Math.max(1, Math.ceil(providerCostIdr * markup)) };
+}
+export function calculateTtsCharge(text, env) {
+  const characters = String(text || "").length;
+  const rate = Math.max(0, Number(env.ZAIDA_TTS_CREDITS_PER_CHARACTER) || 2);
+  return { characters, credits: Math.max(1, Math.ceil(characters * rate)) };
+}
+export async function billUsage(user, env, credits, description) {
+  const remaining = await chargeCredits(user, env, credits, description);
+  return { remaining, charged: credits };
+}

@@ -4,3 +4,12 @@
 @media(max-width:1050px){.page{padding:32px 25px}.topbar{padding:0 25px}.studio-grid{grid-template-columns:minmax(0,1.3fr) minmax(245px,.8fr)}.welcome-art{width:220px}}
 @media(max-width:760px){.sidebar{transform:translateX(-100%);transition:transform .25s;width:260px;box-shadow:15px 0 40px #0008}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.topbar{height:58px;padding:0 17px}.mobile-menu{display:block;border:0;background:none;font-size:19px;color:#c8b9e8;margin-right:10px}.breadcrumb{margin-right:auto}.secure-label{display:none}.page{padding:25px 16px 15px}.welcome{min-height:175px}.welcome h1{font-size:36px}.welcome p{max-width:270px;font-size:11px;line-height:1.6}.welcome-art{width:115px;height:130px;margin-right:-20px}.orb-one{width:95px;height:95px}.orb-two{width:120px;height:120px}.wave-visual{transform:scale(.75)}.welcome-art>span{font-size:6px;right:10px}.studio-grid{grid-template-columns:1fr}.editor-panel{padding:17px}.right-column{grid-template-columns:1fr 1fr;align-items:stretch;gap:10px}.tips-panel,.output-panel{padding:14px}.tips-panel h3{font-size:15px}.tips-panel p{font-size:9px}.empty-output{min-height:160px;padding:10px}.panel-heading p{font-size:10px}.footer{font-size:7px}.history-heading h1{font-size:34px}}
 @media(max-width:390px){.right-column{grid-template-columns:1fr}.welcome-art{opacity:.65;width:90px}.welcome h1{font-size:32px}.live-pill{display:none}}
+.auth-button{border:1px solid #51416f;background:#211b31;color:#d4c5ff;border-radius:8px;padding:9px 13px;font-size:10px;font-weight:600}
+.auth-overlay{position:fixed;inset:0;background:#05050bdc;backdrop-filter:blur(8px);display:grid;place-items:center;padding:18px;z-index:30}
+.auth-dialog{position:relative;width:min(100%,390px);padding:29px;background:#151521;border:1px solid #39334d;border-radius:16px;box-shadow:0 25px 90px #0009}
+.auth-close{position:absolute;right:15px;top:12px;border:0;background:none;color:#aaa;font-size:25px}
+.auth-dialog h2{font:800 27px Manrope;margin:14px 0 6px}.auth-dialog>p{font-size:11px;color:#9995aa;margin:0 0 22px}
+.auth-dialog input{width:100%;height:43px;border:1px solid #302e43;background:#0d0d16;color:#eee;border-radius:8px;padding:0 12px;margin-bottom:17px;outline:none}
+.auth-dialog input:focus{border-color:#8e70d8}.auth-switch{width:100%;border:0;background:none;color:#bba4f4;font-size:11px;margin-top:15px}
+.auth-message{min-height:16px!important;margin:10px 0 0!important;color:#d4baff!important;font-size:10px!important}
+@media(max-width:760px){.auth-button{padding:8px 9px}.auth-dialog{padding:23px}}

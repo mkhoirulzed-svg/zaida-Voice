@@ -43,7 +43,7 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: String(message) }, { status: upstream.status });
     }
     try {
-      const charged = await billUsage(auth.user, env, billing.credits, "text-to-speech:elevenlabs:"+billing.characters+" characters");
+      const charged = await billUsage(auth.user, env, billing.credits, "text-to-speech:elevenlabs:"+billing.characters+" characters", {provider:"elevenlabs",model:env.ZAIDA_TTS_MODEL||"eleven_multilingual_v2",providerCostIdr:Math.ceil((billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0)*(Number(env.ZAIDA_USD_TO_IDR)||18000)),providerCostUsd:(billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0),characters:billing.characters});
       const remaining = charged.remaining;
       return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
     } catch (creditError) {

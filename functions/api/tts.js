@@ -5,6 +5,8 @@ export async function onRequestPost({ request, env }) {
   if (!env.ELEVENLABS_API_KEY) return Response.json({ error: "ELEVENLABS_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 });
   let body;
   try { body = await request.json(); } catch { return Response.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }
+  const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : null;
+  if (!requestId) return Response.json({ error: "ID permintaan tidak valid. Silakan coba lagi." }, { status: 400 });
   const text = typeof body.text === "string" ? body.text.trim() : "";
   const voiceId = typeof body.voiceId === "string" ? body.voiceId : "";
   if (!text || !voiceId) return Response.json({ error: "Teks dan karakter suara wajib diisi." }, { status: 400 });
@@ -43,7 +45,7 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: String(message) }, { status: upstream.status });
     }
     try {
-      const charged = await billUsage(auth.user, env, billing.credits, "text-to-speech:elevenlabs:"+billing.characters+" characters", {provider:"elevenlabs",model:env.ZAIDA_TTS_MODEL||"eleven_multilingual_v2",providerCostIdr:Math.ceil((billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0)*(Number(env.ZAIDA_USD_TO_IDR)||18000)),providerCostUsd:(billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0),characters:billing.characters});
+      const charged = await billUsage(auth.user, env, billing.credits, "text-to-speech:elevenlabs:"+billing.characters+" characters", {provider:"elevenlabs",model:env.ZAIDA_TTS_MODEL||"eleven_multilingual_v2",providerCostIdr:Math.ceil((billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0)*(Number(env.ZAIDA_USD_TO_IDR)||18000)),providerCostUsd:(billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0),characters:billing.characters,requestId});
       const remaining = charged.remaining;
       return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
     } catch (creditError) {

@@ -13,7 +13,7 @@ const auth = getAuth(firebaseApp);
 let authMode = "login";
 let currentUser = null;
 let accountInfo = null;
-async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("creditBalance").textContent="Kredit: "+data.credits;$("profileEmail").textContent=(data.role==="admin"?"ADMIN · ":"")+"Saldo "+data.credits+" kredit";}catch(error){$("creditBalance").textContent="Kredit: —";toast(error.message);}}
+async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").textContent="Kredit: "+data.credits;$("profileEmail").textContent=(data.role==="admin"?"ADMIN · ":"")+"Saldo "+data.credits+" kredit";}catch(error){$("creditBalance").textContent="Kredit: —";toast(error.message);}}
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").innerHTML=(mode==="login"?"Masuk":"Buat akun")+' <b>→</b>'; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
 function closeAuth(){if(currentUser){$("authOverlay").hidden=true;document.body.classList.remove("auth-required");}}
@@ -42,7 +42,31 @@ $("sendAssistant").addEventListener("click",sendAssistantMessage);$("assistantIn
 $("clearAssistant").addEventListener("click",()=>{assistantState.messages=[];assistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
 $("useAssistantScript").addEventListener("click",()=>{if(!assistantState.draft)return;$("scriptText").value=assistantState.draft;updateCount();showView("studio");toast("Naskah dikirim ke Voice Studio.");});
 
-function showView(view){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$(view==="history"?"historyPage":view==="writer"?"writerPage":"studioPage").classList.add("active");$("breadcrumbPage").textContent=view==="history"?"Riwayat audio":view==="writer"?"AI Script Assistant":"Studio Suara";$("sidebar").classList.remove("open")}
+
+function formatRupiah(value){return "Rp"+Math.round(Number(value)||0).toLocaleString("id-ID");}
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function formatAdminDate(value){if(!value)return "Waktu tidak tersedia";const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});}
+async function loadAdminDashboard(){
+  if(accountInfo?.role!=="admin"){toast("Akses dashboard admin tidak tersedia.");return;}
+  const button=$("refreshAdmin");button.disabled=true;button.textContent="Memuat…";
+  $("adminTransactionList").innerHTML='<div class="admin-loading">Mengambil data transaksi…</div>';
+  try{
+    const data=await api("/api/admin/usage",{authRequired:true});
+    $("adminMetrics").innerHTML=[
+      ["KREDIT TERPAKAI",Number(data.creditsCharged||0).toLocaleString("id-ID")+" kredit","Dari "+(data.count||0)+" transaksi terakhir"],
+      ["ESTIMASI BIAYA PROVIDER",formatRupiah(data.providerCostIdr),"≈ $"+Number(data.providerCostUsd||0).toFixed(5)+" USD"],
+      ["TRANSAKSI TERCATAT",Number(data.count||0).toLocaleString("id-ID"),"Maksimal 100 data terbaru"]
+    ].map(x=>'<div class="admin-metric"><small>'+x[0]+'</small><b>'+x[1]+'</b><span>'+x[2]+'</span></div>').join("");
+    $("adminProviders").innerHTML=(data.byProvider||[]).map(p=>'<div class="panel admin-provider"><div class="admin-provider-head"><b>'+escapeHtml(p.provider==="deepseek"?"DeepSeek AI":p.provider==="elevenlabs"?"ElevenLabs TTS":p.provider)+'</b><span>'+Number(p.requests||0)+' proses</span></div><strong>'+formatRupiah(p.providerCostIdr)+'</strong><small>Biaya provider · '+Number(p.creditsCharged||0).toLocaleString("id-ID")+' kredit terpakai</small></div>').join("");
+    const transactions=data.transactions||[];
+    $("adminTransactionList").innerHTML=transactions.length?transactions.map(t=>'<div class="admin-transaction"><div class="admin-tx-main"><b>'+escapeHtml(t.description||"Pemakaian layanan")+'</b><small>'+escapeHtml(t.provider||"unknown")+' · '+escapeHtml(t.model||"")+' · '+escapeHtml(formatAdminDate(t.createdAt))+'</small></div><div class="admin-tx-values"><b>'+Number(t.amount||0).toLocaleString("id-ID")+' kredit</b><small>'+formatRupiah(t.providerCostIdr||0)+'</small></div></div>').join(""):'<div class="empty-output"><b>Belum ada transaksi</b><p>Transaksi pemakaian akan muncul di sini.</p></div>';
+    $("adminUpdated").textContent="Diperbarui "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+  }catch(error){$("adminTransactionList").innerHTML='<div class="admin-error">'+escapeHtml(error.message)+'</div>';toast("Laporan admin gagal dimuat: "+error.message);}
+  finally{button.disabled=false;button.textContent="↻ Perbarui data";}
+}
+$("refreshAdmin").addEventListener("click",loadAdminDashboard);
+
+function showView(view){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$(view==="history"?"historyPage":view==="writer"?"writerPage":view==="admin"?"adminPage":"studioPage").classList.add("active");$("breadcrumbPage").textContent=view==="history"?"Riwayat audio":view==="writer"?"AI Script Assistant":view==="admin"?"Dashboard Admin":"Studio Suara";if(view==="admin")loadAdminDashboard();$("sidebar").classList.remove("open")}
 $("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("sampleText").addEventListener("click",()=>{$("scriptText").value=$("scriptLanguage").value==="en"?"Hello, welcome to ZAIDA Voice.\n\nHere, every word can have its own character. Share your message with a warm, clear, and confident voice. Let's create something together.":SAMPLE;updateCount();toast("Contoh naskah ditambahkan.")});$("newProject").addEventListener("click",()=>{$("scriptText").value="";updateCount();showView("studio");$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=> $("sidebar").classList.toggle("open"));$("settingsButton").addEventListener("click",()=>{$("advancedContent").hidden=false;$("advancedToggle").setAttribute("aria-expanded","true");$("advancedContent").scrollIntoView({behavior:"smooth",block:"center"})});$("advancedToggle").addEventListener("click",()=>{const hidden=$("advancedContent").hidden;$("advancedContent").hidden=!hidden;$("advancedToggle").setAttribute("aria-expanded",String(hidden))});
 [["stability","stabilityValue"],["similarity","similarityValue"],["style","styleValue"]].forEach(([id,out])=>$(id).addEventListener("input",()=>$(out).textContent=$(id).value+"%"));
 $("previewVoice").addEventListener("click",()=>{const voice=state.voices.find(v=>v.voice_id===$("voiceSelect").value);if(!voice){toast("Pilih suara terlebih dahulu.");return}if(voice.preview_url){const audio=new Audio(voice.preview_url);audio.play().catch(()=>toast("Preview tidak dapat diputar."))}else toast("Preview belum tersedia untuk suara ini.")});
@@ -74,6 +98,6 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  if(allowed){refreshAccount();}else{$("creditBalance").textContent="Kredit: —";accountInfo=null;}
+  if(allowed){refreshAccount();}else{$("creditBalance").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;}
   if(user&&!user.emailVerified){$("authMessage").textContent="Verifikasi email terlebih dahulu. Setelah itu, masuk kembali untuk membuka ZAIDA Voice.";$("authOverlay").hidden=false;}
 });

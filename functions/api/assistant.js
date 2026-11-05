@@ -1,5 +1,5 @@
 export async function onRequestPost({ request, env }) {
-  const header=request.headers.get("Authorization")||"",match=header.match(/^Bearer\\s+(.+)$/i);
+  const header=request.headers.get("Authorization")||"",match=header.match(/^Bearer\s+(.+)$/i);
   if(!match)return Response.json({error:"Silakan masuk untuk menggunakan AI Assistant."},{status:401});
   if(!env.FIREBASE_WEB_API_KEY)return Response.json({error:"FIREBASE_WEB_API_KEY belum dikonfigurasi."},{status:503});
   try {

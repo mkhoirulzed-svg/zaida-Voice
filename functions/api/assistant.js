@@ -27,7 +27,7 @@ export async function onRequestPost({ request, env }) {
     const account = await getOrCreateAccount(auth.user, env);
     const billing = calculateDeepSeekCharge(data.usage || {}, env);
     if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi untuk menggunakan AI. Saldo kamu "+account.credits+" kredit; kebutuhan proses ini "+billing.credits+" kredit."},{status:402});
-    const charged = await billUsage(auth.user, env, billing.credits, "ai-assistant:deepseek-flash:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens");
+    const charged = await billUsage(auth.user, env, billing.credits, "ai-assistant:deepseek-flash:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens", {provider:"deepseek",model:"deepseek-flash",providerCostIdr:billing.providerCostIdr,providerCostUsd:billing.providerUsd,inputTokens:billing.inputTokens,outputTokens:billing.outputTokens});
     return Response.json({reply,script,creditsCharged:charged.charged,creditsRemaining:charged.remaining,usage:{inputTokens:billing.inputTokens,outputTokens:billing.outputTokens}});
   } catch { return Response.json({error:"Tidak dapat terhubung ke DeepSeek."},{status:502}); }
 }

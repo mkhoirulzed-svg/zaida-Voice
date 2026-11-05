@@ -1,5 +1,5 @@
 export async function verifyFirebaseUser(request, env) {
-  const header=request.headers.get("Authorization")||"",match=header.match(/^Bearer\\s+(.+)$/i);
+  const header=request.headers.get("Authorization")||"",match=header.match(/^Bearer\s+(.+)$/i);
   if(!match)return {error:Response.json({error:"Silakan masuk terlebih dahulu."},{status:401})};
   if(!env.FIREBASE_WEB_API_KEY)return {error:Response.json({error:"FIREBASE_WEB_API_KEY belum dikonfigurasi."},{status:503})};
   try{
@@ -13,10 +13,10 @@ const encoder = new TextEncoder();
 function b64url(bytes) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 function pemBytes(pem) {
-  const clean = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\s/g, "");
+  const clean = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, "");
   return Uint8Array.from(atob(clean), c => c.charCodeAt(0));
 }
 async function serviceToken(env) {
@@ -25,7 +25,7 @@ async function serviceToken(env) {
   const header = b64url(encoder.encode(JSON.stringify({alg:"RS256",typ:"JWT"})));
   const claim = b64url(encoder.encode(JSON.stringify({iss:env.FIREBASE_CLIENT_EMAIL,sub:env.FIREBASE_CLIENT_EMAIL,aud:"https://oauth2.googleapis.com/token",iat:now,exp:now+3600,scope:"https://www.googleapis.com/auth/datastore"})));
   const unsigned = header+"."+claim;
-  const key = await crypto.subtle.importKey("pkcs8",pemBytes(env.FIREBASE_PRIVATE_KEY.replace(/\\n/g,"\n")),{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["sign"]);
+  const key = await crypto.subtle.importKey("pkcs8",pemBytes(env.FIREBASE_PRIVATE_KEY.replace(/\n/g,"\n")),{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["sign"]);
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5",key,encoder.encode(unsigned));
   const assertion = unsigned+"."+b64url(new Uint8Array(signature));
   const response = await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"urn:ietf:params:oauth:grant-type:jwt-bearer",assertion})});

@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
     const upstream = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + env.DEEPSEEK_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: system }, { role: "user", content: text }], temperature: .7, max_tokens: 2500, stream: false })
+      body: JSON.stringify({ model: "deepseek-flash", messages: [{ role: "system", content: system }, { role: "user", content: text }], temperature: .7, max_tokens: 2500, stream: false })
     });
     const data = await upstream.json();
     if (!upstream.ok) return Response.json({ error: data.error?.message || "DeepSeek gagal memproses naskah." }, { status: upstream.status });

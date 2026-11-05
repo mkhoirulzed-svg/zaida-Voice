@@ -3,18 +3,23 @@
 AI Voice Studio by ZAIDA Labs.
 
 ## Stack
-- Static frontend: HTML, CSS, JavaScript
-- Cloudflare Pages Functions: secure API proxy
+- Static frontend: HTML, CSS, JavaScript in `public/`
+- Cloudflare Pages Functions: secure API proxy in root `functions/`
 - DeepSeek API: script refinement
 - ElevenLabs API: voice catalog and text-to-speech
 
-## Deploy
-1. Connect this repository to Cloudflare Pages.
-2. Leave the build command empty and set the build output directory to `.` (repository root).
-3. Add the following environment variables in Cloudflare Pages > Settings > Environment variables:
+## Deploy with Cloudflare Pages
+1. Connect this repository to Cloudflare Pages using the Pages Git integration.
+2. Set Framework preset to **None**.
+3. Leave the build command empty.
+4. Set the build output directory to `public`.
+5. Keep the project root directory as `/`.
+6. Add these environment variables in Pages project settings:
    - `ELEVENLABS_API_KEY`
    - `DEEPSEEK_API_KEY`
-4. Deploy the project.
+7. Deploy.
+
+The `functions/` directory must remain at the repository root. Do not use `npx wrangler deploy` as the deploy command for this Pages project.
 
 Never put API keys in frontend files or commit them to Git.
 

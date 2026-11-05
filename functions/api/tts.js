@@ -18,6 +18,9 @@ export async function onRequestPost({ request, env }) {
   const clamp = (v, fallback) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(1, Number(v))) : fallback;
 
   try {
+    const account = await getOrCreateAccount(auth.user, env);
+    const billing = calculateTtsCharge(text, env);
+    if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi. Saldo kamu "+account.credits+" kredit; kebutuhan audio ini "+billing.credits+" kredit."},{status:402});
     // Public beta only permits built-in premade voices, never cloned voices.
     const catalogResponse = await fetch("https://api.elevenlabs.io/v1/voices", {
       headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Accept": "application/json" }

@@ -19,7 +19,8 @@ async function verifyFirebaseUser(request, env) {
   }
 }
 export async function onRequestPost({ request, env }) {
-  const auth = await verifyFirebaseUser(request, env);\n  if (auth.error) return auth.error;
+  const auth = await verifyFirebaseUser(request, env);
+  if (auth.error) return auth.error;
   if (!env.DEEPSEEK_API_KEY) return Response.json({ error: "DEEPSEEK_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 });
   let body;
   try { body = await request.json(); } catch { return Response.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }

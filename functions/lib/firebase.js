@@ -106,7 +106,7 @@ export function calculateTtsCharge(text, env) {
   const rate = Math.max(0, Number(env.ZAIDA_TTS_CREDITS_PER_CHARACTER) || 2);
   return { characters, credits: Math.max(1, Math.ceil(characters * rate)) };
 }
-export async function billUsage(user, env, credits, description) {
-  const remaining = await chargeCredits(user, env, credits, description);
+export async function billUsage(user, env, credits, description, metadata = {}) {
+  const remaining = await chargeCredits(user, env, credits, description, metadata);
   return { remaining, charged: credits };
 }

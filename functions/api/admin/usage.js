@@ -123,8 +123,13 @@ export async function onRequestPost({ request, env }) {
     });
     const committed = await commit.json().catch(() => ({}));
     if (!commit.ok) {
-      if (commit.status === 409 || commit.status === 400) return Response.json({ error: "Saldo akun berubah bersamaan. Muat ulang dan coba lagi." }, { status: 409 });
-      throw new Error(committed.error?.message || "Gagal menambahkan kredit.");
+      const detail = committed.error?.message || "Tidak ada detail dari Firestore.";
+      const status = committed.error?.status || "";
+      console.error("Admin credit grant Firestore commit failed:", commit.status, status, detail);
+      if (commit.status === 409 || /ABORTED|FAILED_PRECONDITION|precondition/i.test(status + " " + detail)) {
+        return Response.json({ error: "Data saldo berubah saat diproses. Muat ulang dashboard lalu coba lagi. Detail: " + detail }, { status: 409 });
+      }
+      return Response.json({ error: "Firestore menolak penambahan kredit (HTTP " + commit.status + "): " + detail }, { status: 502 });
     }
     return Response.json({ success: true, email, creditsAdded: credits, balance: next });
   } catch (error) {

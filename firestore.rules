@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All ZAIDA Voice account and credit operations go through Cloudflare
+    // server endpoints. Never trust client writes for roles, balances or ledger.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

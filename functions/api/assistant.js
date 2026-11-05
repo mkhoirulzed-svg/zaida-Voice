@@ -1,7 +1,8 @@
 import { verifyFirebaseUser, getOrCreateAccount, calculateDeepSeekCharge, billUsage } from "../lib/firebase.js";
 
 export async function onRequestPost({ request, env }) {
-  const auth = await verifyFirebaseUser(request, env);\n  if (auth.error) return auth.error;\n  if(!env.DEEPSEEK_API_KEY)return Response.json({error:"DEEPSEEK_API_KEY belum dikonfigurasi."},{status:503});
+  const auth = await verifyFirebaseUser(request, env);
+  if (auth.error) return auth.error;\n  if(!env.DEEPSEEK_API_KEY)return Response.json({error:"DEEPSEEK_API_KEY belum dikonfigurasi."},{status:503});
   let body;try{body=await request.json();}catch{return Response.json({error:"Format permintaan tidak valid."},{status:400});}
   const profile=body.profile&&typeof body.profile==="object"?body.profile:{};
   const raw=Array.isArray(body.messages)?body.messages:[];

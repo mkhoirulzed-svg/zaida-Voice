@@ -23,11 +23,11 @@
       <button class="nav-item" data-view="history"><span>◷</span> Riwayat audio</button>
       <div class="sidebar-bottom">
         <div class="engine-card"><span class="status-dot"></span><div><b>Mesin AI</b><small>DeepSeek + ElevenLabs</small></div><span class="engine-live">AKTIF</span></div>
-        <div class="profile"><div class="avatar">Z</div><div><b>ZAIDA Labs</b><small>Ruang kreator</small></div><button title="Pengaturan" id="settingsButton">⚙</button></div>
+        <div class="profile"><div class="avatar" id="profileAvatar">Z</div><div><b id="profileName">Pengunjung</b><small id="profileEmail">Belum masuk</small></div><button title="Pengaturan" id="settingsButton">⚙</button></div>
       </div>
     </aside>
     <main class="main">
-      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu">☰</button><div class="breadcrumb">Ruang kerja <span>/</span> <b id="breadcrumbPage">Studio Suara</b></div><div class="top-actions"><span class="secure-label">⌑ API terlindungi</span><div class="top-avatar">Z</div></div></header>
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu">☰</button><div class="breadcrumb">Ruang kerja <span>/</span> <b id="breadcrumbPage">Studio Suara</b></div><div class="top-actions"><span class="secure-label">⌑ API terlindungi</span><button class="auth-button" id="authButton">Masuk / Daftar</button><div class="top-avatar" id="topAvatar">Z</div></div></header>
       <section class="page active" id="studioPage">
         <div class="welcome"><div><div class="eyebrow"><span></span> KREASI SUARAMU</div><h1>Suara hebat,<br><em>dimulai dari sini.</em></h1><p>Ubah tulisan menjadi suara yang natural, ekspresif, dan berkarakter.</p></div><div class="welcome-art" aria-hidden="true"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="wave-visual"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>SUARA<br>BERKARAKTER</span></div></div>
         <div class="studio-grid">
@@ -49,5 +49,21 @@
       </section>
       <section class="page" id="historyPage"><div class="history-heading"><div class="eyebrow"><span></span> RUANG KERJAMU</div><h1>Riwayat <em>audio.</em></h1><p>Audio yang dibuat di perangkat ini tersimpan di browser.</p></div><div class="panel history-panel" id="historyList"><div class="empty-output"><div class="audio-orbit"><span>◷</span></div><b>Belum ada riwayat</b><p>Audio yang berhasil dibuat akan muncul di sini.</p></div></div></section>
     </main>
-  </div><div class="toast" id="toast" role="status" aria-live="polite"></div><script src="/app.js" defer></script>
+  </div>
+  <div class="auth-overlay" id="authOverlay" hidden>
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button class="auth-close" id="authClose" aria-label="Tutup">×</button>
+      <div class="eyebrow"><span></span> AKUN ZAIDA VOICE</div>
+      <h2 id="authTitle">Selamat datang.</h2>
+      <p id="authDescription">Masuk untuk mulai membuat audio.</p>
+      <form id="authForm">
+        <label class="field-label" for="authEmail">EMAIL</label><input id="authEmail" type="email" autocomplete="email" required placeholder="nama@email.com">
+        <label class="field-label" for="authPassword">PASSWORD</label><input id="authPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="Minimal 6 karakter">
+        <button class="generate-button" id="authSubmit" type="submit">Masuk <b>→</b></button>
+      </form>
+      <button class="auth-switch" id="authSwitch">Belum punya akun? Daftar</button>
+      <p class="auth-message" id="authMessage" role="status"></p>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script>
 </body></html>

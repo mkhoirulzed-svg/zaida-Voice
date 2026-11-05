@@ -113,7 +113,7 @@ export async function onRequestPost({ request, env }) {
     const userUid = fields.uid?.stringValue || userDoc.name.split("/").pop();
     const now = new Date().toISOString();
     const ledgerId = crypto.randomUUID().replace(/-/g, "");
-    const ledgerName = base + "/credit_ledger/" + ledgerId;
+    const ledgerName = "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/credit_ledger/" + ledgerId;
     const commit = await fetch(base + ":commit", {
       method: "POST", headers: { Authorization: "Bearer " + tokenData.access_token, "Content-Type": "application/json" },
       body: JSON.stringify({ writes: [

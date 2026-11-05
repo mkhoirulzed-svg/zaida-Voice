@@ -1,13 +1,5 @@
-export async function onRequestPost({ request, env }) {
-  const header=request.headers.get("Authorization")||"",match=header.match(/^Bearer\s+(.+)$/i);
-  if(!match)return Response.json({error:"Silakan masuk untuk menggunakan AI Assistant."},{status:401});
-  if(!env.FIREBASE_WEB_API_KEY)return Response.json({error:"FIREBASE_WEB_API_KEY belum dikonfigurasi."},{status:503});
-  try {
-    const verify=await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key="+encodeURIComponent(env.FIREBASE_WEB_API_KEY),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken:match[1]})});
-    const auth=await verify.json(),user=auth.users?.[0];
-    if(!verify.ok||!user||user.emailVerified!==true)return Response.json({error:"Sesi tidak valid atau email belum diverifikasi."},{status:401});
-  } catch { return Response.json({error:"Gagal memverifikasi sesi pengguna."},{status:502}); }
-  if(!env.DEEPSEEK_API_KEY)return Response.json({error:"DEEPSEEK_API_KEY belum dikonfigurasi."},{status:503});
+import { verifyFirebaseUser, getOrCreateAccount, calculateDeepSeekCharge, billUsage } from "../lib/firebase.js";\n\nexport async function onRequestPost({ request, env }) {
+  const auth = await verifyFirebaseUser(request, env);\n  if (auth.error) return auth.error;\n  if(!env.DEEPSEEK_API_KEY)return Response.json({error:"DEEPSEEK_API_KEY belum dikonfigurasi."},{status:503});
   let body;try{body=await request.json();}catch{return Response.json({error:"Format permintaan tidak valid."},{status:400});}
   const profile=body.profile&&typeof body.profile==="object"?body.profile:{};
   const raw=Array.isArray(body.messages)?body.messages:[];
@@ -29,6 +21,10 @@ export async function onRequestPost({ request, env }) {
     const reply=typeof output.reply==="string"?output.reply.trim():"";
     const script=typeof output.script==="string"?output.script.trim():"";
     if(!reply)return Response.json({error:"AI tidak mengembalikan jawaban."},{status:502});
-    return Response.json({reply,script});
+    const account = await getOrCreateAccount(auth.user, env);
+    const billing = calculateDeepSeekCharge(data.usage || {}, env);
+    if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi untuk menggunakan AI. Saldo kamu "+account.credits+" kredit; kebutuhan proses ini "+billing.credits+" kredit."},{status:402});
+    const charged = await billUsage(auth.user, env, billing.credits, "ai-assistant:deepseek-chat:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens");
+    return Response.json({reply,script,creditsCharged:charged.charged,creditsRemaining:charged.remaining,usage:{inputTokens:billing.inputTokens,outputTokens:billing.outputTokens}});
   } catch { return Response.json({error:"Tidak dapat terhubung ke DeepSeek."},{status:502}); }
 }

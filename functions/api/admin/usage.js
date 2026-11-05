@@ -90,7 +90,7 @@ export async function onRequestPost({ request, env }) {
     const body = await request.json();
     const email = String(body.email || "").trim().toLowerCase();
     const credits = Number(body.credits);
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return Response.json({ error: "Masukkan email pengguna yang valid." }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: "Masukkan email pengguna yang valid." }, { status: 400 });
     if (!Number.isSafeInteger(credits) || credits < 1 || credits > 1000000) return Response.json({ error: "Jumlah kredit harus 1 sampai 1.000.000." }, { status: 400 });
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },

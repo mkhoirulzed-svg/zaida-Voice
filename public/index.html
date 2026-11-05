@@ -10,7 +10,7 @@
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
 </head>
-<body>
+<body class="auth-required">
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="/" aria-label="ZAIDA Voice beranda">
@@ -50,18 +50,21 @@
       <section class="page" id="historyPage"><div class="history-heading"><div class="eyebrow"><span></span> RUANG KERJAMU</div><h1>Riwayat <em>audio.</em></h1><p>Audio yang dibuat di perangkat ini tersimpan di browser.</p></div><div class="panel history-panel" id="historyList"><div class="empty-output"><div class="audio-orbit"><span>◷</span></div><b>Belum ada riwayat</b><p>Audio yang berhasil dibuat akan muncul di sini.</p></div></div></section>
     </main>
   </div>
-  <div class="auth-overlay" id="authOverlay" hidden>
+  <div class="auth-overlay" id="authOverlay">
     <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button class="auth-close" id="authClose" aria-label="Tutup">×</button>
       <div class="eyebrow"><span></span> AKUN ZAIDA VOICE</div>
       <h2 id="authTitle">Selamat datang.</h2>
       <p id="authDescription">Masuk untuk mulai membuat audio.</p>
+      <button class="google-auth-button" id="googleAuthButton" type="button"><span class="google-mark">G</span> Lanjutkan dengan Google</button>
+      <div class="auth-divider"><span>atau gunakan email</span></div>
       <form id="authForm">
         <label class="field-label" for="authEmail">EMAIL</label><input id="authEmail" type="email" autocomplete="email" required placeholder="nama@email.com">
         <label class="field-label" for="authPassword">PASSWORD</label><input id="authPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="Minimal 6 karakter">
         <button class="generate-button" id="authSubmit" type="submit">Masuk <b>→</b></button>
       </form>
       <button class="auth-switch" id="authSwitch">Belum punya akun? Daftar</button>
+      <button class="auth-resend" id="resendVerification" type="button" hidden>Kirim ulang email verifikasi</button>
       <p class="auth-message" id="authMessage" role="status"></p>
     </section>
   </div>

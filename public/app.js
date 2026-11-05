@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 const firebaseApp = initializeApp({
   apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-aP8",
@@ -14,7 +14,7 @@ let authMode = "login";
 let currentUser = null;
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").innerHTML=(mode==="login"?"Masuk":"Buat akun")+' <b>→</b>'; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
-function closeAuth(){$("authOverlay").hidden=true;}
+function closeAuth(){if(currentUser){$("authOverlay").hidden=true;document.body.classList.remove("auth-required");}}
 const $ = (id) => document.getElementById(id);
 const state = { voices: [], audioUrl: null, history: [] };
 const SAMPLE = "Halo, selamat datang di ZAIDA Voice.\n\nDi sini, setiap kata bisa memiliki karakter. Sampaikan pesanmu dengan suara yang hangat, jelas, dan penuh percaya diri. Mari mulai berkarya.";
@@ -34,6 +34,8 @@ $("previewVoice").addEventListener("click",()=>{const voice=state.voices.find(v=
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
 updateCount();loadVoices();
 $("authButton").addEventListener("click",()=>currentUser?signOut(auth):openAuth());
+$("googleAuthButton").addEventListener("click",async()=>{const button=$("googleAuthButton");button.disabled=true;$("authMessage").textContent="Menghubungkan ke Google…";try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);closeAuth();toast("Berhasil masuk dengan Google.");}catch(error){const messages={"auth/popup-closed-by-user":"Jendela login ditutup sebelum selesai.","auth/popup-blocked":"Popup diblokir browser. Izinkan popup lalu coba lagi.","auth/account-exists-with-different-credential":"Email ini sudah terdaftar dengan metode login lain."};$("authMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});
+$("resendVerification").addEventListener("click",async()=>{try{if(!auth.currentUser)throw new Error("Masuk kembali menggunakan email dan password.");await sendEmailVerification(auth.currentUser);$("authMessage").textContent="Email verifikasi telah dikirim ulang.";}catch(error){$("authMessage").textContent=error.message;}});
 $("authClose").addEventListener("click",closeAuth);
 $("authOverlay").addEventListener("click",e=>{if(e.target===$("authOverlay"))closeAuth()});
 $("authSwitch").addEventListener("click",()=>openAuth(authMode==="login"?"register":"login"));
@@ -41,16 +43,21 @@ $("authForm").addEventListener("submit",async e=>{
   e.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value;
   $("authSubmit").disabled=true;$("authMessage").textContent="Memproses…";
   try{
-    if(authMode==="register"){const credential=await createUserWithEmailAndPassword(auth,email,password);await sendEmailVerification(credential.user);$("authMessage").textContent="Akun dibuat. Silakan verifikasi email sebelum menggunakan layanan.";}
+    if(authMode==="register"){const credential=await createUserWithEmailAndPassword(auth,email,password);await sendEmailVerification(credential.user);await signOut(auth);$("authMessage").textContent="Akun dibuat. Buka email verifikasi, lalu masuk kembali.";}
     else {await signInWithEmailAndPassword(auth,email,password);closeAuth();toast("Berhasil masuk.");}
   }catch(error){const messages={"auth/email-already-in-use":"Email sudah terdaftar.","auth/invalid-email":"Format email tidak valid.","auth/weak-password":"Password minimal 6 karakter.","auth/invalid-credential":"Email atau password salah.","auth/too-many-requests":"Terlalu banyak percobaan. Coba lagi nanti."};$("authMessage").textContent=messages[error.code]||error.message;}
   finally{$("authSubmit").disabled=false;}
 });
 onAuthStateChanged(auth,user=>{
-  currentUser=user;
-  $("authButton").textContent=user?(user.email||"Akun")+" · Keluar":"Masuk / Daftar";
-  $("profileName").textContent=user?(user.displayName||"Pengguna"):"Pengunjung";
-  $("profileEmail").textContent=user?(user.emailVerified?"Akun terverifikasi":"Email belum diverifikasi"):"Belum masuk";
-  $("profileAvatar").textContent=user?(user.email||"U").slice(0,1).toUpperCase():"Z";
-  $("topAvatar").textContent=user?(user.email||"U").slice(0,1).toUpperCase():"Z";
+  currentUser=user&&user.emailVerified?user:null;
+  const allowed=Boolean(currentUser);
+  document.body.classList.toggle("auth-required",!allowed);
+  $("authOverlay").hidden=allowed;
+  $("authButton").textContent=allowed?(user.email||"Akun")+" · Keluar":"Masuk / Daftar";
+  $("profileName").textContent=allowed?(user.displayName||"Pengguna"):"Pengunjung";
+  $("profileEmail").textContent=allowed?"Akun terverifikasi":(user?"Email belum diverifikasi":"Belum masuk");
+  $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
+  $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
+  $("resendVerification").hidden=!(user&&!user.emailVerified);
+  if(user&&!user.emailVerified){$("authMessage").textContent="Verifikasi email terlebih dahulu. Setelah itu, masuk kembali untuk membuka ZAIDA Voice.";$("authOverlay").hidden=false;}
 });

@@ -13,3 +13,11 @@
 .auth-dialog input:focus{border-color:#8e70d8}.auth-switch{width:100%;border:0;background:none;color:#bba4f4;font-size:11px;margin-top:15px}
 .auth-message{min-height:16px!important;margin:10px 0 0!important;color:#d4baff!important;font-size:10px!important}
 @media(max-width:760px){.auth-button{padding:8px 9px}.auth-dialog{padding:23px}}
+
+/* Authentication gate and Google sign-in */
+.auth-required .app-shell{visibility:hidden;pointer-events:none}
+.google-auth-button{width:100%;height:43px;border:1px solid #39364a;background:#201f2b;color:#f4f2fb;border-radius:8px;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;margin:3px 0 14px}
+.google-auth-button:hover{border-color:#8e70d8;background:#292438}.google-auth-button:disabled{opacity:.55;cursor:wait}
+.google-mark{font:700 16px Arial,sans-serif;color:#4285f4;background:#fff;border-radius:50%;width:21px;height:21px;display:grid;place-items:center}
+.auth-divider{display:flex;align-items:center;gap:10px;color:#77758a;font-size:9px;margin:0 0 15px}.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#302e43;flex:1}
+.auth-resend{display:block;width:100%;border:0;background:none;color:#bba4f4;font-size:10px;margin-top:10px}

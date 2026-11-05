@@ -5,6 +5,8 @@ export async function onRequestPost({ request, env }) {
   if (auth.error) return auth.error;
   if(!env.DEEPSEEK_API_KEY)return Response.json({error:"DEEPSEEK_API_KEY belum dikonfigurasi."},{status:503});
   let body;try{body=await request.json();}catch{return Response.json({error:"Format permintaan tidak valid."},{status:400});}
+  const requestId=typeof body.requestId==="string"&&/^[0-9a-f-]{36}$/i.test(body.requestId)?body.requestId:null;
+  if(!requestId)return Response.json({error:"ID permintaan tidak valid. Silakan muat ulang dan coba lagi."},{status:400});
   const profile=body.profile&&typeof body.profile==="object"?body.profile:{};
   const raw=Array.isArray(body.messages)?body.messages:[];
   const messages=raw.slice(-12).filter(m=>m&&["user","assistant"].includes(m.role)&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:m.content.trim().slice(0,3000)}));
@@ -28,7 +30,7 @@ export async function onRequestPost({ request, env }) {
     const account = await getOrCreateAccount(auth.user, env);
     const billing = calculateDeepSeekCharge(data.usage || {}, env);
     if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi untuk menggunakan AI. Saldo kamu "+account.credits+" kredit; kebutuhan proses ini "+billing.credits+" kredit."},{status:402});
-    const charged = await billUsage(auth.user, env, billing.credits, "ai-assistant:deepseek-chat:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens", {provider:"deepseek",model:(env.ZAIDA_AI_MODEL || "deepseek-chat"),providerCostIdr:billing.providerCostIdr,providerCostUsd:billing.providerUsd,inputTokens:billing.inputTokens,outputTokens:billing.outputTokens});
+    const charged = await billUsage(auth.user, env, billing.credits, "ai-assistant:deepseek-chat:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens", {provider:"deepseek",model:(env.ZAIDA_AI_MODEL || "deepseek-chat"),providerCostIdr:billing.providerCostIdr,providerCostUsd:billing.providerUsd,inputTokens:billing.inputTokens,outputTokens:billing.outputTokens,requestId});
     return Response.json({reply,script,creditsCharged:charged.charged,creditsRemaining:charged.remaining,usage:{inputTokens:billing.inputTokens,outputTokens:billing.outputTokens}});
   } catch { return Response.json({error:"Tidak dapat terhubung ke DeepSeek."},{status:502}); }
 }

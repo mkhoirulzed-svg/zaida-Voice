@@ -1,0 +1,12 @@
+{
+  "name": "ZAIDA Voice — AI Voice Studio",
+  "short_name": "ZAIDA Voice",
+  "description": "Studio suara AI untuk narasi dan kreativitas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0b12",
+  "theme_color": "#0b0b12",
+  "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

@@ -20,6 +20,7 @@
       <button class="new-project" id="newProject"><span>＋</span> Proyek baru</button>
       <div class="nav-label">RUANG KERJA</div>
       <button class="nav-item active" data-view="studio"><span>◉</span> Studio Suara</button>
+      <button class="nav-item" data-view="writer"><span>✦</span> AI Script Assistant</button>
       <button class="nav-item" data-view="history"><span>◷</span> Riwayat audio</button>
       <div class="sidebar-bottom">
         <div class="engine-card"><span class="status-dot"></span><div><b>Mesin AI</b><small>DeepSeek + ElevenLabs</small></div><span class="engine-live">AKTIF</span></div>
@@ -46,6 +47,30 @@
           <aside class="right-column"><section class="panel tips-panel"><div class="tip-icon">✳</div><div class="tip-eyebrow">TIPS SUARA</div><h3>Suara natural<br>berawal dari naskah.</h3><p>Gunakan tanda baca, paragraf pendek, dan kalimat yang mengalir agar narasi terdengar lebih hidup.</p><button id="sampleText" class="subtle-button">Coba contoh naskah <span>↗</span></button></section>
             <section class="panel output-panel"><div class="panel-heading compact"><div><span class="step">02</span><div><h2>Hasil audio</h2><p>Pratinjau dan unduh hasil suaramu.</p></div></div></div><div class="empty-output" id="emptyOutput"><div class="audio-orbit"><span>♫</span></div><b>Belum ada audio</b><p>Hasil pembuatan audio akan muncul di sini.</p></div><div class="audio-result" id="audioResult" hidden><div class="result-meta"><span class="result-icon">♫</span><div><b id="resultTitle">Audio baru</b><small id="resultDetails">MP3 · ZAIDA Voice</small></div></div><audio id="audioPlayer" controls></audio><a class="download-button" id="downloadButton" download="zaida-voice.mp3">↓ Unduh MP3</a></div><div class="progress-wrap" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div></section></aside>
         </div><footer class="footer">DIBUAT DENGAN <span>♥</span> OLEH ZAIDA LABS <i>·</i> VERSI BETA</footer>
+      </section>
+
+      <section class="page" id="writerPage">
+        <div class="history-heading"><div class="eyebrow"><span></span> AI SCRIPT ASSISTANT</div><h1>Rancang cerita,<br><em>bangun karakter.</em></h1><p>Atur personalisasi AI, diskusikan ide, lalu susun naskah sebelum masuk ke Voice Studio.</p></div>
+        <div class="writer-layout">
+          <section class="panel writer-settings">
+            <div class="panel-heading"><div><span class="step">01</span><div><h2>Personalisasi AI</h2><p>Tentukan minat dan gaya penulisan asistenmu.</p></div></div></div>
+            <label class="field-label" for="writerName">NAMA / PERSONA (OPSIONAL)</label><input id="writerName" class="writer-input" maxlength="40" placeholder="Contoh: Kreator konten edukasi">
+            <label class="field-label">TOPIK KETERTARIKAN</label><div class="interest-grid" id="interestGrid">
+              <label><input type="checkbox" value="olahraga"><span>⚽ Olahraga</span></label><label><input type="checkbox" value="politik"><span>🏛 Politik</span></label><label><input type="checkbox" value="komedi"><span>😄 Komedi</span></label><label><input type="checkbox" value="pendidikan"><span>📚 Pendidikan</span></label><label><input type="checkbox" value="teknologi"><span>💻 Teknologi</span></label><label><input type="checkbox" value="bisnis"><span>📈 Bisnis</span></label><label><input type="checkbox" value="kesehatan"><span>🩺 Kesehatan</span></label><label><input type="checkbox" value="cerita"><span>📖 Cerita</span></label><label><input type="checkbox" value="hiburan"><span>🎬 Hiburan</span></label><label><input type="checkbox" value="sejarah"><span>🏺 Sejarah</span></label>
+            </div>
+            <label class="field-label" for="writerStyle">GAYA KOMUNIKASI</label><select id="writerStyle" class="writer-select"><option value="santai dan akrab">Santai dan akrab</option><option value="formal dan profesional">Formal dan profesional</option><option value="humoris dan jenaka">Humoris dan jenaka</option><option value="edukatif dan mudah dipahami">Edukatif dan mudah dipahami</option><option value="dramatis dan bercerita">Dramatis dan bercerita</option><option value="persuasif dan meyakinkan">Persuasif dan meyakinkan</option></select>
+            <label class="field-label" for="writerEmotion">NUANSA / EMOSI UTAMA</label><select id="writerEmotion" class="writer-select"><option value="natural dan netral">Natural</option><option value="ceria dan antusias">Ceria</option><option value="hangat dan bersahabat">Hangat</option><option value="tegas dan berwibawa">Tegas</option><option value="inspiratif dan membangkitkan semangat">Inspiratif</option><option value="sedih dan menyentuh">Sedih</option><option value="dramatis dan penuh ketegangan">Dramatis</option><option value="misterius dan penuh rasa ingin tahu">Misterius</option></select>
+            <label class="field-label" for="writerAudience">TARGET PENDENGAR</label><input id="writerAudience" class="writer-input" maxlength="120" placeholder="Contoh: Remaja, orang tua, masyarakat umum">
+            <label class="field-label" for="writerLength">PANJANG NASKAH</label><select id="writerLength" class="writer-select"><option value="singkat, sekitar 30 detik">Singkat · ±30 detik</option><option value="sekitar 1 menit">±1 menit</option><option value="sekitar 3 menit">±3 menit</option><option value="panjang, sekitar 5 menit">±5 menit</option><option value="fleksibel sesuai kebutuhan">Fleksibel</option></select>
+            <p class="writer-note">Pengaturan ini menjadi arahan AI saat berdiskusi dan menyusun naskah. Kamu bisa mengubahnya kapan saja.</p>
+          </section>
+          <section class="panel assistant-panel"><div class="assistant-head"><div><span class="step">02</span><div><h2>Chat dengan AI</h2><p>Brainstorming, kembangkan ide, dan minta naskah.</p></div></div><button id="clearAssistant" class="text-tool">Percakapan baru</button></div>
+            <div class="chat-messages" id="assistantMessages"><div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Halo! Aku siap membantu merancang naskah. Ceritakan ide, topik, atau konten yang ingin kamu buat. Kita bisa berdiskusi dulu sebelum menyusun naskah final.</p></div></div>
+            <div class="chat-compose"><textarea id="assistantInput" rows="3" maxlength="3000" placeholder="Contoh: Aku ingin membuat video edukasi tentang pentingnya pertolongan pertama..."></textarea><button id="sendAssistant" class="generate-button"><span>✦</span> Kirim pesan <b>→</b></button></div>
+            <div class="script-export"><div><b>Naskah hasil AI</b><small>Setelah naskah siap, kirim ke Voice Studio untuk dibuat audio.</small></div><button id="useAssistantScript" class="subtle-button" disabled>Gunakan di Voice Studio ↗</button></div>
+          </section>
+        </div>
+        <footer class="footer">AI SCRIPT ASSISTANT <i>·</i> POWERED BY DEEPSEEK <i>·</i> ZAIDA LABS</footer>
       </section>
       <section class="page" id="historyPage"><div class="history-heading"><div class="eyebrow"><span></span> RUANG KERJAMU</div><h1>Riwayat <em>audio.</em></h1><p>Audio yang dibuat di perangkat ini tersimpan di browser.</p></div><div class="panel history-panel" id="historyList"><div class="empty-output"><div class="audio-orbit"><span>◷</span></div><b>Belum ada riwayat</b><p>Audio yang berhasil dibuat akan muncul di sini.</p></div></div></section>
     </main>

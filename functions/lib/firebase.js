@@ -66,7 +66,7 @@ export async function getOrCreateAccount(user,env){
   }
   return account;
 }
-export async function chargeCredits(user,env,amount,description="text-to-speech"){
+export async function chargeCredits(user,env,amount,description="text-to-speech",metadata={}){
   for(let attempt=0;attempt<3;attempt++){
     const doc=await firestore(env,"/users/"+encodeURIComponent(user.uid));
     const account=docData(doc);
@@ -77,7 +77,7 @@ export async function chargeCredits(user,env,amount,description="text-to-speech"
     try{
       await firestore(env,":commit",{method:"POST",body:JSON.stringify({writes:[
         {update:{name:doc.name,fields:{credits:integer(next),updatedAt:str(now)}},updateMask:{fieldPaths:["credits","updatedAt"]},currentDocument:{updateTime:doc.updateTime}},
-        {update:{name:ledgerName,fields:{uid:str(user.uid),type:str("usage"),amount:integer(-amount),description:str(description),createdAt:str(now)}},currentDocument:{exists:false}}
+        {update:{name:ledgerName,fields:{uid:str(user.uid),type:str("usage"),amount:integer(-amount),description:str(description),provider:str(metadata.provider||"unknown"),model:str(metadata.model||"unknown"),providerCostIdr:integer(Math.max(0,Number(metadata.providerCostIdr)||0)),providerCostUsd:str(Number(metadata.providerCostUsd||0).toFixed(8)),inputTokens:integer(Math.max(0,Number(metadata.inputTokens)||0)),outputTokens:integer(Math.max(0,Number(metadata.outputTokens)||0)),characters:integer(Math.max(0,Number(metadata.characters)||0)),createdAt:str(now)}},currentDocument:{exists:false}}
       ]})});
       return next;
     }catch(e){if(e.status!==409 && e.status!==400)throw e;}

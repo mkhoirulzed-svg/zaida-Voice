@@ -48,7 +48,7 @@
               <label class="field-label" for="writerEmotion">Emosi</label><select id="writerEmotion" class="writer-select"><option value="natural dan netral">Netral</option><option value="ceria dan antusias">Ceria</option><option value="hangat dan bersahabat">Hangat</option><option value="tegas dan berwibawa">Tegas</option><option value="inspiratif dan membangkitkan semangat">Inspiratif</option><option value="sedih dan menyentuh">Sedih</option><option value="dramatis dan penuh ketegangan">Dramatis</option><option value="misterius dan penuh rasa ingin tahu">Misterius</option></select>
               <label class="field-label" for="writerAudience">Target pendengar</label><input id="writerAudience" class="writer-input" maxlength="120" placeholder="Remaja, orang tua, umum">
 </details>
-            <button class="primary-button" id="continueToVoice">Lanjut ke suara</button></section>
+            <button id="continueToVoice" hidden></button></section>
           <aside class="panel assistant-panel"><div class="section-head"><h2>Asisten naskah</h2><button id="clearAssistant" class="text-tool">Percakapan baru</button></div>
             <div class="chat-messages" id="assistantMessages"><div class="assistant-message ai-message"><b>Asisten</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div></div>
             <div class="chat-compose"><textarea id="assistantInput" rows="3" maxlength="3000" placeholder="Tulis pesan…"></textarea><button id="sendAssistant" class="primary-button">Kirim</button></div>
@@ -58,16 +58,16 @@
           <details class="personalization voice-advanced"><summary>Pengaturan lanjutan</summary>
             <div class="range-field"><div><label for="similarity">Kemiripan</label><output id="similarityValue">75%</output></div><input id="similarity" type="range" min="0" max="100" value="75"></div>
             <div class="range-field"><div><label for="style">Penekanan gaya</label><output id="styleValue">0%</output></div><input id="style" type="range" min="0" max="100" value="0"></div><input id="stability" type="hidden" value="50"><output id="stabilityValue" hidden>50%</output></details>
-          <div class="voice-actions"><button class="secondary-button" id="backToScript">Kembali</button><button class="primary-button" id="generateButton">Buat suara</button></div>
+          <div class="voice-actions"><button class="secondary-button" id="backToScript">Kembali</button><button id="generateButton" hidden></button></div>
           <div class="progress-wrap" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div></div></section>
         <section class="workflow-panel" id="step3"><div class="panel subtitle-panel"><div class="section-head"><h2>Subtitle</h2><span id="subtitleStatus">Belum dibuat</span></div>
           <div class="subtitle-toolbar"><span>Waktu dan teks dapat diedit.</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div>
           <div id="subtitleList" class="subtitle-list"><div class="empty-output"><b>Subtitle belum tersedia</b></div></div>
-          <div class="step-actions"><button class="secondary-button" id="backToVoice">Kembali</button><button class="primary-button" id="continueToExport">Lanjut ke ekspor</button></div></div></section>
+          <div class="step-actions"><button class="secondary-button" id="backToVoice">Kembali</button><button id="continueToExport" hidden></button></div></div></section>
         <section class="workflow-panel" id="step4"><div class="panel export-panel"><div class="section-head"><h2>Ekspor</h2></div>
           <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small id="resultDetails">MP3</small></div></div>
           <audio id="audioPlayer" controls></audio><div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a><button class="secondary-button" id="downloadSrt">Unduh SRT</button></div>
-          <div class="step-actions"><button class="secondary-button" id="backToSubtitle">Kembali</button><button class="primary-button" id="restartProject">Proyek baru</button></div></div></section>
+          <div class="step-actions"><button class="secondary-button" id="backToSubtitle">Kembali</button><button id="restartProject" hidden></button></div></div></section>
       </section>
       <section class="page" id="historyPage"><div class="history-heading"><h1>Riwayat</h1></div><div class="panel history-panel" id="historyList"><div class="empty-output"><b>Belum ada riwayat</b></div></div></section>
         <section class="page" id="adminPage"><div class="history-heading"><h1>Dashboard admin</h1></div>

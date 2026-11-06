@@ -13,7 +13,7 @@ const auth = getAuth(firebaseApp);
 let authMode = "login";
 let currentUser = null;
 let accountInfo = null;
-async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").textContent="Kredit: "+data.credits;$("dockCredits").textContent="Kredit: "+data.credits;$("profileEmail").textContent=(data.role==="admin"?"ADMIN · ":"")+"Saldo "+data.credits+" kredit";}catch(error){$("creditBalance").textContent="Kredit: —";toast(error.message);}}
+async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").textContent="Kredit: "+data.credits;$("sidebarCreditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+data.credits;$("profileEmail").textContent=data.role==="admin"?"Administrator":"Akun terverifikasi";}catch(error){$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Saldo tidak tersedia";toast(error.message);}}
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").textContent=mode==="login"?"Masuk":"Buat akun"; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
 function closeAuth(){$("authOverlay").hidden=true;}
@@ -24,7 +24,7 @@ function toast(message){const el=$("toast");el.textContent=message;el.classList.
 function setBusy(busy,message="Sedang membuat audio…"){$("generateButton").disabled=busy;$("dockAction").disabled=busy;$("progressWrap").hidden=!busy;$("progressText").textContent=message}
 function newRequestId(){return crypto.randomUUID();}
 async function api(path,options={}){const response=await fetch(path,{...options,headers:{"Content-Type":"application/json",...(options.authRequired?await authHeaders():{}),...(options.headers||{})}});let data;try{data=await response.json()}catch{data={error:"Respons server tidak valid."}}if(!response.ok)throw new Error(data.error||"Permintaan gagal ("+response.status+")");return data}
-async function improveScript(){const text=$("scriptText").value.trim();if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return}if(!text){toast("Tulis topik atau naskah terlebih dahulu.");return}const button=$("improveScript");button.disabled=true;button.textContent="Menyusun…";try{const result=await api("/api/script",{method:"POST",body:JSON.stringify({requestId:newRequestId(),text,task:"polish",language:$("scriptLanguage").value}),authRequired:true});if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining)}$("scriptText").value=result.text||text;updateCount();const providerLabel=result.provider==="kiosapi"?"Kiosapi":result.provider==="deepseek-direct"?"DeepSeek langsung":"Provider belum terdeteksi";const modelLabel=result.model?" · "+result.model:"";toast("Naskah berhasil diperbarui.");}catch(error){toast(error.message)}finally{button.disabled=false;button.textContent="Perbaiki naskah"}}
+async function improveScript(){const text=$("scriptText").value.trim();if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return}if(!text){toast("Tulis topik atau naskah terlebih dahulu.");return}const button=$("improveScript");button.disabled=true;button.textContent="Menyusun…";try{const result=await api("/api/script",{method:"POST",body:JSON.stringify({requestId:newRequestId(),text,task:"polish",language:$("scriptLanguage").value}),authRequired:true});if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining)}$("scriptText").value=result.text||text;updateCount();const providerLabel=result.provider==="kiosapi"?"Kiosapi":result.provider==="deepseek-direct"?"DeepSeek langsung":"Provider belum terdeteksi";const modelLabel=result.model?" · "+result.model:"";toast("Naskah berhasil diperbarui.");}catch(error){toast(error.message)}finally{button.disabled=false;button.textContent="Perbaiki naskah"}}
 function renderHistory(){
   const list=$("historyList");
   if(!state.history.length){list.innerHTML='<div class="empty-output"><b>Belum ada riwayat</b></div>';return;}
@@ -49,6 +49,31 @@ async function sendAssistantMessage(){const input=$("assistantInput"),message=in
 $("sendAssistant").addEventListener("click",sendAssistantMessage);$("assistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAssistantMessage();}});
 $("clearAssistant").addEventListener("click",()=>{assistantState.messages=[];assistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
 $("useAssistantScript").addEventListener("click",()=>{if(!assistantState.draft)return;$("scriptText").value=assistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
+
+async function sendStandaloneAssistantMessage(){
+  const input=$("standaloneAssistantInput"),message=input.value.trim();
+  if(!message||assistantState.busy)return;
+  if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return;}
+  if(message.length>3000){toast("Pesan maksimal 3.000 karakter.");return;}
+  assistantState.busy=true;$("standaloneSendAssistant").disabled=true;
+  const userMessage=document.createElement("div");userMessage.className="assistant-message user-message";userMessage.textContent=message;$("standaloneAssistantMessages").append(userMessage);
+  input.value="";
+  try{
+    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:[...assistantState.messages.slice(-10),{role:"user",content:message}]}),authRequired:true});
+    const answer=(result.reply||"").trim();if(!answer)throw new Error("AI tidak mengembalikan jawaban.");
+    assistantState.messages.push({role:"user",content:message},{role:"assistant",content:answer});
+    const response=document.createElement("div");response.className="assistant-message ai-message";const name=document.createElement("b");name.textContent="ZAIDA Assistant";const p=document.createElement("p");p.textContent=answer;response.append(name,p);$("standaloneAssistantMessages").append(response);
+    if(result.script?.trim()){assistantState.draft=result.script.trim();$("standaloneUseAssistantScript").disabled=false;}
+    if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining);}
+    $("standaloneAssistantMessages").scrollTop=$("standaloneAssistantMessages").scrollHeight;toast("Balasan diterima.");
+  }catch(error){toast(error.message);}
+  finally{assistantState.busy=false;$("standaloneSendAssistant").disabled=false;input.focus();}
+}
+$("standaloneSendAssistant").addEventListener("click",sendStandaloneAssistantMessage);
+$("standaloneAssistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendStandaloneAssistantMessage();}});
+$("clearStandaloneAssistant").addEventListener("click",()=>{$("standaloneAssistantMessages").innerHTML='<div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';assistantState.messages=[];assistantState.draft="";$("standaloneUseAssistantScript").disabled=true;});
+$("standaloneUseAssistantScript").addEventListener("click",()=>{if(!assistantState.draft)return;$("scriptText").value=assistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
+
 
 
 function formatRupiah(value){return "Rp"+Math.round(Number(value)||0).toLocaleString("id-ID");}
@@ -85,8 +110,25 @@ $("adminCreditForm").addEventListener("submit",async event=>{
   finally{button.disabled=false;button.textContent="Tambahkan kredit";}
 });
 
-function showView(view){document.body.classList.toggle("in-studio",view==="studio");document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$(view==="history"?"historyPage":view==="writer"?"writerPage":view==="admin"?"adminPage":"studioPage").classList.add("active");$("breadcrumbPage").textContent=view==="history"?"Riwayat":view==="writer"?"AI Script Assistant":view==="admin"?"Dashboard admin":"Studio";if(view==="admin")loadAdminDashboard();$("sidebar").classList.remove("open")}
-$("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=> $("sidebar").classList.toggle("open"));$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
+function closeSidebar(){
+  $("sidebar").classList.remove("open");$("sidebarBackdrop").hidden=true;document.body.classList.remove("sidebar-open");
+}
+function showView(requestedView){
+  let view=requestedView;
+  if(view==="subtitle"){
+    if(!state.audioUrl){toast("Buat suara sebelum menyiapkan subtitle.");view="studio";setStep(2);}
+    else{view="studio";setStep(3);$("includeSubtitle").checked=true;$("subtitleOptions").hidden=false;renderSubtitles();}
+  }
+  const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage"}[view]||"studioPage";
+  document.body.classList.toggle("in-studio",view==="studio");
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  $(pageId).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
+  $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",admin:"Dashboard admin"})[requestedView]||"Studio";
+  if(view==="admin")loadAdminDashboard();
+  closeSidebar();
+}
+$("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
 [["stability","stabilityValue"],["similarity","similarityValue"],["style","styleValue"]].forEach(([id,out])=>$(id).addEventListener("input",()=>$(out).textContent=$(id).value+"%"));
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
 
@@ -119,14 +161,13 @@ function renderVoiceCards(){
   });
 }
 function setStep(step){
+  step=Math.max(1,Math.min(3,Number(step)||1));
+  if(step===3&&!state.audioUrl){toast("Buat suara terlebih dahulu.");step=2;}
   state.currentStep=step;
   document.querySelectorAll(".workflow-panel").forEach(p=>p.classList.toggle("active",p.id==="step"+step));
-  document.querySelectorAll(".stepper-item,.mobile-step-nav button").forEach(b=>{
-    const n=Number(b.dataset.step);b.classList.toggle("active",n===step);
-    if(b.classList.contains("stepper-item"))b.classList.toggle("complete",n<step);
-  });
-  $("workflowTitle").textContent=["Naskah","Suara","Subtitle","Ekspor"][step-1];
-  $("dockAction").textContent=["Lanjut","Buat suara","Lanjut","Proyek baru"][step-1];
+  document.querySelectorAll(".stepper-item").forEach(b=>{const n=Number(b.dataset.step);b.classList.toggle("active",n===step);b.classList.toggle("complete",n<step);});
+  $("workflowTitle").textContent=["Naskah","Suara","Ekspor"][step-1];
+  $("dockAction").textContent=["Lanjut","Buat suara","Proyek baru"][step-1];
 }
 function wrapSubtitle(text,max=42){
   let rest=Array.from(String(text).trim()),lines=[];
@@ -233,13 +274,13 @@ async function generate(){
       let error={};try{error=await response.json();}catch{}throw new Error(error.error||"Gagal membuat audio.");
     }
     const remaining=response.headers.get("X-Credits-Remaining");
-    if(remaining!==null){$("creditBalance").textContent="Kredit: "+remaining;$("dockCredits").textContent="Kredit: "+remaining;if(accountInfo)accountInfo.credits=Number(remaining);}
+    if(remaining!==null){$("creditBalance").textContent="Kredit: "+remaining;$("sidebarCreditBalance").textContent=Number(remaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+remaining;if(accountInfo)accountInfo.credits=Number(remaining);}
     if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);
     state.audioUrl=URL.createObjectURL(audioBlob);$("audioPlayer").src=state.audioUrl;$("downloadButton").href=state.audioUrl;
     state.alignment=alignment;state.sourceText=text;
     $("resultTitle").textContent="Narasi "+new Date().toLocaleString("id-ID");$("resultDetails").textContent="MP3 · "+text.length+" karakter";$("dockTrack").textContent=$("resultTitle").textContent;
     const duration=await new Promise(resolve=>{const p=$("audioPlayer");if(p.readyState>=1&&Number.isFinite(p.duration)){resolve(p.duration);return;}const done=()=>resolve(Number.isFinite(p.duration)?p.duration:Math.max(1,text.length/12));p.addEventListener("loadedmetadata",done,{once:true});p.addEventListener("error",done,{once:true});});
-    state.subtitles=buildSubtitles(text,state.alignment,duration);renderSubtitles();
+    state.subtitles=buildSubtitles(text,state.alignment,duration);$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;renderSubtitles();
     state.history.unshift({title:$("resultTitle").textContent,details:$("resultDetails").textContent,url:state.audioUrl,text});renderHistory();setStep(3);toast("Suara berhasil dibuat.");
   }catch(error){toast(error.message);}finally{setBusy(false);}
 }
@@ -247,13 +288,13 @@ $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.tri
 $("backToScript").addEventListener("click",()=>setStep(1));
 $("backToVoice").addEventListener("click",()=>setStep(2));
 $("continueToExport").addEventListener("click",()=>setStep(4));
-$("backToSubtitle").addEventListener("click",()=>setStep(3));
 document.querySelectorAll(".stepper-item,.mobile-step-nav button").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl||n===4&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
 $("voiceSelect").addEventListener("change",renderVoiceCards);
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
+$("includeSubtitle").addEventListener("change",()=>{$("subtitleOptions").hidden=!$("includeSubtitle").checked;if($("includeSubtitle").checked)renderSubtitles();});
 $("downloadSrt").addEventListener("click",downloadSubtitle);
 $("regenerateSrt").addEventListener("click",()=>{state.subtitles=buildSubtitles(state.sourceText,state.alignment,$("audioPlayer").duration||Math.max(1,state.sourceText.length/12));renderSubtitles();toast("Subtitle dibuat ulang.");});
-$("dockAction").addEventListener("click",()=>{if(state.currentStep===1){if($("scriptText").value.trim())setStep(2);else toast("Masukkan naskah terlebih dahulu.");}else if(state.currentStep===2)generate();else if(state.currentStep===3)setStep(4);else $("newProject").click();});
+$("dockAction").addEventListener("click",()=>{if(state.currentStep===1){if($("scriptText").value.trim())setStep(2);else toast("Masukkan naskah terlebih dahulu.");}else if(state.currentStep===2)generate();else $("newProject").click();});
 $("restartProject").addEventListener("click",()=>{$("newProject").click();});
 
 function syncChoiceChips(){
@@ -294,7 +335,7 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  if(allowed){refreshAccount();}else{$("creditBalance").textContent="Kredit: —";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;}
+  if(allowed){refreshAccount();}else{$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;}
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }

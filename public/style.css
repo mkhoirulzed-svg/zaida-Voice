@@ -352,3 +352,10 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .voice-clone-owned>small{font-size:11px;color:var(--muted)}
 .voice-clone-owned-actions{display:flex;justify-content:flex-end;margin-top:8px}
 .voice-clone-status{margin-top:12px;color:#d5cbff}
+
+
+/* Compact voice catalog pagination */
+.voice-pagination{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.voice-pagination span{margin-right:auto;color:var(--muted);font-size:11px}
+.voice-pagination button{min-height:34px;padding:0 12px;font-size:11px}
+.voice-pagination button:disabled{opacity:.4;cursor:not-allowed}

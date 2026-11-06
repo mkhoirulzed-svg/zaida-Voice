@@ -277,3 +277,56 @@ export async function saveUserPersonaProfile(user, env, profile) {
   }
   const error = new Error("Persona sedang diperbarui. Coba simpan kembali."); error.status = 409; throw error;
 }
+
+
+// One private Instant Voice Clone record per Firebase UID.
+function voiceCloneData(doc) {
+  const f = doc?.fields || {};
+  return {
+    userId: val(f.userId),
+    voiceId: val(f.voiceId),
+    name: val(f.name),
+    status: val(f.status),
+    createdAt: val(f.createdAt),
+    updatedAt: val(f.updatedAt)
+  };
+}
+export async function getUserVoiceClone(user, env) {
+  try {
+    const doc = await firestore(env, "/user_voices/" + encodeURIComponent(user.uid));
+    return voiceCloneData(doc);
+  } catch (error) {
+    if (error.status === 404) return null;
+    throw error;
+  }
+}
+export async function createUserVoiceClone(user, env, record) {
+  const now = new Date().toISOString();
+  const name = "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/user_voices/" + user.uid;
+  return firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{
+    update: { name, fields: {
+      userId: str(user.uid), voiceId: str(record.voiceId || ""), name: str(record.name || ""),
+      status: str(record.status || "creating"), createdAt: str(now), updatedAt: str(now)
+    }},
+    currentDocument: { exists: false }
+  }]})});
+}
+export async function updateUserVoiceClone(user, env, record) {
+  const path = "/user_voices/" + encodeURIComponent(user.uid);
+  const doc = await firestore(env, path);
+  const fields = { updatedAt: str(new Date().toISOString()) };
+  for (const key of ["voiceId", "name", "status"]) if (record[key] !== undefined) fields[key] = str(record[key]);
+  return firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{
+    update: { name: doc.name, fields }, updateMask: { fieldPaths: Object.keys(fields) },
+    currentDocument: { updateTime: doc.updateTime }
+  }]})});
+}
+export async function deleteUserVoiceCloneRecord(user, env) {
+  const path = "/user_voices/" + encodeURIComponent(user.uid);
+  try {
+    const doc = await firestore(env, path);
+    return firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{
+      delete: doc.name, currentDocument: { updateTime: doc.updateTime }
+    }]})});
+  } catch (error) { if (error.status === 404) return false; throw error; }
+}

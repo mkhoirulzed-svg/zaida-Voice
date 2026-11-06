@@ -19,7 +19,7 @@ async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan mas
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").textContent=mode==="login"?"Masuk":"Buat akun"; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
 function closeAuth(){$("authOverlay").hidden=true;}
 const $ = (id) => document.getElementById(id);
-const state = { voices: [], audioUrl: null, history: [], alignment: null, subtitles: [], currentStep: 1, sourceText: "" };
+const state = { voices: [], audioUrl: null, history: [], alignment: null, subtitles: [], currentStep: 1, sourceText: "", voicePage: 0, previewAudio: null };
 const SAMPLE = "Halo, selamat datang di ZAIDA Voice.\n\nDi sini, setiap kata bisa memiliki karakter. Sampaikan pesanmu dengan suara yang hangat, jelas, dan penuh percaya diri. Mari mulai berkarya.";
 function toast(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),3200)}
 function setBusy(busy,message="Sedang membuat audio…"){$("generateButton").disabled=busy;$("dockAction").disabled=busy;$("progressWrap").hidden=!busy;$("progressText").textContent=message}
@@ -175,12 +175,18 @@ async function loadVoices(){
   }catch(error){select.innerHTML='<option value="">Gagal memuat suara</option>';$("voiceStatus").textContent="Suara tidak dapat dimuat";$("voiceCards").textContent=error.message;$("voiceLibraryNote").textContent=error.message;}
 }
 function isIndonesianVoice(v){return /indonesian|bahasa indonesia|^ind$/i.test(String(v.language||""));}
+function stopVoicePreview(){
+  if(state.previewAudio){state.previewAudio.pause();state.previewAudio.currentTime=0;state.previewAudio=null;}
+}
 function renderVoiceCards(){
   const wrap=$("voiceCards");wrap.innerHTML="";
   const query=$("voiceSearch").value.trim().toLowerCase(),filter=$("voiceLanguageFilter").value;
   const filtered=state.voices.filter(v=>(!query||v.name.toLowerCase().includes(query))&&(filter!=="indonesian"||isIndonesianVoice(v)));
+  const pageSize=12,totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
+  state.voicePage=Math.min(state.voicePage,totalPages-1);
+  const pageItems=filtered.slice(state.voicePage*pageSize,(state.voicePage+1)*pageSize);
   if(!filtered.length){wrap.innerHTML='<div class="empty-output"><b>Suara tidak ditemukan</b><p>Coba kata pencarian atau filter bahasa lain.</p></div>';return;}
-  filtered.forEach(v=>{
+  pageItems.forEach(v=>{
     const card=document.createElement("article");card.className="voice-card"+(v.voice_id===$("voiceSelect").value?" selected":"");
     const choose=document.createElement("button");choose.type="button";choose.className="voice-select-card";
     choose.innerHTML='<span class="voice-card-icon"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
@@ -189,9 +195,20 @@ function renderVoiceCards(){
     const kind=document.createElement("small");kind.textContent=v.private?"Zed Clone · Privat":isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
     choose.append(name,kind);choose.addEventListener("click",()=>{$("voiceSelect").value=v.voice_id;renderVoiceCards();});
     const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
-    preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}const a=new Audio(v.preview_url);a.play().catch(()=>toast("Pratinjau tidak dapat diputar."));});
+    preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}stopVoicePreview();const audio=new Audio(v.preview_url);state.previewAudio=audio;audio.addEventListener("ended",()=>{if(state.previewAudio===audio)state.previewAudio=null;},{once:true});audio.play().catch(()=>{if(state.previewAudio===audio)state.previewAudio=null;toast("Pratinjau tidak dapat diputar.");});});
     card.append(choose,preview);wrap.append(card);
   });
+  let pager=$("voicePagination");
+  if(!pager){pager=document.createElement("div");pager.id="voicePagination";pager.className="voice-pagination";wrap.insertAdjacentElement("afterend",pager);}
+  pager.innerHTML="";
+  if(filtered.length>pageSize){
+    const info=document.createElement("span");info.textContent=`Halaman ${state.voicePage+1} dari ${totalPages} · ${filtered.length} suara`;
+    const prev=document.createElement("button");prev.type="button";prev.className="secondary-button";prev.textContent="Sebelumnya";prev.disabled=state.voicePage===0;
+    const next=document.createElement("button");next.type="button";next.className="secondary-button";next.textContent="Berikutnya";next.disabled=state.voicePage>=totalPages-1;
+    prev.addEventListener("click",()=>{stopVoicePreview();state.voicePage--;renderVoiceCards();});
+    next.addEventListener("click",()=>{stopVoicePreview();state.voicePage++;renderVoiceCards();});
+    pager.append(info,prev,next);
+  }else if(filtered.length){const info=document.createElement("span");info.textContent=`${filtered.length} suara`;pager.append(info);}
 }
 function setStep(step){
   step=Math.max(1,Math.min(3,Number(step)||1));
@@ -321,7 +338,7 @@ $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.tri
 $("backToScript").addEventListener("click",()=>setStep(1));
 $("backToVoice").addEventListener("click",()=>setStep(2));
 document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
-$("voiceSelect").addEventListener("change",renderVoiceCards);$("voiceSearch").addEventListener("input",renderVoiceCards);$("voiceLanguageFilter").addEventListener("change",renderVoiceCards);
+$("voiceSelect").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();});$("voiceSearch").addEventListener("input",()=>{state.voicePage=0;renderVoiceCards();});$("voiceLanguageFilter").addEventListener("change",()=>{state.voicePage=0;renderVoiceCards();});
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
 $("includeSubtitle").addEventListener("change",()=>{$("subtitleOptions").hidden=!$("includeSubtitle").checked;if($("includeSubtitle").checked)renderSubtitles();});
 $("downloadSrt").addEventListener("click",downloadSubtitle);

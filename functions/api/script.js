@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
     : "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
   let reservation;
   try {
-    const maxOutputTokens = 2500;
+    const maxOutputTokens = 1500;
     const reserveAmount = estimateDeepSeekReservation(text.length, system.length, maxOutputTokens, env);
     reservation = await reserveCredits(auth.user, env, reserveAmount, "ai-script-edit", { requestId, provider: "deepseek", model: env.ZAIDA_AI_MODEL || "deepseek-chat" });
     const upstream = await fetch("https://api.deepseek.com/chat/completions", {
@@ -26,10 +26,10 @@ export async function onRequestPost({ request, env }) {
     });
     const data = await upstream.json();
     if (!upstream.ok) { await releaseCredits(auth.user, env, reservation.reservationId, "deepseek-http-" + upstream.status); return Response.json({ error: data.error?.message || "DeepSeek gagal memproses naskah." }, { status: upstream.status }); }
-    const output = data.choices?.[0]?.message?.content?.trim();
-    if (!output) return Response.json({ error: "DeepSeek tidak mengembalikan naskah." }, { status: 502 });
     const billing = calculateDeepSeekCharge(data.usage || {}, env);
     const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits, "ai-script-edit:"+billing.inputTokens+" input/"+billing.outputTokens+" output tokens", {provider:"deepseek",model:(env.ZAIDA_AI_MODEL || "deepseek-chat"),providerCostIdr:billing.providerCostIdr,providerCostUsd:billing.providerUsd,inputTokens:billing.inputTokens,outputTokens:billing.outputTokens,requestId});
+    const output = data.choices?.[0]?.message?.content?.trim();
+    if (!output) return Response.json({ error: "DeepSeek tidak mengembalikan naskah; penggunaan provider tetap tercatat." }, { status: 502 });
     return Response.json({ text: output, creditsCharged: charged.charged, creditsRemaining: charged.remaining, usage: {inputTokens:billing.inputTokens,outputTokens:billing.outputTokens} });
   } catch (error) {
     return Response.json({ error: error?.message || "Tidak dapat terhubung ke DeepSeek." }, { status: error?.status || 502 });

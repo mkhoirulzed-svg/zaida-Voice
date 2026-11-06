@@ -236,3 +236,4 @@ textarea::placeholder{color:#69717e}
 .auth-close svg{width:18px;height:18px;display:block}
 
 body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:none}
+.dock-action:disabled{opacity:.55;cursor:wait}

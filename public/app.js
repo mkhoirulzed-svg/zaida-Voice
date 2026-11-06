@@ -183,10 +183,15 @@ function renderSubtitles(){
 }
 function downloadSubtitle(){
   if(!state.subtitles.length){toast("Subtitle belum tersedia.");return;}
-  const output=state.subtitles.map((cue,i)=>{
-    const start=typeof cue.start==="string"?parseSrtTime(cue.start):cue.start,end=typeof cue.end==="string"?parseSrtTime(cue.end):cue.end;
-    return (i+1)+"\n"+srtTime(start)+" --> "+srtTime(end)+"\n"+cue.text;
-  }).join("\n\n")+"\n";
+  const entries=state.subtitles.map(cue=>({
+    start:typeof cue.start==="string"?parseSrtTime(cue.start):cue.start,
+    end:typeof cue.end==="string"?parseSrtTime(cue.end):cue.end,
+    text:cue.text
+  }));
+  if(entries.some(c=>c.start===null||c.end===null||!Number.isFinite(c.start)||!Number.isFinite(c.end)||c.end<=c.start)){
+    toast("Periksa waktu subtitle.");return;
+  }
+  const output=entries.map((cue,i)=>(i+1)+"\n"+srtTime(cue.start)+" --> "+srtTime(cue.end)+"\n"+cue.text).join("\n\n")+"\n";
   const url=URL.createObjectURL(new Blob([output],{type:"text/plain;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download="zaida-voice.srt";a.click();URL.revokeObjectURL(url);
 }
 async function generate(){

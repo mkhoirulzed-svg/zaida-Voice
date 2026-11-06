@@ -287,8 +287,7 @@ async function generate(){
 $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.trim()){toast("Masukkan naskah terlebih dahulu.");return;}setStep(2);});
 $("backToScript").addEventListener("click",()=>setStep(1));
 $("backToVoice").addEventListener("click",()=>setStep(2));
-$("continueToExport").addEventListener("click",()=>setStep(4));
-document.querySelectorAll(".stepper-item,.mobile-step-nav button").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl||n===4&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
+document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
 $("voiceSelect").addEventListener("change",renderVoiceCards);
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
 $("includeSubtitle").addEventListener("change",()=>{$("subtitleOptions").hidden=!$("includeSubtitle").checked;if($("includeSubtitle").checked)renderSubtitles();});

@@ -159,8 +159,6 @@ async function deleteMyVoiceClone(){
   try{
     const response=await fetch("/api/voice-clone",{method:"DELETE",headers:{"Content-Type":"application/json",...(await authHeaders())}});
     const deleted=await response.json();if(!response.ok)throw new Error(deleted.error||"Gagal menghapus clone.");
-    const response=await fetch("/api/voice-clone",{headers:await authHeaders()});
-    const data=await response.json();if(!response.ok)throw new Error(data.error||"Gagal memuat status.");
     $("voiceCloneForm").hidden=false;$("voiceCloneForm").reset();$("voiceCloneSubmit").disabled=false;
     $("voiceCloneStatus").textContent="Clone berhasil dihapus.";
     await loadMyVoiceClone();await loadVoices();

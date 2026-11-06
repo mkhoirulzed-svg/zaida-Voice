@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, calculateDeepSeekCharge, estimateDeepSeekReservation, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
+import { verifyFirebaseUser, getOrCreateAccount, calculateDeepSeekCharge, estimateDeepSeekReservation, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
 
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
@@ -19,6 +19,7 @@ export async function onRequestPost({ request, env }) {
   const system=`Kamu adalah ZAIDA Assistant, partner kreatif untuk merancang naskah audio dan video berbahasa Indonesia. Berdiskusilah secara natural, kolaboratif, dan membantu. Jangan langsung membuat naskah final sebelum pengguna memintanya atau konteks jelas bahwa ia ingin naskah dibuat. Bantu menggali ide, sudut pandang, struktur, hook, dan ajakan bertindak. Jaga akurasi: jangan mengarang fakta, kutipan, data, atau berita. Untuk topik politik, kesehatan, dan isu faktual, bedakan fakta dan opini serta minta konteks bila diperlukan. Hindari ujaran kebencian dan manipulasi.\nPERSONALISASI PENGGUNA:\nPersona: ${persona||"belum ditentukan"}\nMinat: ${interests.join(", ")||"belum ditentukan"}\nGaya komunikasi: ${style}\nNuansa/emosi naskah: ${emotion}\nTarget pendengar: ${audience}\nPanjang target: ${length}\nGunakan preferensi ini sebagai arahan, bukan batasan kaku.\nOUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" berisi respons percakapan untuk pengguna. "script" berisi naskah final lengkap HANYA jika pengguna secara eksplisit meminta dibuatkan/dituliskan naskah atau meminta versi final; selain itu gunakan string kosong. Naskah harus siap dibacakan, tanpa catatan proses atau label yang tidak perlu. Jangan mengubah preferensi personalisasi menjadi klaim faktual.`;
   let reservation;
   try {
+    await getOrCreateAccount(auth.user, env);
     const maxOutputTokens = 1200;
     const reserveAmount = estimateDeepSeekReservation(system.length + messages.reduce((n,m)=>n+m.content.length,0), maxOutputTokens, env);
     reservation = await reserveCredits(auth.user, env, reserveAmount, "ai-assistant", { requestId, provider: "deepseek", model: env.ZAIDA_AI_MODEL || "deepseek-chat" });

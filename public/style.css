@@ -252,3 +252,63 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .admin-credit-form .generate-button{background:var(--accent)}
 .admin-toolbar button{border-color:var(--line);background:var(--panel2);color:#d8d3ff}
 .auth-close{border-radius:7px}
+
+
+/* Sidebar navigation, account balance and mobile close controls */
+.sidebar{overflow-y:auto;overscroll-behavior:contain}
+.sidebar-brand-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 4px 18px}
+.sidebar-brand-row .brand{margin:0;min-width:0}
+.sidebar-close{display:none;width:34px;height:34px;flex:none;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:#d5d9e1}
+.sidebar-close svg{width:17px;height:17px}
+.sidebar-credit{padding:12px;margin:0 0 20px;border:1px solid #3b3651;border-radius:10px;background:#191824}
+.sidebar-credit-top{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}
+.sidebar-credit-top span{font-size:10px;color:var(--muted)}
+.sidebar-credit-top b{font-size:14px;color:#eeeaff;font-weight:650}
+.sidebar-credit>a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:9px;border-top:1px solid var(--line);color:#c9c0ff;text-decoration:none;font-size:11px;font-weight:600}
+.sidebar-credit>a span{font-size:15px}
+.sidebar .nav-label{margin-top:8px}
+.sidebar .nav-item{width:100%;text-align:left;min-height:37px;padding:0 11px;border:0;background:transparent;font-size:12px}
+.sidebar .nav-item.active{background:var(--accent-soft);color:#e4e0ff}
+.sidebar-links{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;padding:14px 3px 17px;margin-bottom:12px;border-top:1px solid var(--line)}
+.sidebar-links a{font-size:10px;color:#9299a6;text-decoration:none}
+.sidebar-links a:hover{color:#e4e0ff}
+.sidebar-backdrop{display:none}
+#creditBalance[hidden]{display:none!important}
+.footer{display:none}
+.standalone-assistant{max-width:850px;margin:0 auto;padding:22px}
+.standalone-assistant .chat-messages{height:min(56vh,520px)}
+.standalone-assistant .chat-compose textarea{min-height:90px}
+.subtitle-option{display:flex;align-items:center;gap:11px;margin:18px 0 0;padding:14px;border:1px solid var(--line);border-radius:9px;background:#101319;cursor:pointer}
+.subtitle-option>input{width:17px;height:17px;accent-color:var(--accent);flex:none}
+.subtitle-option span{display:grid;gap:4px}
+.subtitle-option b{font-size:12px;color:var(--text)}
+.subtitle-option small{font-size:10px;color:var(--muted)}
+.subtitle-options{padding:14px 0 0}
+.subtitle-options[hidden]{display:none!important}
+.subtitle-options .subtitle-list{margin-bottom:12px}
+.subtitle-options #downloadSrt{width:100%}
+.export-actions{grid-template-columns:1fr}
+@media(max-width:760px){
+  .main{padding-bottom:78px}
+  .sidebar{z-index:12;padding-top:18px}
+  .sidebar-brand-row{margin-bottom:15px}
+  .sidebar-close{display:grid}
+  .sidebar-backdrop:not([hidden]){display:block;position:fixed;inset:0;z-index:11;border:0;background:#05060bd9;backdrop-filter:blur(2px)}
+  body.sidebar-open{overflow:hidden}
+  .sidebar-credit{margin-bottom:15px}
+  .sidebar-links{grid-template-columns:1fr 1fr}
+  .bottom-dock{left:0;right:0;bottom:0;min-height:62px;padding:7px 12px;gap:9px}
+  .dock-player audio{width:min(190px,43vw);height:31px}
+  .dock-player span{display:none}
+  .dock-credits{font-size:10px}
+  .dock-action{height:37px;padding:0 13px;font-size:11px}
+  .stepper{width:100%}
+  .stepper-item{font-size:11px}
+  .stepper>i{flex:1;max-width:40px}
+  .standalone-assistant{padding:15px}
+  .standalone-assistant .chat-messages{height:50vh}
+}
+@media(max-width:380px){
+  .dock-credits{display:none}
+  .dock-player audio{width:45vw}
+}

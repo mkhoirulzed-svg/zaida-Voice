@@ -35,12 +35,13 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: "Suara clone/pribadi tidak tersedia untuk pengguna umum." }, { status: 403 });
     }
 
-    const reservation = await reserveCredits(auth.user, env, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { requestId, provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2" });
+    const modelId = env.ZAIDA_TTS_MODEL || "eleven_v4";
+    const reservation = await reserveCredits(auth.user, env, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { requestId, provider: "elevenlabs", model: modelId });
     const upstreamUrl = "https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId) + (withTimestamps ? "/with-timestamps" : "?output_format=mp3_44100_128");
     const upstream = await fetch(upstreamUrl, {
       method: "POST",
       headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", "Accept": withTimestamps ? "application/json" : "audio/mpeg" },
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: clamp(s.stability, .5), similarity_boost: clamp(s.similarity_boost, .75), style: clamp(s.style, 0), use_speaker_boost: true } })
+      body: JSON.stringify({ text, model_id: modelId, voice_settings: { stability: clamp(s.stability, .5), similarity_boost: clamp(s.similarity_boost, .75), ...(modelId.startsWith("eleven_v4") ? {} : { style: clamp(s.style, 0), use_speaker_boost: true }) } })
     });
     if (!upstream.ok) {
       let message = "ElevenLabs gagal membuat audio.";
@@ -54,7 +55,9 @@ export async function onRequestPost({ request, env }) {
         await releaseCredits(auth.user, env, reservation.reservationId, "elevenlabs-timestamps-missing-audio");
         return Response.json({ error: "Respons audio bertimestamp tidak valid." }, { status: 502 });
       }
-      const providerCostUsd = (billing.characters / 1000) * (Number(env.ELEVENLABS_USD_PER_1000_CHARS) || 0);
+      const listRate = modelId === "eleven_v4_turbo" ? 0.04 : modelId === "eleven_v4" ? 0.08 : 0.10;
+      const customRate = Number(env.ZAIDA_TTS_USD_PER_1000_CHARS);
+      const providerCostUsd = (billing.characters / 1000) * (customRate > 0 ? customRate : listRate);
       const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2", providerCostIdr: Math.ceil(providerCostUsd * (Number(env.ZAIDA_USD_TO_IDR) || 18000)), providerCostUsd, characters: billing.characters, requestId });
       if (withTimestamps) {
         return Response.json({ audioBase64: timestampPayload.audio_base64, alignment: timestampPayload.alignment || timestampPayload.normalized_alignment || null }, {

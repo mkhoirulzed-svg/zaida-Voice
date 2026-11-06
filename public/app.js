@@ -16,7 +16,7 @@ let accountInfo = null;
 async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").textContent="Kredit: "+data.credits;$("profileEmail").textContent=(data.role==="admin"?"ADMIN · ":"")+"Saldo "+data.credits+" kredit";}catch(error){$("creditBalance").textContent="Kredit: —";toast(error.message);}}
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").innerHTML=(mode==="login"?"Masuk":"Buat akun")+' <b>→</b>'; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
-function closeAuth(){if(currentUser){$("authOverlay").hidden=true;document.body.classList.remove("auth-required");}}
+function closeAuth(){$("authOverlay").hidden=true;}
 const $ = (id) => document.getElementById(id);
 const state = { voices: [], audioUrl: null, history: [] };
 const SAMPLE = "Halo, selamat datang di ZAIDA Voice.\n\nDi sini, setiap kata bisa memiliki karakter. Sampaikan pesanmu dengan suara yang hangat, jelas, dan penuh percaya diri. Mari mulai berkarya.";
@@ -101,8 +101,8 @@ $("authForm").addEventListener("submit",async e=>{
 onAuthStateChanged(auth,user=>{
   currentUser=user&&user.emailVerified?user:null;
   const allowed=Boolean(currentUser);
-  document.body.classList.toggle("auth-required",!allowed);
-  $("authOverlay").hidden=allowed;
+  // Public-first: the studio shell remains accessible to visitors.
+  $("authOverlay").hidden=true;
   $("authButton").textContent=allowed?(user.email||"Akun")+" · Keluar":"Masuk / Daftar";
   $("profileName").textContent=allowed?(user.displayName||"Pengguna"):"Pengunjung";
   $("profileEmail").textContent=allowed?"Akun terverifikasi":(user?"Email belum diverifikasi":"Belum masuk");
@@ -110,5 +110,7 @@ onAuthStateChanged(auth,user=>{
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
   if(allowed){refreshAccount();}else{$("creditBalance").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;}
-  if(user&&!user.emailVerified){$("authMessage").textContent="Verifikasi email terlebih dahulu. Setelah itu, masuk kembali untuk membuka ZAIDA Voice.";$("authOverlay").hidden=false;}
+  if(user&&!user.emailVerified){
+    $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
+  }
 });

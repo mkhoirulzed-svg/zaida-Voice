@@ -234,3 +234,5 @@ textarea::placeholder{color:#69717e}
 .choice-chip{border:1px solid var(--line);border-radius:7px;background:#191c23;color:#c1c7d1;padding:7px 10px;font-size:10px}
 .choice-chip.active{border-color:var(--accent);background:var(--accent-soft);color:#e3deff}
 .auth-close svg{width:18px;height:18px;display:block}
+
+body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:none}

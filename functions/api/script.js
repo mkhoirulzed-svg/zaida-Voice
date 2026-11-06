@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, calculateDeepSeekCharge, estimateDeepSeekReservation, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
+import { verifyFirebaseUser, getOrCreateAccount, calculateDeepSeekCharge, estimateDeepSeekReservation, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
 
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
@@ -16,6 +16,7 @@ export async function onRequestPost({ request, env }) {
     : "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
   let reservation;
   try {
+    await getOrCreateAccount(auth.user, env);
     const maxOutputTokens = 1500;
     const reserveAmount = estimateDeepSeekReservation(text.length + system.length, maxOutputTokens, env);
     reservation = await reserveCredits(auth.user, env, reserveAmount, "ai-script-edit", { requestId, provider: "deepseek", model: env.ZAIDA_AI_MODEL || "deepseek-chat" });

@@ -21,7 +21,7 @@
       <button class="new-project" id="newProject"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Proyek baru</button>
       <div class="nav-label">PROYEK</div><button class="nav-item active" data-view="studio">Proyek saat ini</button>
       <button class="nav-item" data-view="assistant">Chat AI khusus</button>
-      <button class="nav-item" data-view="persona">Persona Saya</button>
+      <button class="nav-item" id="personaNav" data-view="persona" hidden>Persona Saya</button>
       <button class="nav-item" data-view="history">Riwayat</button>
       <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden>Dashboard admin</button>
       <div class="sidebar-bottom">
@@ -43,8 +43,6 @@
                 <div><span class="quick-label">Gaya</span><div class="chip-row" id="styleChips"><button type="button" class="choice-chip active" data-select="writerStyle" data-value="santai dan akrab">Santai</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="formal dan profesional">Formal</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="edukatif dan mudah dipahami">Edukatif</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="dramatis dan bercerita">Bercerita</button></div></div>
                 <div><span class="quick-label">Durasi</span><div class="chip-row" id="durationChips"><button type="button" class="choice-chip active" data-select="writerLength" data-value="singkat, sekitar 30 detik">30 dtk</button><button type="button" class="choice-chip" data-select="writerLength" data-value="sekitar 1 menit">1 mnt</button><button type="button" class="choice-chip" data-select="writerLength" data-value="sekitar 3 menit">3 mnt</button><button type="button" class="choice-chip" data-select="writerLength" data-value="fleksibel sesuai kebutuhan">Fleksibel</button></div></div>
               </div>
-              <select id="writerStyle" class="writer-select" hidden><option value="santai dan akrab">Santai</option><option value="formal dan profesional">Formal</option><option value="humoris dan jenaka">Humoris</option><option value="edukatif dan mudah dipahami">Edukatif</option><option value="dramatis dan bercerita">Bercerita</option><option value="persuasif dan meyakinkan">Persuasif</option></select>
-              <select id="writerLength" class="writer-select" hidden><option value="singkat, sekitar 30 detik">30 detik</option><option value="sekitar 1 menit">1 menit</option><option value="sekitar 3 menit">3 menit</option><option value="panjang, sekitar 5 menit">5 menit</option><option value="fleksibel sesuai kebutuhan">Fleksibel</option></select>
             <button id="continueToVoice" hidden></button></section>
           <aside class="panel assistant-panel"><div class="section-head"><h2>Asisten naskah</h2><button id="clearAssistant" class="text-tool">Percakapan baru</button></div>
             <div class="chat-messages" id="assistantMessages"><div class="assistant-message ai-message"><b>Asisten</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div></div>

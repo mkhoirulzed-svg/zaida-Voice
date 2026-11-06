@@ -227,3 +227,10 @@ textarea::placeholder{color:#69717e}
 .mobile-menu svg{width:21px;height:21px;display:block}
 .profile button{display:grid;place-items:center;width:30px;height:30px;border-radius:7px}
 .profile button svg{width:17px;height:17px;fill:none;stroke:currentColor}
+
+.quick-options{display:grid;gap:13px;margin:0 0 18px;padding:2px 0}
+.quick-label{display:block;font-size:10px;color:var(--muted);margin-bottom:7px}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.choice-chip{border:1px solid var(--line);border-radius:7px;background:#191c23;color:#c1c7d1;padding:7px 10px;font-size:10px}
+.choice-chip.active{border-color:var(--accent);background:var(--accent-soft);color:#e3deff}
+.auth-close svg{width:18px;height:18px;display:block}

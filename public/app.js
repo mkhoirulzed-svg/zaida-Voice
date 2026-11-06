@@ -223,6 +223,18 @@ $("regenerateSrt").addEventListener("click",()=>{state.subtitles=buildSubtitles(
 $("dockPlay").addEventListener("click",()=>{const p=$("audioPlayer");if(!p.src){toast("Audio belum tersedia.");return;}if(p.paused)p.play();else p.pause();});
 $("dockAction").addEventListener("click",()=>{if(state.currentStep===1){if($("scriptText").value.trim())setStep(2);else toast("Masukkan naskah terlebih dahulu.");}else if(state.currentStep===2)generate();else if(state.currentStep===3)setStep(4);else $("newProject").click();});
 $("restartProject").addEventListener("click",()=>{$("newProject").click();});
+
+function syncChoiceChips(){
+  document.querySelectorAll(".choice-chip").forEach(button=>{
+    const select=$(button.dataset.select);
+    button.classList.toggle("active",Boolean(select&&select.value===button.dataset.value));
+  });
+}
+document.querySelectorAll(".choice-chip").forEach(button=>button.addEventListener("click",()=>{
+  const select=$(button.dataset.select);if(!select)return;
+  select.value=button.dataset.value;select.dispatchEvent(new Event("change",{bubbles:true}));syncChoiceChips();saveAssistantProfile();
+}));
+syncChoiceChips();
 updateCount();loadVoices();
 $("authButton").addEventListener("click",()=>currentUser?signOut(auth):openAuth());
 $("googleAuthButton").addEventListener("click",async()=>{const button=$("googleAuthButton");button.disabled=true;$("authMessage").textContent="Menghubungkan ke Google…";try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);closeAuth();toast("Berhasil masuk dengan Google.");}catch(error){const messages={"auth/popup-closed-by-user":"Jendela login ditutup sebelum selesai.","auth/popup-blocked":"Popup diblokir browser. Izinkan popup lalu coba lagi.","auth/account-exists-with-different-credential":"Email ini sudah terdaftar dengan metode login lain."};$("authMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});

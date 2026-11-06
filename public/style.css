@@ -374,3 +374,16 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .editor-panel.preview-mode .editor-tools{justify-content:flex-start}
 #toggleScriptPreview{color:#c9b6ff;border:1px solid #51416f;border-radius:7px;padding:7px 10px}
 @media(max-width:560px){.script-preview{min-height:260px;padding:17px 14px;font-size:17px;line-height:1.85}}
+
+
+/* Script preview belongs to the voice step, above voice selection */
+.script-review-panel{margin:0 0 22px;padding:17px;border:1px solid var(--line);border-radius:11px;background:#101019}
+.script-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.script-review-head>div{display:flex;align-items:baseline;gap:10px;min-width:0}
+.script-review-head h2{font:700 14px Manrope;margin:0}
+.script-review-head span{font-size:10px;color:var(--muted)}
+.script-review-head button{flex:none}
+.script-review-panel .script-preview{min-height:100px;max-height:42vh;border:0;background:transparent;padding:2px 0 0;font-size:clamp(15px,1.8vw,18px)}
+.script-review-panel .script-preview p{margin-bottom:13px}
+.script-review-panel .script-preview .script-preview-spacer{height:9px;margin:0}
+@media(max-width:560px){.script-review-panel{padding:14px}.script-review-panel .script-preview{font-size:16px;line-height:1.8}}

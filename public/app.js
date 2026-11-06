@@ -185,7 +185,7 @@ function renderVoiceCards(){
   const pageSize=12,totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
   state.voicePage=Math.min(state.voicePage,totalPages-1);
   const pageItems=filtered.slice(state.voicePage*pageSize,(state.voicePage+1)*pageSize);
-  if(!filtered.length){wrap.innerHTML='<div class="empty-output"><b>Suara tidak ditemukan</b><p>Coba kata pencarian atau filter bahasa lain.</p></div>';return;}
+  if(!filtered.length){wrap.innerHTML='<div class="empty-output"><b>Suara tidak ditemukan</b><p>Coba kata pencarian atau filter bahasa lain.</p></div>';const pager=$("voicePagination");if(pager)pager.innerHTML="";return;}
   pageItems.forEach(v=>{
     const card=document.createElement("article");card.className="voice-card"+(v.voice_id===$("voiceSelect").value?" selected":"");
     const choose=document.createElement("button");choose.type="button";choose.className="voice-select-card";
@@ -193,7 +193,7 @@ function renderVoiceCards(){
     const name=document.createElement("b");name.textContent=v.name;
     const labels=[v.language||"Multilingual",v.accent].filter(Boolean).join(" · ");
     const kind=document.createElement("small");kind.textContent=v.private?"Zed Clone · Privat":isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
-    choose.append(name,kind);choose.addEventListener("click",()=>{$("voiceSelect").value=v.voice_id;renderVoiceCards();});
+    choose.append(name,kind);choose.addEventListener("click",()=>{stopVoicePreview();$("voiceSelect").value=v.voice_id;renderVoiceCards();});
     const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
     preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}stopVoicePreview();const audio=new Audio(v.preview_url);state.previewAudio=audio;audio.addEventListener("ended",()=>{if(state.previewAudio===audio)state.previewAudio=null;},{once:true});audio.play().catch(()=>{if(state.previewAudio===audio)state.previewAudio=null;toast("Pratinjau tidak dapat diputar.");});});
     card.append(choose,preview);wrap.append(card);

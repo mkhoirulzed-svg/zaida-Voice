@@ -361,11 +361,9 @@ async function generate(){
   }catch(error){toast(error.message);}finally{setBusy(false);}
 }
 $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.trim()){toast("Masukkan naskah terlebih dahulu.");return;}setStep(2);});
-$("backToScript").addEventListener("click",()=>setStep(1));
 $("regenerateButton").addEventListener("click",()=>{if(!state.audioUrl){toast("Belum ada audio untuk dibuat ulang.");return;}setStep(2);toast("Silakan ubah naskah atau pilih suara lain, lalu buat audio kembali.");});
 $("resultAudio").addEventListener("play",()=>{if(!$("audioPlayer").paused)$("audioPlayer").pause();});
 $("audioPlayer").addEventListener("play",()=>{if(!$("resultAudio").paused)$("resultAudio").pause();});
-$("backToVoice").addEventListener("click",()=>setStep(2));
 document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
 $("voiceSelect").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();});$("voiceSearch").addEventListener("input",()=>{state.voicePage=0;renderVoiceCards();});$("voiceGenderFilter").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();});
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});

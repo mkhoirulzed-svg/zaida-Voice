@@ -117,7 +117,7 @@ export function calculateDeepSeekCharge(usage, env) {
 }
 export function calculateTtsCharge(text, env) {
   const characters = String(text || "").length;
-  const rate = Math.max(0, Number(env.ZAIDA_TTS_CREDITS_PER_CHARACTER) || 2);
+  const rate = Math.max(0, Number(env.ZAIDA_TTS_CREDITS_PER_CHARACTER) || 3);
   return { characters, credits: Math.max(1, Math.ceil(characters * rate)) };
 }
 export async function billUsage(user, env, credits, description, metadata = {}) {

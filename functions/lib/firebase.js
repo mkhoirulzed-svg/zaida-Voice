@@ -107,13 +107,39 @@ export function calculateDeepSeekCharge(usage, env) {
   const output = Math.max(0, Number(usage?.completion_tokens ?? usage?.output_tokens) || 0);
   const cached = Math.max(0, Math.min(input, Number(usage?.prompt_cache_hit_tokens ?? usage?.cached_tokens) || 0));
   const usdToIdr = Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000);
-  const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 2);
+  const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
   const inputMissRate = Math.max(0, Number(env.DEEPSEEK_INPUT_USD_PER_MILLION) || 0.15);
   const inputHitRate = Math.max(0, Number(env.DEEPSEEK_CACHED_INPUT_USD_PER_MILLION) || 0.003);
   const outputRate = Math.max(0, Number(env.DEEPSEEK_OUTPUT_USD_PER_MILLION) || 0.60);
   const providerUsd = ((input - cached) * inputMissRate + cached * inputHitRate + output * outputRate) / 1000000;
   const providerCostIdr = Math.ceil(providerUsd * usdToIdr);
   return { inputTokens: input, cachedInputTokens: cached, outputTokens: output, providerUsd, providerCostIdr, credits: Math.max(1, Math.ceil(providerCostIdr * markup)) };
+}
+export function calculateKiosapiCharge(usage, env) {
+  const input = Math.max(0, Number(usage?.prompt_tokens ?? usage?.input_tokens) || 0);
+  const output = Math.max(0, Number(usage?.completion_tokens ?? usage?.output_tokens) || 0);
+  const providerCostIdr = Math.max(0, Number(usage?.cost_idr) || 0);
+  const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
+  return { inputTokens: input, outputTokens: output, providerCostIdr, credits: Math.max(1, Math.ceil(providerCostIdr * markup)) };
+}
+export function estimateKiosapiCostIdr(usage, model, env) {
+  const input = Math.max(0, Number(usage?.prompt_tokens ?? usage?.input_tokens) || 0);
+  const output = Math.max(0, Number(usage?.completion_tokens ?? usage?.output_tokens) || 0);
+  const isDeepSeek = String(model || "").startsWith("deepseek/");
+  const inputRate = Math.max(0, Number(env.ZAIDA_KIOSAPI_INPUT_MAX_IDR_PER_MILLION) || (isDeepSeek ? 12000 : 6500));
+  const outputRate = Math.max(0, Number(env.ZAIDA_KIOSAPI_OUTPUT_MAX_IDR_PER_MILLION) || (isDeepSeek ? 50000 : 25000));
+  return ((input * inputRate) + (output * outputRate)) / 1000000;
+}
+export function estimateKiosapiReservation(inputCharacters, maxOutputTokens, env) {
+  // Conservative upper bound: assume at most two characters per input token.
+  // Uses the peak DeepSeek V4 Flash rate because it is the configured fallback.
+  const promptTokens = Math.max(1, Math.ceil(Math.max(0, Number(inputCharacters) || 0) / 2) + 256);
+  const outputTokens = Math.max(1, Math.ceil(Number(maxOutputTokens) || 1));
+  const maxInputRate = Math.max(0, Number(env.ZAIDA_KIOSAPI_INPUT_MAX_IDR_PER_MILLION) || 12000);
+  const maxOutputRate = Math.max(0, Number(env.ZAIDA_KIOSAPI_OUTPUT_MAX_IDR_PER_MILLION) || 50000);
+  const providerCostIdr = ((promptTokens * maxInputRate) + (outputTokens * maxOutputRate)) / 1000000;
+  const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
+  return Math.max(1, Math.ceil(providerCostIdr * markup) + 1);
 }
 export function calculateTtsCharge(text, env) {
   const characters = String(text || "").length;

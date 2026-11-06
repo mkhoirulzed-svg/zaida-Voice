@@ -156,7 +156,23 @@ function buildSubtitles(text,alignment,duration){
       cues.push({start:Math.max(0,start),end:Math.min(total,Math.max(start+1,end)),text:wrapSubtitle(value)});
       group=[];length=0;
     };
-    for(const word of words){const size=Array.from(word[0]).length;if(group.length&&length+1+size>84)flush();group.push(word);length+=size+(group.length>1?1:0);}
+    for(const word of words){
+      const token=Array.from(word[0]),size=token.length;
+      if(size>84){
+        flush();
+        for(let offset=0;offset<size;offset+=84){
+          const before=token.slice(0,offset).join(""),piece=token.slice(offset,offset+84).join("");
+          const first=base+Array.from(part.slice(0,word.index+before.length)).length;
+          const last=first+Array.from(piece).length-1;
+          const start=aligned?Number(starts[first]||0):(first/chars.length)*total;
+          const end=aligned?Number(ends[last]||start+1):((last+1)/chars.length)*total;
+          cues.push({start:Math.max(0,start),end:Math.min(total,Math.max(start+1,end)),text:wrapSubtitle(piece)});
+        }
+        continue;
+      }
+      if(group.length&&length+1+size>84)flush();
+      group.push(word);length+=size+(group.length>1?1:0);
+    }
     flush();
   }
   if(!cues.length&&text.trim())cues.push({start:0,end:total,text:wrapSubtitle(text.trim())});

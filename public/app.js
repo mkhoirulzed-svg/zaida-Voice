@@ -197,13 +197,29 @@ async function generate(){
   if(text.length>5000){toast("Maksimal 5.000 karakter.");return;}
   setBusy(true);
   try{
-    const response=await fetch("/api/tts?timestamps=1",{method:"POST",headers:{"Content-Type":"application/json",...(await authHeaders())},body:JSON.stringify({requestId:newRequestId(),text,voiceId,voiceSettings:{stability:Number($("stability").value)/100,similarity_boost:Number($("similarity").value)/100,style:Number($("style").value)/100}})});
-    let result={};try{result=await response.json();}catch{}if(!response.ok)throw new Error(result.error||"Gagal membuat audio.");
-    const remaining=response.headers.get("X-Credits-Remaining");if(remaining!==null){$("creditBalance").textContent="Kredit: "+remaining;$("dockCredits").textContent="Kredit: "+remaining;if(accountInfo)accountInfo.credits=Number(remaining);}
-    const binary=atob(result.audioBase64||""),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-    const blob=new Blob([bytes],{type:"audio/mpeg"});if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);
-    state.audioUrl=URL.createObjectURL(blob);$("audioPlayer").src=state.audioUrl;$("downloadButton").href=state.audioUrl;
-    state.alignment=result.alignment||null;state.sourceText=text;
+    const payload={requestId:newRequestId(),text,voiceId,voiceSettings:{stability:Number($("stability").value)/100,similarity_boost:Number($("similarity").value)/100,style:Number($("style").value)/100}};
+    const headers={"Content-Type":"application/json",...(await authHeaders())};
+    let response=await fetch("/api/tts?timestamps=1",{method:"POST",headers,body:JSON.stringify(payload)});
+    let audioBlob=null,alignment=null;
+    if(response.ok){
+      const result=await response.json();
+      const binary=atob(result.audioBase64||""),bytes=new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      audioBlob=new Blob([bytes],{type:"audio/mpeg"});alignment=result.alignment||null;
+    }else if([404,405,422].includes(response.status)){
+      // Timestamp endpoint unavailable: use the existing TTS endpoint once,
+      // then estimate subtitle timing from the returned audio duration.
+      response=await fetch("/api/tts",{method:"POST",headers,body:JSON.stringify(payload)});
+      if(!response.ok){let error={};try{error=await response.json();}catch{}throw new Error(error.error||"Gagal membuat audio.");}
+      audioBlob=await response.blob();
+    }else{
+      let error={};try{error=await response.json();}catch{}throw new Error(error.error||"Gagal membuat audio.");
+    }
+    const remaining=response.headers.get("X-Credits-Remaining");
+    if(remaining!==null){$("creditBalance").textContent="Kredit: "+remaining;$("dockCredits").textContent="Kredit: "+remaining;if(accountInfo)accountInfo.credits=Number(remaining);}
+    if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);
+    state.audioUrl=URL.createObjectURL(audioBlob);$("audioPlayer").src=state.audioUrl;$("downloadButton").href=state.audioUrl;
+    state.alignment=alignment;state.sourceText=text;
     $("resultTitle").textContent="Narasi "+new Date().toLocaleString("id-ID");$("resultDetails").textContent="MP3 · "+text.length+" karakter";$("dockTrack").textContent=$("resultTitle").textContent;
     const duration=await new Promise(resolve=>{const p=$("audioPlayer");if(p.readyState>=1&&Number.isFinite(p.duration)){resolve(p.duration);return;}const done=()=>resolve(Number.isFinite(p.duration)?p.duration:Math.max(1,text.length/12));p.addEventListener("loadedmetadata",done,{once:true});p.addEventListener("error",done,{once:true});});
     state.subtitles=buildSubtitles(text,state.alignment,duration);renderSubtitles();

@@ -82,7 +82,7 @@ export async function onRequestGet({ request, env }) {
   if (auth.error) return auth.error;
   try {
     const voice = await getUserVoiceClone(auth.user, env);
-    return Response.json({ voice: voice ? { voiceId: voice.voiceId, name: voice.name, status: voice.status, createdAt: voice.createdAt } : null }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ voice: voice ? { voiceId: voice.voiceId, name: voice.name, status: voice.status, createdAt: voice.createdAt } : null, creditsCost: Math.max(0, Number(env.ZAIDA_VOICE_CLONE_CREDITS) || 0) }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return Response.json({ error: error.message || "Gagal memuat clone suara." }, { status: error.status || 502 }); }
 }
 

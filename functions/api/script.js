@@ -17,7 +17,7 @@ export async function onRequestPost({ request, env }) {
   let reservation;
   try {
     const maxOutputTokens = 1500;
-    const reserveAmount = estimateDeepSeekReservation(text.length, system.length, maxOutputTokens, env);
+    const reserveAmount = estimateDeepSeekReservation(text.length + system.length, maxOutputTokens, env);
     reservation = await reserveCredits(auth.user, env, reserveAmount, "ai-script-edit", { requestId, provider: "deepseek", model: env.ZAIDA_AI_MODEL || "deepseek-chat" });
     const upstream = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",

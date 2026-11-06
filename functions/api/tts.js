@@ -31,8 +31,28 @@ export async function onRequestPost({ request, env }) {
     const catalog = await catalogResponse.json();
     if (!catalogResponse.ok) return Response.json({ error: "Tidak dapat memverifikasi karakter suara." }, { status: 502 });
     const selected = (catalog.voices || []).find(v => v.voice_id === voiceId);
-    if (!selected || (isPrivateVoice ? account.role !== "admin" : selected.category !== "premade")) {
-      return Response.json({ error: "Karakter suara tidak tersedia untuk akun ini." }, { status: 403 });
+
+    // Saved Voice Library voices are valid for this account even though
+    // their category is usually "professional" or "community", not "premade".
+    let isSavedVoice = false;
+    if (!isPrivateVoice && selected && selected.category !== "premade") {
+      let pageToken = "";
+      for (let page = 0; page < 10 && !isSavedVoice; page++) {
+        const params = new URLSearchParams({ voice_type: "saved", page_size: "100" });
+        if (pageToken) params.set("next_page_token", pageToken);
+        const savedResponse = await fetch("https://api.elevenlabs.io/v2/voices?" + params, {
+          headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Accept": "application/json" }
+        });
+        if (!savedResponse.ok) break;
+        const savedData = await savedResponse.json();
+        isSavedVoice = (savedData.voices || []).some(v => v.voice_id === voiceId);
+        if (!savedData.has_more || !savedData.next_page_token) break;
+        pageToken = savedData.next_page_token;
+      }
+    }
+
+    if (isPrivateVoice ? (!selected || account.role !== "admin") : (!selected || (selected.category !== "premade" && !isSavedVoice))) {
+      return Response.json({ error: "Karakter suara tidak tersedia untuk akun ini. Pastikan suara sudah disimpan ke My Voices di ElevenLabs." }, { status: 403 });
     }
 
     const modelId = env.ZAIDA_TTS_MODEL || "eleven_v4";

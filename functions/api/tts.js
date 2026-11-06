@@ -31,7 +31,9 @@ export async function onRequestPost({ request, env }) {
     const catalog = await catalogResponse.json();
     if (!catalogResponse.ok) return Response.json({ error: "Tidak dapat memverifikasi karakter suara." }, { status: 502 });
     const selected = (catalog.voices || []).find(v => v.voice_id === voiceId);
-    if (!selected || (isPrivateVoice ? account.role !== "admin" : selected.category !== "premade")) {
+    const userClone = isPrivateVoice ? null : await getUserVoiceClone(auth.user, env);
+    const isOwnedClone = Boolean(userClone && userClone.voiceId === voiceId && userClone.status === "ready");
+    if (!selected || (isPrivateVoice ? account.role !== "admin" : (selected.category !== "premade" && !isOwnedClone))) {
       return Response.json({ error: "Karakter suara tidak tersedia untuk akun ini." }, { status: 403 });
     }
 

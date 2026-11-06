@@ -162,16 +162,15 @@ function updateCount(){
 async function loadVoices(){
   const select=$("voiceSelect");
   try{
-    const data=await api("/api/voices");state.voices=data.voices||[];select.innerHTML="";
+    const data=await api("/api/voices",{authRequired:Boolean(currentUser)});state.voices=data.voices||[];select.innerHTML="";
     const indonesianCount=state.voices.filter(isIndonesianVoice).length;
+    const privateCount=state.voices.filter(v=>v.private).length;
     $("voiceStatus").textContent=state.voices.length+" suara";
-    $("voiceLibraryNote").textContent=indonesianCount
-      ? indonesianCount+" suara berlabel Bahasa Indonesia tersedia. Suara ini diprioritaskan di daftar."
-      : "Belum ada suara bawaan berlabel Bahasa Indonesia di katalog API akun ini. Suara multilingual tetap dapat membaca bahasa Indonesia, tetapi aksennya bisa berbeda.";
+    $("voiceLibraryNote").textContent=(indonesianCount?indonesianCount+" suara berlabel Bahasa Indonesia diprioritaskan.":"Belum ada suara bawaan berlabel Bahasa Indonesia di katalog. Suara multilingual tetap bisa membaca bahasa Indonesia, tetapi aksennya bisa bervariasi.")+(privateCount?" Zed Clone pribadi tersedia untuk akun pemilik.":"");
     state.voices.sort((a,b)=>Number(isIndonesianVoice(b))-Number(isIndonesianVoice(a)));
     state.voices.forEach(v=>{const o=document.createElement("option");o.value=v.voice_id;o.textContent=v.name;select.append(o);});
     if(!state.voices.length)select.innerHTML='<option value="">Tidak ada suara tersedia</option>';
-    if(state.voices.length&&!select.value)select.value=state.voices[0].voice_id;
+    if(state.voices.length&&!state.voices.some(v=>v.voice_id===select.value))select.value=state.voices[0].voice_id;
     renderVoiceCards();
   }catch(error){select.innerHTML='<option value="">Gagal memuat suara</option>';$("voiceStatus").textContent="Suara tidak dapat dimuat";$("voiceCards").textContent=error.message;$("voiceLibraryNote").textContent=error.message;}
 }
@@ -187,7 +186,7 @@ function renderVoiceCards(){
     choose.innerHTML='<span class="voice-card-icon"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
     const name=document.createElement("b");name.textContent=v.name;
     const labels=[v.language||"Multilingual",v.accent].filter(Boolean).join(" · ");
-    const kind=document.createElement("small");kind.textContent=isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
+    const kind=document.createElement("small");kind.textContent=v.private?"Zed Clone · Privat":isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
     choose.append(name,kind);choose.addEventListener("click",()=>{$("voiceSelect").value=v.voice_id;renderVoiceCards();});
     const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
     preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}const a=new Audio(v.preview_url);a.play().catch(()=>toast("Pratinjau tidak dapat diputar."));});
@@ -368,7 +367,7 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);}else{$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
+  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();}else{loadVoices();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }

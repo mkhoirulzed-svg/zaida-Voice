@@ -312,3 +312,16 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
   .dock-credits{display:none}
   .dock-player audio{width:45vw}
 }
+
+
+/* Persona Saya */
+.persona-intro{max-width:720px;margin:8px 0 18px;color:var(--muted);font-size:12px;line-height:1.65}
+.persona-panel{max-width:760px;padding:22px}
+.persona-panel>.field-label{display:block;margin:18px 0 8px}
+.persona-panel>.field-label:first-child{margin-top:0}
+.persona-panel .writer-input,.persona-panel .writer-select{height:43px;font-size:12px}
+.persona-panel .interest-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.persona-panel .interest-grid label span{padding:10px;font-size:11px}
+.persona-save-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
+.persona-save-row span{font-size:11px;color:var(--muted)}
+@media(max-width:760px){.persona-panel{padding:16px}.persona-panel .interest-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.persona-save-row{align-items:stretch;flex-direction:column}.persona-save-row .primary-button{width:100%}}

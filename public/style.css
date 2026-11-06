@@ -387,3 +387,13 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .script-review-panel .script-preview p{margin-bottom:13px}
 .script-review-panel .script-preview .script-preview-spacer{height:9px;margin:0}
 @media(max-width:560px){.script-review-panel{padding:14px}.script-review-panel .script-preview{font-size:16px;line-height:1.8}}
+
+
+/* Clear result preview and regeneration actions */
+.result-player-wrap{margin:22px 0 18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface, #15151d)}
+.result-player-wrap audio{display:block;width:100%;min-height:42px}
+.result-player-hint{margin:9px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
+.export-actions{display:flex;gap:10px;flex-wrap:wrap}
+.export-actions .download-button{flex:1;min-width:150px;text-align:center}
+#regenerateButton{min-height:44px}
+@media(max-width:560px){.export-actions{flex-direction:column}.export-actions>*{width:100%;justify-content:center}}

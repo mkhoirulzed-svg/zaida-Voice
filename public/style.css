@@ -237,3 +237,6 @@ textarea::placeholder{color:#69717e}
 
 body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:none}
 .dock-action:disabled{opacity:.55;cursor:wait}
+.dock-player audio{width:min(260px,34vw);height:34px;flex:none;accent-color:var(--accent)}
+.dock-player span{max-width:180px}
+@media(max-width:760px){.dock-player audio{width:min(190px,42vw);height:31px}.dock-player span{display:none}}

@@ -163,19 +163,31 @@ async function loadVoices(){
   const select=$("voiceSelect");
   try{
     const data=await api("/api/voices");state.voices=data.voices||[];select.innerHTML="";
+    const indonesianCount=state.voices.filter(isIndonesianVoice).length;
+    $("voiceStatus").textContent=state.voices.length+" suara";
+    $("voiceLibraryNote").textContent=indonesianCount
+      ? indonesianCount+" suara berlabel Bahasa Indonesia tersedia. Suara ini diprioritaskan di daftar."
+      : "Belum ada suara bawaan berlabel Bahasa Indonesia di katalog API akun ini. Suara multilingual tetap dapat membaca bahasa Indonesia, tetapi aksennya bisa berbeda.";
+    state.voices.sort((a,b)=>Number(isIndonesianVoice(b))-Number(isIndonesianVoice(a)));
     state.voices.forEach(v=>{const o=document.createElement("option");o.value=v.voice_id;o.textContent=v.name;select.append(o);});
     if(!state.voices.length)select.innerHTML='<option value="">Tidak ada suara tersedia</option>';
     if(state.voices.length&&!select.value)select.value=state.voices[0].voice_id;
-    $("voiceStatus").textContent=state.voices.length+" suara";renderVoiceCards();
-  }catch(error){select.innerHTML='<option value="">Gagal memuat suara</option>';$("voiceStatus").textContent="Suara tidak dapat dimuat";$("voiceCards").textContent=error.message;}
+    renderVoiceCards();
+  }catch(error){select.innerHTML='<option value="">Gagal memuat suara</option>';$("voiceStatus").textContent="Suara tidak dapat dimuat";$("voiceCards").textContent=error.message;$("voiceLibraryNote").textContent=error.message;}
 }
+function isIndonesianVoice(v){return /indonesian|bahasa indonesia|^ind$/i.test(String(v.language||""));}
 function renderVoiceCards(){
   const wrap=$("voiceCards");wrap.innerHTML="";
-  state.voices.forEach(v=>{
+  const query=$("voiceSearch").value.trim().toLowerCase(),filter=$("voiceLanguageFilter").value;
+  const filtered=state.voices.filter(v=>(!query||v.name.toLowerCase().includes(query))&&(filter!=="indonesian"||isIndonesianVoice(v)));
+  if(!filtered.length){wrap.innerHTML='<div class="empty-output"><b>Suara tidak ditemukan</b><p>Coba kata pencarian atau filter bahasa lain.</p></div>';return;}
+  filtered.forEach(v=>{
     const card=document.createElement("article");card.className="voice-card"+(v.voice_id===$("voiceSelect").value?" selected":"");
     const choose=document.createElement("button");choose.type="button";choose.className="voice-select-card";
     choose.innerHTML='<span class="voice-card-icon"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
-    const name=document.createElement("b");name.textContent=v.name;const kind=document.createElement("small");kind.textContent="Suara";
+    const name=document.createElement("b");name.textContent=v.name;
+    const labels=[v.language||"Multilingual",v.accent].filter(Boolean).join(" · ");
+    const kind=document.createElement("small");kind.textContent=isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
     choose.append(name,kind);choose.addEventListener("click",()=>{$("voiceSelect").value=v.voice_id;renderVoiceCards();});
     const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
     preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}const a=new Audio(v.preview_url);a.play().catch(()=>toast("Pratinjau tidak dapat diputar."));});
@@ -310,7 +322,7 @@ $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.tri
 $("backToScript").addEventListener("click",()=>setStep(1));
 $("backToVoice").addEventListener("click",()=>setStep(2));
 document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
-$("voiceSelect").addEventListener("change",renderVoiceCards);
+$("voiceSelect").addEventListener("change",renderVoiceCards);$("voiceSearch").addEventListener("input",renderVoiceCards);$("voiceLanguageFilter").addEventListener("change",renderVoiceCards);
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
 $("includeSubtitle").addEventListener("change",()=>{$("subtitleOptions").hidden=!$("includeSubtitle").checked;if($("includeSubtitle").checked)renderSubtitles();});
 $("downloadSrt").addEventListener("click",downloadSubtitle);

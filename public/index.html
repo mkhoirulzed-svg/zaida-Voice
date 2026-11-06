@@ -13,23 +13,27 @@
 <body class="in-studio">
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="/" aria-label="ZAIDA Voice beranda">
+      <div class="sidebar-brand-row"><a class="brand" href="/" aria-label="ZAIDA Voice beranda">
         <span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11.5C8 9.6 9.6 8 11.5 8h17C30.4 8 32 9.6 32 11.5v17c0 1.9-1.6 3.5-3.5 3.5h-17C9.6 32 8 30.4 8 28.5v-17Z" fill="currentColor" opacity=".18"/><path d="M12 25.5 25.5 12H14m2 16h12" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         <span><strong>ZAIDA <i>Voice</i></strong><small>STUDIO SUARA AI</small></span>
-      </a>
+      </a><button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+      <section class="sidebar-credit"><div class="sidebar-credit-top"><span>Kredit</span><b id="sidebarCreditBalance">Masuk untuk melihat saldo</b></div><a href="/harga.html">Lihat paket kredit <span aria-hidden="true">→</span></a></section>
       <button class="new-project" id="newProject"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Proyek baru</button>
       <div class="nav-label">PROYEK</div><button class="nav-item active" data-view="studio">Proyek saat ini</button>
+      <button class="nav-item" id="subtitleNav" data-view="subtitle">Subtitle</button>
+      <button class="nav-item" data-view="assistant">Chat AI khusus</button>
       <div class="nav-label">RIWAYAT</div><button class="nav-item" data-view="history">Riwayat</button>
       <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden>Dashboard admin</button>
       <div class="sidebar-bottom">
+        <nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav>
         <div class="profile"><div class="avatar" id="profileAvatar">Z</div><div><b id="profileName">Pengunjung</b><small id="profileEmail">Belum masuk</small></div><button title="Personalisasi" id="settingsButton" aria-label="Personalisasi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 1 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 1 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 1 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 1 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 1 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 1 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 1 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 1 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       </div>
     </aside>
     <main class="main">
-      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="breadcrumb">Ruang kerja <span>/</span> <b id="breadcrumbPage">Studio Suara</b></div><div class="top-actions"><span class="credit-balance" id="creditBalance">Kredit: —</span><button class="auth-button" id="authButton">Masuk / Daftar</button><div class="top-avatar" id="topAvatar">Z</div></div></header>
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="breadcrumb">Ruang kerja <span>/</span> <b id="breadcrumbPage">Studio Suara</b></div><div class="top-actions"><button class="auth-button" id="authButton">Masuk / Daftar</button><div class="top-avatar" id="topAvatar">Z</div></div></header>
       <section class="page active" id="studioPage">
         <div class="workflow-header"><div class="workflow-title"><h1 id="workflowTitle">Naskah</h1><span id="workflowCount">0 karakter</span></div>
-          <nav class="stepper" aria-label="Tahapan produksi"><button class="stepper-item active" data-step="1"><span>1</span>Naskah</button><i></i><button class="stepper-item" data-step="2"><span>2</span>Suara</button><i></i><button class="stepper-item" data-step="3"><span>3</span>Subtitle</button><i></i><button class="stepper-item" data-step="4"><span>4</span>Ekspor</button></nav></div>
+          <nav class="stepper" aria-label="Tahapan produksi"><button class="stepper-item active" data-step="1"><span>1</span>Naskah</button><i></i><button class="stepper-item" data-step="2"><span>2</span>Suara</button><i></i><button class="stepper-item" data-step="3"><span>3</span>Ekspor</button></nav></div>
         <section class="workflow-panel active" id="step1"><div class="script-workspace">
           <section class="panel editor-panel"><div class="section-head"><h2>Naskah</h2><span id="charCount">0 karakter</span></div>
             <div class="language-row"><label class="field-label" for="scriptLanguage">Bahasa</label><select id="scriptLanguage" class="language-select"><option value="id" selected>Bahasa Indonesia</option><option value="en">English</option></select></div>
@@ -60,25 +64,34 @@
             <div class="range-field"><div><label for="style">Penekanan gaya</label><output id="styleValue">0%</output></div><input id="style" type="range" min="0" max="100" value="0"></div><input id="stability" type="hidden" value="50"><output id="stabilityValue" hidden>50%</output></details>
           <div class="voice-actions"><button class="secondary-button" id="backToScript">Kembali</button><button id="generateButton" hidden></button></div>
           <div class="progress-wrap" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div></div></section>
-        <section class="workflow-panel" id="step3"><div class="panel subtitle-panel"><div class="section-head"><h2>Subtitle</h2><span id="subtitleStatus">Belum dibuat</span></div>
-          <div class="subtitle-toolbar"><span>Waktu dan teks dapat diedit.</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div>
-          <div id="subtitleList" class="subtitle-list"><div class="empty-output"><b>Subtitle belum tersedia</b></div></div>
-          <div class="step-actions"><button class="secondary-button" id="backToVoice">Kembali</button><button id="continueToExport" hidden></button></div></div></section>
-        <section class="workflow-panel" id="step4"><div class="panel export-panel"><div class="section-head"><h2>Ekspor</h2></div>
+        <section class="workflow-panel" id="step3"><div class="panel export-panel"><div class="section-head"><h2>Ekspor</h2></div>
           <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small id="resultDetails">MP3</small></div></div>
-          <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a><button class="secondary-button" id="downloadSrt">Unduh SRT</button></div>
-          <div class="step-actions"><button class="secondary-button" id="backToSubtitle">Kembali</button><button id="restartProject" hidden></button></div></div></section>
+          <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a></div>
+          <label class="subtitle-option"><input type="checkbox" id="includeSubtitle"><span><b>Tambahkan subtitle</b><small>Siapkan file SRT bersama audio.</small></span></label>
+          <section class="subtitle-options" id="subtitleOptions" hidden>
+            <div class="subtitle-toolbar"><span id="subtitleStatus">Subtitle siap diedit</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div>
+            <div id="subtitleList" class="subtitle-list"><div class="empty-output"><b>Subtitle belum dibuat</b></div></div>
+            <button class="secondary-button" id="downloadSrt">Unduh SRT</button>
+          </section>
+          <div class="step-actions"><button class="secondary-button" id="backToVoice">Kembali ke suara</button><button id="restartProject" hidden></button></div></div></section>
       </section>
+      <section class="page" id="assistantPage"><div class="history-heading"><h1>Chat AI</h1></div>
+        <div class="panel assistant-panel standalone-assistant"><div class="section-head"><h2>Asisten naskah</h2><button id="clearStandaloneAssistant" class="text-tool">Percakapan baru</button></div>
+          <div class="chat-messages" id="standaloneAssistantMessages"><div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div></div>
+          <div class="chat-compose"><textarea id="standaloneAssistantInput" rows="3" maxlength="3000" placeholder="Tulis pesan…"></textarea><button id="standaloneSendAssistant" class="primary-button">Kirim</button></div>
+          <div class="script-export"><button id="standaloneUseAssistantScript" class="subtle-button" disabled>Gunakan naskah</button></div>
+        </div></section>
       <section class="page" id="historyPage"><div class="history-heading"><h1>Riwayat</h1></div><div class="panel history-panel" id="historyList"><div class="empty-output"><b>Belum ada riwayat</b></div></div></section>
         <section class="page" id="adminPage"><div class="history-heading"><h1>Dashboard admin</h1></div>
           <div class="admin-toolbar"><span id="adminUpdated">Data belum dimuat</span><button class="subtle-button" id="refreshAdmin">Perbarui data</button></div><div class="admin-metrics" id="adminMetrics"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div>
           <div class="panel admin-credit-panel"><div class="panel-heading"><div><div><h2>Tambah kredit pengguna</h2></div></div></div><form id="adminCreditForm" class="admin-credit-form"><label>Email pengguna<input id="adminCreditEmail" type="email" placeholder="nama@email.com" required></label><label>Jumlah kredit<input id="adminCreditAmount" type="number" min="1" max="1000000" step="1" value="10000" required></label><button class="generate-button" id="adminCreditSubmit" type="submit">Tambahkan kredit</button></form></div><div class="admin-provider-grid" id="adminProviders"></div>
           <section class="panel admin-transactions"><div class="panel-heading"><div><h2>Transaksi terbaru</h2></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b></div></div></section></section>
-      <nav class="mobile-step-nav" aria-label="Navigasi langkah"><button data-step="1" class="active">Naskah</button><button data-step="2">Suara</button><button data-step="3">Subtitle</button><button data-step="4">Ekspor</button></nav>
+      
       <div class="bottom-dock"><div class="dock-player"><audio id="audioPlayer" controls preload="metadata"></audio><span id="dockTrack">Belum ada audio</span></div><span class="dock-credits" id="dockCredits">Kredit: —</span><button class="dock-action" id="dockAction">Lanjut</button></div>
       <footer class="footer">Kebijakan privasi · <a href="/privasi.html">Baca selengkapnya</a></footer>
     </main>
   </div>
+  <button class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Tutup menu" hidden></button>
   <div class="auth-overlay" id="authOverlay" hidden>
     <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button class="auth-close" id="authClose" aria-label="Tutup"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>

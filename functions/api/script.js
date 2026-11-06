@@ -50,6 +50,7 @@ export async function onRequestPost({ request, env }) {
   const maxOutputTokens = 1500;
   let reservation = null;
   let reservationSettled = false;
+  let providerResponded = false;
 
   try {
     await getOrCreateAccount(auth.user, env);
@@ -89,6 +90,9 @@ export async function onRequestPost({ request, env }) {
 
         const data = await readJson(upstream);
         if (upstream.ok) {
+          // A successful provider response may already be billable. Never call
+          // another provider if settlement fails after this point.
+          providerResponded = true;
           const output = data.choices?.[0]?.message?.content?.trim();
           if (output) {
             const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
@@ -124,19 +128,20 @@ export async function onRequestPost({ request, env }) {
               providerCostIdr: providerCostIdr
             });
           }
-          lastError = new Error("Kiosapi tidak mengembalikan naskah.");
+          throw new Error("Kiosapi tidak mengembalikan naskah.");
         } else {
           lastError = new Error(data.error?.message || data.message || "Kiosapi gagal memproses naskah (HTTP " + upstream.status + ").");
           lastError.status = upstream.status;
         }
       } catch (error) {
+        if (providerResponded) throw error;
         lastError = error;
       }
     }
 
     // Optional emergency fallback through DeepSeek's own API key. This also
     // covers Kiosapi gateway/key/balance errors, not only model-provider errors.
-    if (hasDirectDeepSeek) {
+    if (hasDirectDeepSeek && !providerResponded) {
       try {
         const upstream = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
@@ -159,6 +164,7 @@ export async function onRequestPost({ request, env }) {
         if (!upstream.ok) {
           throw new Error(data.error?.message || "DeepSeek gagal memproses naskah (HTTP " + upstream.status + ").");
         }
+        providerResponded = true;
         const output = data.choices?.[0]?.message?.content?.trim();
         if (!output) throw new Error("DeepSeek tidak mengembalikan naskah.");
 
@@ -190,6 +196,7 @@ export async function onRequestPost({ request, env }) {
           providerCostIdr: billing.providerCostIdr
         });
       } catch (error) {
+        if (providerResponded) throw error;
         lastError = error;
       }
     }
@@ -198,7 +205,7 @@ export async function onRequestPost({ request, env }) {
     reservationSettled = true;
     return jsonError(lastError?.message || "Kiosapi dan DeepSeek gagal memproses naskah.", 502);
   } catch (error) {
-    if (reservation && !reservationSettled) {
+    if (reservation && !reservationSettled && !providerResponded) {
       try { await releaseCredits(auth.user, env, reservation.reservationId, "script-processing-error"); }
       catch (releaseError) { /* Keep the original error; reservation remains visible for admin review. */ }
     }

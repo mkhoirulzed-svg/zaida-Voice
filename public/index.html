@@ -35,7 +35,7 @@
           <nav class="stepper" aria-label="Tahapan produksi"><button class="stepper-item active" data-step="1"><span>1</span>Naskah</button><i></i><button class="stepper-item" data-step="2"><span>2</span>Suara</button><i></i><button class="stepper-item" data-step="3"><span>3</span>Ekspor</button></nav></div>
         <section class="workflow-panel active" id="step1"><div class="script-workspace">
           <section class="panel editor-panel"><div class="section-head"><h2>Naskah</h2><span id="charCount">0 karakter</span></div>
-            <div class="language-row"><label class="field-label" for="scriptLanguage">Bahasa</label><select id="scriptLanguage" class="language-select"><option value="id" selected>Bahasa Indonesia</option><option value="en">English</option></select></div>
+            <select id="scriptLanguage" class="language-select" hidden><option value="id" selected>Bahasa Indonesia</option></select>
             <textarea id="scriptText" maxlength="5000" placeholder="Tulis atau tempel naskah di sini…"></textarea>
             <div class="editor-tools"><button class="text-tool" id="clearText">Hapus</button><button class="text-tool" id="improveScript">Perbaiki naskah</button></div>
               <div class="quick-options">

@@ -38,11 +38,12 @@ async function firestore(env,path,options={}) {
   const url = "https://firestore.googleapis.com/v1/projects/"+encodeURIComponent(env.FIREBASE_PROJECT_ID)+"/databases/(default)/documents"+path;
   const response = await fetch(url,{...options,headers:{Authorization:"Bearer "+token,"Content-Type":"application/json",...(options.headers||{})}});
   const data = await response.json().catch(()=>({}));
-  if(!response.ok) { const e=new Error(data.error?.message||"Firestore request gagal.");e.status=response.status;throw e; }
+  if(!response.ok) { const e=new Error(data.error?.message||"Firestore request gagal.");e.status=response.status;e.code=data.error?.status||data.error?.details?.[0]?.reason||"";throw e; }
   return data;
 }
 function val(v){ if(!v)return null; if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return Number(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;return null; }
 function docData(doc){const f=doc?.fields||{};return {uid:val(f.uid),email:val(f.email),role:val(f.role)||"user",credits:val(f.credits)||0,plan:val(f.plan)||"free",createdAt:val(f.createdAt),updatedAt:val(f.updatedAt)};}
+const isFirestoreConflict = error => error?.status === 409 || ["ABORTED","FAILED_PRECONDITION","ALREADY_EXISTS"].includes(String(error?.code||"").toUpperCase());
 const str = value=>({stringValue:String(value)});
 const integer = value=>({integerValue:String(value)});
 export async function getOrCreateAccount(user,env){
@@ -56,7 +57,7 @@ export async function getOrCreateAccount(user,env){
     const credits=Math.max(0,Math.min(10000,Number(env.WELCOME_CREDITS??50)||0));
     try{
       await firestore(env,":commit",{method:"POST",body:JSON.stringify({writes:[{update:{name:"projects/"+env.FIREBASE_PROJECT_ID+"/databases/(default)/documents/users/"+user.uid,fields:{uid:str(user.uid),email:str(user.email||""),role:str(admin?"admin":"user"),credits:integer(credits),plan:str("free"),createdAt:str(now),updatedAt:str(now)}},currentDocument:{exists:false}}]})});
-    }catch(e){if(e.status!==409 && e.status!==400)throw e;}
+    }catch(e){if(!isFirestoreConflict(e))throw e;}
     doc=await firestore(env,path);
   }
   const account=docData(doc);
@@ -93,7 +94,7 @@ export async function chargeCredits(user,env,amount,description="text-to-speech"
         {update:{name:ledgerName,fields:{uid:str(user.uid),type:str("usage"),amount:integer(-amount),description:str(description),provider:str(metadata.provider||"unknown"),model:str(metadata.model||"unknown"),providerCostIdr:integer(Math.max(0,Number(metadata.providerCostIdr)||0)),providerCostUsd:str(Number(metadata.providerCostUsd||0).toFixed(8)),inputTokens:integer(Math.max(0,Number(metadata.inputTokens)||0)),outputTokens:integer(Math.max(0,Number(metadata.outputTokens)||0)),characters:integer(Math.max(0,Number(metadata.characters)||0)),requestId:str(requestId||""),createdAt:str(now)}},currentDocument:{exists:false}}
       ]})});
       return next;
-    }catch(e){if(e.status!==409 && e.status!==400)throw e;}
+    }catch(e){if(!isFirestoreConflict(e))throw e;}
   }
   const e=new Error("Saldo sedang diperbarui. Silakan coba kembali.");e.status=409;throw e;
 }

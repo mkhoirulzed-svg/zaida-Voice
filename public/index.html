@@ -22,6 +22,7 @@
       <div class="nav-label">PROYEK</div><button class="nav-item active" data-view="studio">Proyek saat ini</button>
       <button class="nav-item" data-view="assistant">Chat AI khusus</button>
       <button class="nav-item" id="personaNav" data-view="persona" hidden>Persona Saya</button>
+      <button class="nav-item" id="voiceCloneNav" data-view="voice-clone" hidden>Suara Saya</button>
       <button class="nav-item" data-view="history">Riwayat</button>
       <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden>Dashboard admin</button>
       <div class="sidebar-bottom">
@@ -81,6 +82,19 @@
           <label class="field-label" for="writerAudience">Target pendengar</label><input id="writerAudience" class="writer-input" maxlength="120" placeholder="Contoh: remaja, orang tua, calon pelanggan">
           <label class="field-label" for="writerLength">Panjang naskah yang disukai</label><select id="writerLength" class="writer-select"><option value="singkat, sekitar 30 detik">Singkat, sekitar 30 detik</option><option value="sekitar 1 menit">Sekitar 1 menit</option><option value="sekitar 3 menit">Sekitar 3 menit</option><option value="panjang, sekitar 5 menit">Panjang, sekitar 5 menit</option><option value="fleksibel sesuai kebutuhan">Fleksibel sesuai kebutuhan</option></select>
           <div class="persona-save-row"><span id="personaSaveStatus">Perubahan belum disimpan</span><button class="primary-button" id="savePersonaButton">Simpan persona</button></div>
+        </div></section>
+      <section class="page" id="voiceClonePage"><div class="history-heading"><h1>Suara Saya</h1><p class="persona-intro">Buat satu clone pribadi dari suaramu. Hanya akunmu yang dapat mengaksesnya.</p></div>
+        <div class="panel persona-panel voice-clone-panel">
+          <div id="voiceCloneCurrent" class="voice-clone-current"><div class="empty-output"><b>Belum ada clone suara</b><p>Unggah rekaman suara untuk membuat narator AI pribadi.</p></div></div>
+          <form id="voiceCloneForm" class="voice-clone-form">
+            <label class="field-label" for="voiceCloneName">Nama suara</label><input id="voiceCloneName" class="writer-input" maxlength="40" required placeholder="Contoh: Suara Narator Saya">
+            <label class="field-label" for="voiceCloneAudio">Rekaman suara (MP3, WAV, M4A, OGG, WebM)</label><input id="voiceCloneAudio" class="writer-input voice-clone-file" type="file" accept="audio/*" required>
+            <p class="voice-clone-help">Gunakan rekaman bersih sekitar 1–2 menit, satu pembicara, tanpa musik atau kebisingan. Minimum total sampel 10 detik. <a href="https://elevenlabs.io/docs/eleven-creative/voices/voice-cloning/instant-voice-cloning" target="_blank" rel="noopener">Panduan rekaman</a>.</p>
+            <label class="voice-clone-consent"><input type="checkbox" id="voiceCloneConsent" required><span>Saya menyatakan bahwa suara ini adalah suara saya sendiri atau saya memiliki izin eksplisit dari pemiliknya untuk membuat clone.</span></label>
+            <p class="voice-clone-cost" id="voiceCloneCost">Biaya clone akan ditampilkan setelah konfigurasi.</p>
+            <button class="primary-button" id="voiceCloneSubmit" type="submit">Buat clone suara</button>
+          </form>
+          <p class="voice-clone-status" id="voiceCloneStatus" role="status"></p>
         </div></section>
       <section class="page" id="assistantPage"><div class="history-heading"><h1>Chat AI</h1></div>
         <div class="panel assistant-panel standalone-assistant"><div class="section-head"><h2>Asisten naskah</h2><button id="clearStandaloneAssistant" class="text-tool">Percakapan baru</button></div>

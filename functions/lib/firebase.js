@@ -223,3 +223,10 @@ export async function settleReservedCredits(user, env, reservationId, actualCred
   }
   const e = new Error("Gagal menyelesaikan tagihan. Reservasi tetap ditahan untuk pemeriksaan."); e.status = 409; throw e;
 }
+
+export function estimateDeepSeekReservation(inputCharacters, maxOutputTokens, env) {
+  // Conservative upper bound: assume at most two characters per input token, plus prompt overhead.
+  const promptTokens = Math.max(1, Math.ceil(Math.max(0, Number(inputCharacters) || 0) / 2) + 256);
+  const outputTokens = Math.max(1, Math.ceil(Number(maxOutputTokens) || 1));
+  return calculateDeepSeekCharge({ prompt_tokens: promptTokens, completion_tokens: outputTokens }, env).credits;
+}

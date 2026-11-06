@@ -15,7 +15,7 @@ let currentUser = null;
 let accountInfo = null;
 async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").textContent="Kredit: "+data.credits;$("dockCredits").textContent="Kredit: "+data.credits;$("profileEmail").textContent=(data.role==="admin"?"ADMIN · ":"")+"Saldo "+data.credits+" kredit";}catch(error){$("creditBalance").textContent="Kredit: —";toast(error.message);}}
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
-function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").innerHTML=(mode==="login"?"Masuk":"Buat akun")+' <b>→</b>'; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
+function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").textContent=mode==="login"?"Masuk":"Buat akun"; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
 function closeAuth(){$("authOverlay").hidden=true;}
 const $ = (id) => document.getElementById(id);
 const state = { voices: [], audioUrl: null, history: [], alignment: null, subtitles: [], currentStep: 1, sourceText: "" };
@@ -74,7 +74,7 @@ async function loadAdminDashboard(){
     $("adminTransactionList").innerHTML=transactions.length?transactions.map(t=>'<div class="admin-transaction"><div class="admin-tx-main"><b>'+escapeHtml(t.description||"Pemakaian layanan")+'</b><small>'+escapeHtml(t.provider||"unknown")+' · '+escapeHtml(t.model||"")+' · '+escapeHtml(formatAdminDate(t.createdAt))+'</small></div><div class="admin-tx-values"><b>'+Number(t.amount||0).toLocaleString("id-ID")+' kredit</b><small>'+formatRupiah(t.providerCostIdr||0)+'</small></div></div>').join(""):'<div class="empty-output"><b>Belum ada transaksi</b><p>Transaksi pemakaian akan muncul di sini.</p></div>';
     $("adminUpdated").textContent="Diperbarui "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
   }catch(error){$("adminTransactionList").innerHTML='<div class="admin-error">'+escapeHtml(error.message)+'</div>';toast("Laporan admin gagal dimuat: "+error.message);}
-  finally{button.disabled=false;button.textContent="↻ Perbarui data";}
+  finally{button.disabled=false;button.textContent="Perbarui data";}
 }
 $("refreshAdmin").addEventListener("click",loadAdminDashboard);
 $("adminCreditForm").addEventListener("submit",async event=>{
@@ -86,7 +86,7 @@ $("adminCreditForm").addEventListener("submit",async event=>{
     toast("Berhasil! "+result.email+" mendapat "+Number(result.creditsAdded).toLocaleString("id-ID")+" kredit. Saldo: "+Number(result.balance).toLocaleString("id-ID")+".");
     $("adminCreditForm").reset();$("adminCreditAmount").value=10000;await loadAdminDashboard();
   }catch(error){toast("Gagal menambah kredit: "+error.message);}
-  finally{button.disabled=false;button.textContent="＋ Tambahkan kredit";}
+  finally{button.disabled=false;button.textContent="Tambahkan kredit";}
 });
 
 function showView(view){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$(view==="history"?"historyPage":view==="writer"?"writerPage":view==="admin"?"adminPage":"studioPage").classList.add("active");$("breadcrumbPage").textContent=view==="history"?"Riwayat audio":view==="writer"?"AI Script Assistant":view==="admin"?"Dashboard Admin":"Studio Suara";if(view==="admin")loadAdminDashboard();$("sidebar").classList.remove("open")}

@@ -157,7 +157,8 @@ async function deleteMyVoiceClone(){
   if(!confirm("Hapus clone suara ini dari ZAIDA dan ElevenLabs? Tindakan ini tidak dapat dibatalkan."))return;
   $("voiceCloneStatus").textContent="Menghapus clone…";
   try{
-    await fetch("/api/voice-clone",{method:"DELETE",headers:{"Content-Type":"application/json",...(await authHeaders())}});
+    const response=await fetch("/api/voice-clone",{method:"DELETE",headers:{"Content-Type":"application/json",...(await authHeaders())}});
+    const deleted=await response.json();if(!response.ok)throw new Error(deleted.error||"Gagal menghapus clone.");
     const response=await fetch("/api/voice-clone",{headers:await authHeaders()});
     const data=await response.json();if(!response.ok)throw new Error(data.error||"Gagal memuat status.");
     $("voiceCloneForm").hidden=false;$("voiceCloneForm").reset();$("voiceCloneSubmit").disabled=false;
@@ -196,7 +197,8 @@ $("voiceCloneForm").addEventListener("submit",async event=>{
   $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",persona:"Persona Saya",admin:"Dashboard admin","voice-clone":"Suara Saya"})[requestedView]||"Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="assistant")renderStandaloneConversation();
-  if((view==="persona"||view==="voice-clone")&&!currentUser){openAuth();toast("Fitur ini hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}\n  if(view==="voice-clone")loadMyVoiceClone();
+  if((view==="persona"||view==="voice-clone")&&!currentUser){openAuth();toast("Fitur ini hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}
+  if(view==="voice-clone")loadMyVoiceClone();
   closeSidebar();
 }
 $("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});

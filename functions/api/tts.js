@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, getOrCreateAccount, calculateTtsCharge, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
+import { verifyFirebaseUser, getOrCreateAccount, getUserVoiceClone, calculateTtsCharge, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;

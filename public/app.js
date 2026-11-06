@@ -176,7 +176,7 @@ function renderSubtitles(){
   if(!state.subtitles.length){list.innerHTML='<div class="empty-output"><b>Subtitle belum tersedia</b></div>';return;}
   state.subtitles.forEach((cue,i)=>{
     const row=document.createElement("article");row.className="subtitle-row";
-    row.innerHTML='<div class="subtitle-number">'+(i+1)+'</div><div class="subtitle-fields"><label>Mulai<input data-field="start" data-index="'+i+'" value="'+srtTime(cue.start)+'"></label><label>Selesai<input data-field="end" data-index="'+i+'" value="'+srtTime(cue.end)+'"></label><label class="subtitle-copy">Teks<textarea data-field="text" data-index="'+i+'" rows="2">'+escapeHtml(cue.text)+'</textarea></label></div>';
+    row.innerHTML='<div class="subtitle-number">'+(i+1)+'</div><div class="subtitle-fields"><label>Mulai<input data-field="start" data-index="'+i+'" value="'+srtTime(cue.start)+'"></label><label>Selesai<input data-field="end" data-index="'+i+'" value="'+srtTime(cue.end)+'"></label><label class="subtitle-copy">Teks<textarea data-field="text" data-index="'+i+'" rows="2" maxlength="84">'+escapeHtml(cue.text)+'</textarea></label></div>';
     list.append(row);
   });
   $("subtitleStatus").textContent=state.subtitles.length+" baris";

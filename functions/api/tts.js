@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, getOrCreateAccount, calculateTtsCharge, billUsage } from "../lib/firebase.js";
+import { verifyFirebaseUser, getOrCreateAccount, calculateTtsCharge, reserveCredits, releaseCredits, settleReservedCredits } from "../lib/firebase.js";
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
@@ -34,6 +34,7 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: "Suara clone/pribadi tidak tersedia untuk pengguna umum." }, { status: 403 });
     }
 
+    const reservation = await reserveCredits(auth.user, env, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { requestId, provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2" });
     const upstream = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId) + "?output_format=mp3_44100_128", {
       method: "POST",
       headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg" },
@@ -42,16 +43,17 @@ export async function onRequestPost({ request, env }) {
     if (!upstream.ok) {
       let message = "ElevenLabs gagal membuat audio.";
       try { const e = await upstream.json(); message = e.detail?.message || e.detail || e.message || message; } catch {}
+      await releaseCredits(auth.user, env, reservation.reservationId, "elevenlabs-http-" + upstream.status);
       return Response.json({ error: String(message) }, { status: upstream.status });
     }
     try {
-      const charged = await billUsage(auth.user, env, billing.credits, "text-to-speech:elevenlabs:"+billing.characters+" characters", {provider:"elevenlabs",model:env.ZAIDA_TTS_MODEL||"eleven_multilingual_v2",providerCostIdr:Math.ceil((billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0)*(Number(env.ZAIDA_USD_TO_IDR)||18000)),providerCostUsd:(billing.characters/1000)*(Number(env.ELEVENLABS_USD_PER_1000_CHARS)||0),characters:billing.characters,requestId});
-      const remaining = charged.remaining;
-      return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
+      const providerCostUsd = (billing.characters / 1000) * (Number(env.ELEVENLABS_USD_PER_1000_CHARS) || 0);
+      const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2", providerCostIdr: Math.ceil(providerCostUsd * (Number(env.ZAIDA_USD_TO_IDR) || 18000)), providerCostUsd, characters: billing.characters, requestId });
+      return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(charged.remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
     } catch (creditError) {
       return Response.json({ error: creditError.message || "Tidak dapat memproses kredit." }, { status: creditError.status || 503 });
     }
-  } catch {
-    return Response.json({ error: "Koneksi ke ElevenLabs gagal. Coba lagi." }, { status: 502 });
+  } catch (error) {
+    return Response.json({ error: error?.message || "Koneksi ke ElevenLabs gagal. Coba lagi." }, { status: error?.status || 502 });
   }
 }

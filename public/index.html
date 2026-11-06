@@ -48,13 +48,17 @@
             <div class="chat-messages" id="assistantMessages"><div class="assistant-message ai-message"><b>Asisten</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div></div>
             <div class="chat-compose"><textarea id="assistantInput" rows="3" maxlength="3000" placeholder="Tulis pesan…"></textarea><button id="sendAssistant" class="primary-button">Kirim</button></div>
             <div class="script-export"><button id="useAssistantScript" class="subtle-button" disabled>Gunakan naskah</button></div></aside></div></section>
-        <section class="workflow-panel" id="step2"><div class="panel voice-panel"><div class="section-head"><h2>Pilih suara</h2><span id="voiceStatus">Memuat suara…</span></div>
+        <section class="workflow-panel" id="step2"><div class="panel voice-panel">
+          <div class="progress-wrap voice-progress-top" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div>
+          <div class="section-head"><h2>Pilih suara</h2><span id="voiceStatus">Memuat suara…</span></div>
+          <div class="voice-library-tools"><input id="voiceSearch" type="search" placeholder="Cari nama suara…" aria-label="Cari nama suara"><select id="voiceLanguageFilter" aria-label="Filter bahasa"><option value="all">Semua bahasa</option><option value="indonesian">Bahasa Indonesia</option></select></div>
+          <p class="voice-library-note" id="voiceLibraryNote">Memuat katalog suara…</p>
           <select id="voiceSelect" class="voice-select-native" aria-label="Pilih suara"><option value="">Memuat daftar suara…</option></select><div class="voice-card-grid" id="voiceCards"></div>
           <details class="personalization voice-advanced"><summary>Pengaturan lanjutan</summary>
             <div class="range-field"><div><label for="similarity">Kemiripan</label><output id="similarityValue">75%</output></div><input id="similarity" type="range" min="0" max="100" value="75"></div>
             <div class="range-field"><div><label for="style">Penekanan gaya</label><output id="styleValue">0%</output></div><input id="style" type="range" min="0" max="100" value="0"></div><input id="stability" type="hidden" value="50"><output id="stabilityValue" hidden>50%</output></details>
           <div class="voice-actions"><button class="secondary-button" id="backToScript">Kembali</button><button id="generateButton" hidden></button></div>
-          <div class="progress-wrap" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div></div></section>
+        </div></section>
         <section class="workflow-panel" id="step3"><div class="panel export-panel"><div class="section-head"><h2>Ekspor</h2></div>
           <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small id="resultDetails">MP3</small></div></div>
           <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a></div>

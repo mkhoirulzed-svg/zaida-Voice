@@ -133,71 +133,21 @@ function renderStandaloneConversation(){
   $("standaloneUseAssistantScript").disabled=!assistantState.draft;
   box.scrollTop=box.scrollHeight;
 }
-
-async function loadMyVoiceClone(){
-  if(!currentUser)return;
-  const wrap=$("voiceCloneCurrent");
-  wrap.innerHTML='<div class="empty-output"><b>Memuat clone suara…</b></div>';
-  try{
-    const data=await api("/api/voice-clone",{authRequired:true});
-    $("voiceCloneCost").textContent=data.creditsCost>0?"Biaya pembuatan: "+Number(data.creditsCost).toLocaleString("id-ID")+" kredit.":"Pembuatan clone belum tersedia karena biaya kredit belum dikonfigurasi.";
-    $("voiceCloneSubmit").disabled=!(data.creditsCost>0)||Boolean(data.voice);
-    if(!data.voice){wrap.innerHTML='<div class="empty-output"><b>Belum ada clone suara</b><p>Unggah rekaman bersih untuk membuat narator AI pribadi.</p></div>';return;}
-    const card=document.createElement("div");card.className="voice-clone-owned";
-    const title=document.createElement("b");title.textContent=data.voice.name;
-    const meta=document.createElement("small");meta.textContent=data.voice.status==="ready"?"Clone pribadi siap digunakan":data.voice.status==="verification_required"?"Menunggu verifikasi ElevenLabs":"Status: "+data.voice.status;
-    const actions=document.createElement("div");actions.className="voice-clone-owned-actions";
-    const remove=document.createElement("button");remove.type="button";remove.className="secondary-button";remove.textContent="Hapus clone";
-    remove.addEventListener("click",deleteMyVoiceClone);
-    actions.append(remove);card.append(title,meta,actions);wrap.replaceChildren(card);
-    $("voiceCloneForm").hidden=true;
-  }catch(error){wrap.textContent=error.message;}
-}
-async function deleteMyVoiceClone(){
-  if(!confirm("Hapus clone suara ini dari ZAIDA dan ElevenLabs? Tindakan ini tidak dapat dibatalkan."))return;
-  $("voiceCloneStatus").textContent="Menghapus clone…";
-  try{
-    const response=await fetch("/api/voice-clone",{method:"DELETE",headers:{"Content-Type":"application/json",...(await authHeaders())}});
-    const deleted=await response.json();if(!response.ok)throw new Error(deleted.error||"Gagal menghapus clone.");
-    $("voiceCloneForm").hidden=false;$("voiceCloneForm").reset();$("voiceCloneSubmit").disabled=false;
-    $("voiceCloneStatus").textContent="Clone berhasil dihapus.";
-    await loadMyVoiceClone();await loadVoices();
-  }catch(error){$("voiceCloneStatus").textContent=error.message;}
-}
-$("voiceCloneForm").addEventListener("submit",async event=>{
-  event.preventDefault();
-  if(!currentUser){openAuth();return;}
-  const file=$("voiceCloneAudio").files[0],name=$("voiceCloneName").value.trim();
-  if(!file||!name||!$("voiceCloneConsent").checked)return;
-  if(file.size>25*1024*1024){toast("Ukuran rekaman maksimal 25 MB.");return;}
-  const button=$("voiceCloneSubmit");button.disabled=true;button.textContent="Membuat clone…";$("voiceCloneStatus").textContent="Mengirim sampel suara ke ElevenLabs…";
-  try{
-    const form=new FormData();form.append("name",name);form.append("audio",file,file.name);form.append("consent","true");form.append("requestId",newRequestId());
-    const response=await fetch("/api/voice-clone",{method:"POST",headers:await authHeaders(),body:form});
-    const data=await response.json();if(!response.ok)throw new Error(data.error||"Gagal membuat clone.");
-    if(data.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+data.creditsRemaining;$("sidebarCreditBalance").textContent=Number(data.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+data.creditsRemaining;if(accountInfo)accountInfo.credits=Number(data.creditsRemaining);}
-    $("voiceCloneStatus").textContent=data.message||"Clone berhasil dibuat.";
-    $("voiceCloneForm").reset();await loadMyVoiceClone();await loadVoices();
-  }catch(error){$("voiceCloneStatus").textContent=error.message;button.disabled=false;}
-  finally{button.textContent="Buat clone suara";}
-});
-\nfunction showView(requestedView){
-  if(requestedView==="voice-clone"){toast("Fitur Clone Suara ZAIDA belum tersedia.");return;}
+function showView(requestedView){
   let view=requestedView;
   if(view==="subtitle"){
     if(!state.audioUrl){toast("Buat suara sebelum menyiapkan subtitle.");view="studio";setStep(2);}
     else{view="studio";setStep(3);$("includeSubtitle").checked=true;$("subtitleOptions").hidden=false;renderSubtitles();}
   }
-  const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage","voice-clone":"voiceClonePage"}[view]||"studioPage";
+  const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage"}[view]||"studioPage";
   document.body.classList.toggle("in-studio",view==="studio");
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
-  $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",persona:"Persona Saya",admin:"Dashboard admin","voice-clone":"Suara Saya"})[requestedView]||"Studio";
+  $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",persona:"Persona Saya",admin:"Dashboard admin"})[requestedView]||"Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="assistant")renderStandaloneConversation();
-  if((view==="persona"||view==="voice-clone")&&!currentUser){openAuth();toast("Fitur ini hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}
-  if(view==="voice-clone")loadMyVoiceClone();
+  if(view==="persona"&&!currentUser){openAuth();toast("Persona Saya hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}
   closeSidebar();
 }
 $("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
@@ -212,7 +162,7 @@ function updateCount(){
 async function loadVoices(){
   const select=$("voiceSelect");
   try{
-    const data=await api("/api/voices",{authRequired:Boolean(currentUser)});state.voices=(data.voices||[]).filter(v=>!v.ownedClone);select.innerHTML="";
+    const data=await api("/api/voices",{authRequired:Boolean(currentUser)});state.voices=data.voices||[];select.innerHTML="";
     const indonesianCount=state.voices.filter(isIndonesianVoice).length;
     const privateCount=state.voices.filter(v=>v.private).length;
     $("voiceStatus").textContent=state.voices.length+" suara";
@@ -236,7 +186,7 @@ function renderVoiceCards(){
     choose.innerHTML='<span class="voice-card-icon"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
     const name=document.createElement("b");name.textContent=v.name;
     const labels=[v.language||"Multilingual",v.accent].filter(Boolean).join(" · ");
-    const kind=document.createElement("small");kind.textContent=v.private?"Zed Clone · Privat":v.ownedClone?"Clone Saya · Privat":isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
+    const kind=document.createElement("small");kind.textContent=v.private?"Zed Clone · Privat":isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
     choose.append(name,kind);choose.addEventListener("click",()=>{$("voiceSelect").value=v.voice_id;renderVoiceCards();});
     const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
     preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}const a=new Audio(v.preview_url);a.play().catch(()=>toast("Pratinjau tidak dapat diputar."));});
@@ -417,7 +367,6 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  $("voiceCloneNav").hidden=true;
   if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();}else{loadVoices();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";

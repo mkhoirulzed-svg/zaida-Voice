@@ -256,3 +256,24 @@ export function estimateDeepSeekReservation(inputCharacters, maxOutputTokens, en
   const outputTokens = Math.max(1, Math.ceil(Number(maxOutputTokens) || 1));
   return calculateDeepSeekCharge({ prompt_tokens: promptTokens, completion_tokens: outputTokens }, env).credits;
 }
+
+
+// Per-user creative persona stored on the authenticated Firestore user document.
+export async function getUserPersonaProfile(user, env) {
+  const doc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+  const raw = val(doc.fields?.personaProfile);
+  if (!raw) return {};
+  try { const parsed = JSON.parse(raw); return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {}; }
+  catch { return {}; }
+}
+export async function saveUserPersonaProfile(user, env, profile) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const doc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+    const now = new Date().toISOString();
+    try {
+      await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{ update: { name: doc.name, fields: { personaProfile: str(JSON.stringify(profile)), updatedAt: str(now) } }, updateMask: { fieldPaths: ["personaProfile", "updatedAt"] }, currentDocument: { updateTime: doc.updateTime } }] }) });
+      return profile;
+    } catch (error) { if (!isFirestoreConflict(error)) throw error; }
+  }
+  const error = new Error("Persona sedang diperbarui. Coba simpan kembali."); error.status = 409; throw error;
+}

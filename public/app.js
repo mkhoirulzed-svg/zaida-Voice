@@ -78,10 +78,138 @@ $("adminCreditForm").addEventListener("submit",async event=>{
 });
 
 function showView(view){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$(view==="history"?"historyPage":view==="writer"?"writerPage":view==="admin"?"adminPage":"studioPage").classList.add("active");$("breadcrumbPage").textContent=view==="history"?"Riwayat audio":view==="writer"?"AI Script Assistant":view==="admin"?"Dashboard Admin":"Studio Suara";if(view==="admin")loadAdminDashboard();$("sidebar").classList.remove("open")}
-$("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});updateCount();toast("Contoh naskah ditambahkan.")});$("newProject").addEventListener("click",()=>{$("scriptText").value="";updateCount();showView("studio");$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=> $("sidebar").classList.toggle("open"));$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
+$("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";updateCount();showView("studio");$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=> $("sidebar").classList.toggle("open"));$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
 [["stability","stabilityValue"],["similarity","similarityValue"],["style","styleValue"]].forEach(([id,out])=>$(id).addEventListener("input",()=>$(out).textContent=$(id).value+"%"));
-if(!voice){toast("Pilih suara terlebih dahulu.");return}if(voice.preview_url){const audio=new Audio(voice.preview_url);audio.play().catch(()=>toast("Preview tidak dapat diputar."))}else toast("Preview belum tersedia untuk suara ini.")});
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+
+function updateCount(){
+  const length=$("scriptText").value.length;
+  $("charCount").textContent=length.toLocaleString("id-ID")+" karakter";
+  $("workflowCount").textContent=length.toLocaleString("id-ID")+" karakter";
+}
+async function loadVoices(){
+  const select=$("voiceSelect");
+  try{
+    const data=await api("/api/voices");state.voices=data.voices||[];select.innerHTML="";
+    state.voices.forEach(v=>{const o=document.createElement("option");o.value=v.voice_id;o.textContent=v.name;select.append(o);});
+    if(!state.voices.length)select.innerHTML='<option value="">Tidak ada suara tersedia</option>';
+    if(state.voices.length&&!select.value)select.value=state.voices[0].voice_id;
+    $("voiceStatus").textContent=state.voices.length+" suara";renderVoiceCards();
+  }catch(error){select.innerHTML='<option value="">Gagal memuat suara</option>';$("voiceStatus").textContent="Suara tidak dapat dimuat";$("voiceCards").textContent=error.message;}
+}
+function renderVoiceCards(){
+  const wrap=$("voiceCards");wrap.innerHTML="";
+  state.voices.forEach(v=>{
+    const card=document.createElement("article");card.className="voice-card"+(v.voice_id===$("voiceSelect").value?" selected":"");
+    const choose=document.createElement("button");choose.type="button";choose.className="voice-select-card";
+    choose.innerHTML='<span class="voice-card-icon"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
+    const name=document.createElement("b");name.textContent=v.name;const kind=document.createElement("small");kind.textContent="Suara";
+    choose.append(name,kind);choose.addEventListener("click",()=>{$("voiceSelect").value=v.voice_id;renderVoiceCards();});
+    const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
+    preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}const a=new Audio(v.preview_url);a.play().catch(()=>toast("Pratinjau tidak dapat diputar."));});
+    card.append(choose,preview);wrap.append(card);
+  });
+}
+function setStep(step){
+  state.currentStep=step;
+  document.querySelectorAll(".workflow-panel").forEach(p=>p.classList.toggle("active",p.id==="step"+step));
+  document.querySelectorAll(".stepper-item,.mobile-step-nav button").forEach(b=>{
+    const n=Number(b.dataset.step);b.classList.toggle("active",n===step);
+    if(b.classList.contains("stepper-item"))b.classList.toggle("complete",n<step);
+  });
+  $("workflowTitle").textContent=["Naskah","Suara","Subtitle","Ekspor"][step-1];
+  $("dockAction").textContent=["Lanjut","Buat suara","Lanjut","Proyek baru"][step-1];
+}
+function wrapSubtitle(text,max=42){
+  const out=[];let line="";
+  for(const word of text.split(/\s+/)){
+    if(!word)continue;
+    if(Array.from(word).length>max){if(line){out.push(line);line="";}const chars=Array.from(word);for(let i=0;i<chars.length;i+=max)out.push(chars.slice(i,i+max).join(""));continue;}
+    if(line&&Array.from(line+" "+word).length>max){out.push(line);line=word;}else line=line?line+" "+word:word;
+  }
+  if(line)out.push(line);return out.slice(0,2).join("\n");
+}
+function buildSubtitles(text,alignment,duration){
+  const chars=Array.from(text),starts=alignment?.character_start_times_seconds||[],ends=alignment?.character_end_times_seconds||[];
+  const aligned=starts.length===chars.length&&ends.length===chars.length;
+  const total=Number.isFinite(duration)&&duration>0?duration:Math.max(1,chars.length/12);
+  const matches=[...text.matchAll(/[^.!?。！？\n]+[.!?。！？]?/gu)],cues=[];
+  for(const match of matches){
+    const raw=match[0],leading=raw.match(/^\s*/)?.[0].length||0,part=raw.trim();if(!part)continue;
+    const base=Array.from(text.slice(0,match.index+leading)).length,words=[...part.matchAll(/\S+/g)];
+    let group=[],length=0;
+    const flush=()=>{
+      if(!group.length)return;
+      const from=group[0].index,to=group[group.length-1].index+group[group.length-1][0].length;
+      const value=part.slice(from,to),first=base+Array.from(part.slice(0,from)).length,last=first+Array.from(value).length-1;
+      const start=aligned?Number(starts[first]||0):(first/chars.length)*total;
+      const end=aligned?Number(ends[last]||start+1):((last+1)/chars.length)*total;
+      cues.push({start:Math.max(0,start),end:Math.min(total,Math.max(start+1,end)),text:wrapSubtitle(value)});
+      group=[];length=0;
+    };
+    for(const word of words){const size=Array.from(word[0]).length;if(group.length&&length+1+size>84)flush();group.push(word);length+=size+(group.length>1?1:0);}
+    flush();
+  }
+  if(!cues.length&&text.trim())cues.push({start:0,end:total,text:wrapSubtitle(text.trim())});
+  return cues;
+}
+function srtTime(seconds){
+  const ms=Math.max(0,Math.round((Number(seconds)||0)*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),r=ms%1000;
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")+","+String(r).padStart(3,"0");
+}
+function parseSrtTime(value){const m=String(value).trim().match(/^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/);return m?Number(m[1])*3600+Number(m[2])*60+Number(m[3])+Number(m[4])/1000:null;}
+function renderSubtitles(){
+  const list=$("subtitleList");list.innerHTML="";
+  if(!state.subtitles.length){list.innerHTML='<div class="empty-output"><b>Subtitle belum tersedia</b></div>';return;}
+  state.subtitles.forEach((cue,i)=>{
+    const row=document.createElement("article");row.className="subtitle-row";
+    row.innerHTML='<div class="subtitle-number">'+(i+1)+'</div><div class="subtitle-fields"><label>Mulai<input data-field="start" data-index="'+i+'" value="'+srtTime(cue.start)+'"></label><label>Selesai<input data-field="end" data-index="'+i+'" value="'+srtTime(cue.end)+'"></label><label class="subtitle-copy">Teks<textarea data-field="text" data-index="'+i+'" rows="2">'+escapeHtml(cue.text)+'</textarea></label></div>';
+    list.append(row);
+  });
+  $("subtitleStatus").textContent=state.subtitles.length+" baris";
+}
+function downloadSubtitle(){
+  if(!state.subtitles.length){toast("Subtitle belum tersedia.");return;}
+  const output=state.subtitles.map((cue,i)=>{
+    const start=typeof cue.start==="string"?parseSrtTime(cue.start):cue.start,end=typeof cue.end==="string"?parseSrtTime(cue.end):cue.end;
+    return (i+1)+"\n"+srtTime(start)+" --> "+srtTime(end)+"\n"+cue.text;
+  }).join("\n\n")+"\n";
+  const url=URL.createObjectURL(new Blob([output],{type:"text/plain;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download="zaida-voice.srt";a.click();URL.revokeObjectURL(url);
+}
+async function generate(){
+  const text=$("scriptText").value.trim(),voiceId=$("voiceSelect").value;
+  if(!currentUser){openAuth();toast("Masuk untuk membuat suara.");return;}
+  if(!text){toast("Masukkan naskah terlebih dahulu.");setStep(1);return;}
+  if(!voiceId){toast("Pilih suara terlebih dahulu.");setStep(2);return;}
+  if(text.length>5000){toast("Maksimal 5.000 karakter.");return;}
+  setBusy(true);
+  try{
+    const response=await fetch("/api/tts?timestamps=1",{method:"POST",headers:{"Content-Type":"application/json",...(await authHeaders())},body:JSON.stringify({requestId:newRequestId(),text,voiceId,voiceSettings:{stability:Number($("stability").value)/100,similarity_boost:Number($("similarity").value)/100,style:Number($("style").value)/100}})});
+    let result={};try{result=await response.json();}catch{}if(!response.ok)throw new Error(result.error||"Gagal membuat audio.");
+    const remaining=response.headers.get("X-Credits-Remaining");if(remaining!==null){$("creditBalance").textContent="Kredit: "+remaining;$("dockCredits").textContent="Kredit: "+remaining;if(accountInfo)accountInfo.credits=Number(remaining);}
+    const binary=atob(result.audioBase64||""),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    const blob=new Blob([bytes],{type:"audio/mpeg"});if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);
+    state.audioUrl=URL.createObjectURL(blob);$("audioPlayer").src=state.audioUrl;$("downloadButton").href=state.audioUrl;
+    state.alignment=result.alignment||null;state.sourceText=text;
+    $("resultTitle").textContent="Narasi "+new Date().toLocaleString("id-ID");$("resultDetails").textContent="MP3 · "+text.length+" karakter";$("dockTrack").textContent=$("resultTitle").textContent;
+    const duration=await new Promise(resolve=>{const p=$("audioPlayer");if(p.readyState>=1&&Number.isFinite(p.duration)){resolve(p.duration);return;}const done=()=>resolve(Number.isFinite(p.duration)?p.duration:Math.max(1,text.length/12));p.addEventListener("loadedmetadata",done,{once:true});p.addEventListener("error",done,{once:true});});
+    state.subtitles=buildSubtitles(text,state.alignment,duration);renderSubtitles();
+    state.history.unshift({title:$("resultTitle").textContent,details:$("resultDetails").textContent,url:state.audioUrl,text});renderHistory();setStep(3);toast("Suara berhasil dibuat.");
+  }catch(error){toast(error.message);}finally{setBusy(false);}
+}
+$("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.trim()){toast("Masukkan naskah terlebih dahulu.");return;}setStep(2);});
+$("backToScript").addEventListener("click",()=>setStep(1));
+$("backToVoice").addEventListener("click",()=>setStep(2));
+$("continueToExport").addEventListener("click",()=>setStep(4));
+$("backToSubtitle").addEventListener("click",()=>setStep(3));
+document.querySelectorAll(".stepper-item,.mobile-step-nav button").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl||n===4&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
+$("voiceSelect").addEventListener("change",renderVoiceCards);
+$("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
+$("downloadSrt").addEventListener("click",downloadSubtitle);
+$("regenerateSrt").addEventListener("click",()=>{state.subtitles=buildSubtitles(state.sourceText,state.alignment,$("audioPlayer").duration||Math.max(1,state.sourceText.length/12));renderSubtitles();toast("Subtitle dibuat ulang.");});
+$("dockPlay").addEventListener("click",()=>{const p=$("audioPlayer");if(!p.src){toast("Audio belum tersedia.");return;}if(p.paused)p.play();else p.pause();});
+$("dockAction").addEventListener("click",()=>{if(state.currentStep===1){if($("scriptText").value.trim())setStep(2);else toast("Masukkan naskah terlebih dahulu.");}else if(state.currentStep===2)generate();else if(state.currentStep===3)setStep(4);else $("newProject").click();});
+$("restartProject").addEventListener("click",()=>{$("newProject").click();});
 updateCount();loadVoices();
 $("authButton").addEventListener("click",()=>currentUser?signOut(auth):openAuth());
 $("googleAuthButton").addEventListener("click",async()=>{const button=$("googleAuthButton");button.disabled=true;$("authMessage").textContent="Menghubungkan ke Google…";try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);closeAuth();toast("Berhasil masuk dengan Google.");}catch(error){const messages={"auth/popup-closed-by-user":"Jendela login ditutup sebelum selesai.","auth/popup-blocked":"Popup diblokir browser. Izinkan popup lalu coba lagi.","auth/account-exists-with-different-credential":"Email ini sudah terdaftar dengan metode login lain."};$("authMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});

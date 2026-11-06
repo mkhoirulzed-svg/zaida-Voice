@@ -20,9 +20,8 @@
       <section class="sidebar-credit"><div class="sidebar-credit-top"><span>Kredit</span><b id="sidebarCreditBalance">Masuk untuk melihat saldo</b></div><a href="/harga.html">Lihat paket kredit <span aria-hidden="true">→</span></a></section>
       <button class="new-project" id="newProject"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Proyek baru</button>
       <div class="nav-label">PROYEK</div><button class="nav-item active" data-view="studio">Proyek saat ini</button>
-      <button class="nav-item" id="subtitleNav" data-view="subtitle">Subtitle</button>
       <button class="nav-item" data-view="assistant">Chat AI khusus</button>
-      <div class="nav-label">RIWAYAT</div><button class="nav-item" data-view="history">Riwayat</button>
+      <button class="nav-item" data-view="history">Riwayat</button>
       <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden>Dashboard admin</button>
       <div class="sidebar-bottom">
         <nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav>
@@ -86,7 +85,6 @@
           <div class="admin-toolbar"><span id="adminUpdated">Data belum dimuat</span><button class="subtle-button" id="refreshAdmin">Perbarui data</button></div><div class="admin-metrics" id="adminMetrics"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div>
           <div class="panel admin-credit-panel"><div class="panel-heading"><div><div><h2>Tambah kredit pengguna</h2></div></div></div><form id="adminCreditForm" class="admin-credit-form"><label>Email pengguna<input id="adminCreditEmail" type="email" placeholder="nama@email.com" required></label><label>Jumlah kredit<input id="adminCreditAmount" type="number" min="1" max="1000000" step="1" value="10000" required></label><button class="generate-button" id="adminCreditSubmit" type="submit">Tambahkan kredit</button></form></div><div class="admin-provider-grid" id="adminProviders"></div>
           <section class="panel admin-transactions"><div class="panel-heading"><div><h2>Transaksi terbaru</h2></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b></div></div></section></section>
-      
       <div class="bottom-dock"><div class="dock-player"><audio id="audioPlayer" controls preload="metadata"></audio><span id="dockTrack">Belum ada audio</span></div><span class="dock-credits" id="dockCredits">Kredit: —</span><button class="dock-action" id="dockAction">Lanjut</button></div>
       <footer class="footer">Kebijakan privasi · <a href="/privasi.html">Baca selengkapnya</a></footer>
     </main>

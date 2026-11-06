@@ -150,16 +150,17 @@ function showView(requestedView){
   if(view==="persona"&&!currentUser){openAuth();toast("Persona Saya hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}
   closeSidebar();
 }
-$("scriptText").addEventListener("input",updateCount);$("toggleScriptPreview").addEventListener("click",()=>setScriptPreview($("scriptPreview").hidden));$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();setScriptPreview(false);updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
+$("scriptText").addEventListener("input",updateCount);$("editScriptFromVoice").addEventListener("click",()=>{setStep(1);$("scriptText").focus();});$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
 [["stability","stabilityValue"],["similarity","similarityValue"],["style","styleValue"]].forEach(([id,out])=>$(id).addEventListener("input",()=>$(out).textContent=$(id).value+"%"));
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
 
-function renderScriptPreview(){
-  const preview=$("scriptPreview");
+function renderVoiceScriptPreview(){
+  const preview=$("voiceScriptPreview");
   preview.innerHTML="";
   const source=$("scriptText").value;
+  $("voiceScriptCharCount").textContent=source.length.toLocaleString("id-ID")+" karakter";
   if(!source.trim()){
-    const empty=document.createElement("p");empty.className="script-preview-empty";empty.textContent="Naskah masih kosong. Kembali ke mode edit untuk mulai menulis.";preview.append(empty);return;
+    const empty=document.createElement("p");empty.className="script-preview-empty";empty.textContent="Naskah masih kosong.";preview.append(empty);return;
   }
   source.split(/\n/).forEach(line=>{
     const row=document.createElement("p");
@@ -174,20 +175,10 @@ function renderScriptPreview(){
     preview.append(row);
   });
 }
-function setScriptPreview(enabled){
-  const preview=$("scriptPreview"),editor=$("scriptText"),button=$("toggleScriptPreview");
-  renderScriptPreview();
-  preview.hidden=!enabled;editor.hidden=enabled;
-  $("editorPanel").classList.toggle("preview-mode",enabled);
-  $("clearText").hidden=enabled;$("improveScript").hidden=enabled;$("addAudioTags").hidden=enabled;
-  button.textContent=enabled?"Edit naskah":"Pratinjau naskah";
-  button.setAttribute("aria-pressed",String(enabled));
-}
 function updateCount(){
   const length=$("scriptText").value.length;
   $("charCount").textContent=length.toLocaleString("id-ID")+" karakter";
   $("workflowCount").textContent=length.toLocaleString("id-ID")+" karakter";
-  if(!$("scriptPreview").hidden)renderScriptPreview();
 }
 async function loadVoices(){
   const select=$("voiceSelect");
@@ -248,6 +239,7 @@ function setStep(step){
   step=Math.max(1,Math.min(3,Number(step)||1));
   if(step===3&&!state.audioUrl){toast("Buat suara terlebih dahulu.");step=2;}
   state.currentStep=step;
+  if(step===2)renderVoiceScriptPreview();
   document.querySelectorAll(".workflow-panel").forEach(p=>p.classList.toggle("active",p.id==="step"+step));
   document.querySelectorAll(".stepper-item").forEach(b=>{const n=Number(b.dataset.step);b.classList.toggle("active",n===step);b.classList.toggle("complete",n<step);});
   $("workflowTitle").textContent=["Naskah","Suara","Ekspor"][step-1];

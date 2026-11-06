@@ -61,3 +61,5 @@
 .admin-credit-form .generate-button{margin:0;height:43px;padding:0 16px;white-space:nowrap}
 .admin-credit-note{font-size:9px;color:#858296;margin:12px 0 0}
 @media(max-width:760px){.admin-credit-form{grid-template-columns:1fr}.admin-credit-form .generate-button{width:100%}}
+
+.public-links{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;margin-top:13px}.public-links a{color:#aaa0c5;text-decoration:none;font-size:9px;letter-spacing:.5px}.public-links a:hover{color:#d6c8ff}

@@ -56,7 +56,7 @@ export async function onRequestPost({ request, env }) {
   if (!messages.length || messages[messages.length - 1].role !== "user") return jsonError("Kirim pesan terlebih dahulu.", 400);
   if (messages.reduce((n, m) => n + m.content.length, 0) > 12000) return jsonError("Percakapan terlalu panjang. Mulai percakapan baru.", 400);
 
-  const allowed = ["olahraga", "politik", "komedi", "pendidikan", "teknologi", "bisnis", "kesehatan", "cerita", "hiburan", "sejarah"];
+  const allowed = ["olahraga", "politik", "komedi", "pendidikan", "teknologi", "bisnis", "kesehatan", "cerita", "hiburan", "sejarah", "iklan"];
   const interests = Array.isArray(profile.interests) ? profile.interests.filter(x => allowed.includes(x)).slice(0, 10) : [];
   const safe = (v, max = 160) => typeof v === "string" ? v.trim().slice(0, max) : "";
   const persona = safe(profile.persona, 80);

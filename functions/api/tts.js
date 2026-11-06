@@ -5,6 +5,7 @@ export async function onRequestPost({ request, env }) {
   if (!env.ELEVENLABS_API_KEY) return Response.json({ error: "ELEVENLABS_API_KEY belum dikonfigurasi di Cloudflare." }, { status: 503 });
   let body;
   try { body = await request.json(); } catch { return Response.json({ error: "Format permintaan tidak valid." }, { status: 400 }); }
+  const withTimestamps = new URL(request.url).searchParams.get("timestamps") === "1";
   const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : null;
   if (!requestId) return Response.json({ error: "ID permintaan tidak valid. Silakan coba lagi." }, { status: 400 });
   const text = typeof body.text === "string" ? body.text.trim() : "";
@@ -34,11 +35,13 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: "Suara clone/pribadi tidak tersedia untuk pengguna umum." }, { status: 403 });
     }
 
-    const reservation = await reserveCredits(auth.user, env, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { requestId, provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2" });
-    const upstream = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId) + "?output_format=mp3_44100_128", {
+    const modelId = env.ZAIDA_TTS_MODEL || "eleven_v4";
+    const reservation = await reserveCredits(auth.user, env, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { requestId, provider: "elevenlabs", model: modelId });
+    const upstreamUrl = "https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId) + (withTimestamps ? "/with-timestamps" : "?output_format=mp3_44100_128");
+    const upstream = await fetch(upstreamUrl, {
       method: "POST",
-      headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg" },
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: clamp(s.stability, .5), similarity_boost: clamp(s.similarity_boost, .75), style: clamp(s.style, 0), use_speaker_boost: true } })
+      headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", "Accept": withTimestamps ? "application/json" : "audio/mpeg" },
+      body: JSON.stringify({ text, model_id: modelId, voice_settings: { stability: clamp(s.stability, .5), similarity_boost: clamp(s.similarity_boost, .75), ...(modelId.startsWith("eleven_v4") ? {} : { style: clamp(s.style, 0), use_speaker_boost: true }) } })
     });
     if (!upstream.ok) {
       let message = "ElevenLabs gagal membuat audio.";
@@ -47,8 +50,20 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: String(message) }, { status: upstream.status });
     }
     try {
-      const providerCostUsd = (billing.characters / 1000) * (Number(env.ELEVENLABS_USD_PER_1000_CHARS) || 0);
+      const timestampPayload = withTimestamps ? await upstream.json() : null;
+      if (withTimestamps && !timestampPayload?.audio_base64) {
+        await releaseCredits(auth.user, env, reservation.reservationId, "elevenlabs-timestamps-missing-audio");
+        return Response.json({ error: "Respons audio bertimestamp tidak valid." }, { status: 502 });
+      }
+      const listRate = modelId === "eleven_v4_turbo" ? 0.04 : modelId === "eleven_v4" ? 0.08 : 0.10;
+      const customRate = Number(env.ZAIDA_TTS_USD_PER_1000_CHARS);
+      const providerCostUsd = (billing.characters / 1000) * (customRate > 0 ? customRate : listRate);
       const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2", providerCostIdr: Math.ceil(providerCostUsd * (Number(env.ZAIDA_USD_TO_IDR) || 18000)), providerCostUsd, characters: billing.characters, requestId });
+      if (withTimestamps) {
+        return Response.json({ audioBase64: timestampPayload.audio_base64, alignment: timestampPayload.alignment || timestampPayload.normalized_alignment || null }, {
+          headers: { "Cache-Control": "no-store", "X-Credits-Remaining": String(charged.remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" }
+        });
+      }
       return new Response(upstream.body, { headers: { "Content-Type": "audio/mpeg", "Content-Disposition": 'attachment; filename="zaida-voice.mp3"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Credits-Remaining": String(charged.remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" } });
     } catch (creditError) {
       return Response.json({ error: creditError.message || "Tidak dapat memproses kredit." }, { status: creditError.status || 503 });

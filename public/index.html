@@ -62,7 +62,8 @@
         </div></section>
         <section class="workflow-panel" id="step3"><div class="panel export-panel"><div class="section-head"><h2>Ekspor</h2></div>
           <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small id="resultDetails">MP3</small></div></div>
-          <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a></div>
+          <div class="result-player-wrap"><audio id="resultAudio" controls preload="metadata"></audio><p class="result-player-hint">Dengarkan hasilnya terlebih dahulu sebelum mengunduh.</p></div>
+          <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a><button type="button" class="secondary-button" id="regenerateButton">Buat ulang audio</button></div>
           <label class="subtitle-option"><input type="checkbox" id="includeSubtitle"><span><b>Tambahkan subtitle</b><small>Siapkan file SRT bersama audio.</small></span></label>
           <section class="subtitle-options" id="subtitleOptions" hidden>
             <div class="subtitle-toolbar"><span id="subtitleStatus">Subtitle siap diedit</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div>

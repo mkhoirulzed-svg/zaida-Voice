@@ -55,10 +55,12 @@ export async function onRequestPost({ request, env }) {
         await releaseCredits(auth.user, env, reservation.reservationId, "elevenlabs-timestamps-missing-audio");
         return Response.json({ error: "Respons audio bertimestamp tidak valid." }, { status: 502 });
       }
-      const listRate = modelId === "eleven_v4_turbo" ? 0.04 : modelId === "eleven_v4" ? 0.08 : 0.10;
+      // Current public API list rates: v4/v3/v2 Multilingual $0.08/1K;
+      // Turbo/Flash families $0.04/1K. Allow an explicit account-specific override.
+      const listRate = /turbo|flash/i.test(modelId) ? 0.04 : 0.08;
       const customRate = Number(env.ZAIDA_TTS_USD_PER_1000_CHARS);
       const providerCostUsd = (billing.characters / 1000) * (customRate > 0 ? customRate : listRate);
-      const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { provider: "elevenlabs", model: env.ZAIDA_TTS_MODEL || "eleven_multilingual_v2", providerCostIdr: Math.ceil(providerCostUsd * (Number(env.ZAIDA_USD_TO_IDR) || 18000)), providerCostUsd, characters: billing.characters, requestId });
+      const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits, "text-to-speech:elevenlabs:" + billing.characters + " characters", { provider: "elevenlabs", model: modelId, providerCostIdr: Math.ceil(providerCostUsd * (Number(env.ZAIDA_USD_TO_IDR) || 18000)), providerCostUsd, characters: billing.characters, requestId });
       if (withTimestamps) {
         return Response.json({ audioBase64: timestampPayload.audio_base64, alignment: timestampPayload.alignment || timestampPayload.normalized_alignment || null }, {
           headers: { "Cache-Control": "no-store", "X-Credits-Remaining": String(charged.remaining), "Access-Control-Expose-Headers": "X-Credits-Remaining" }

@@ -40,7 +40,10 @@ export async function onRequestPost({ request, env }) {
   if (!text || text.length > 5000) return jsonError("Masukkan teks maksimal 5.000 karakter.", 400);
 
   const language = body.language === "en" ? "English" : "Bahasa Indonesia";
-  const system = language === "English"
+  const task = body.task === "audio_tags" ? "audio_tags" : "polish";
+  const system = task === "audio_tags"
+    ? "You add sparse ElevenLabs v4 audio tags to a spoken script. Preserve the original words, order, punctuation, facts, names and numbers exactly. Only insert relevant square-bracket delivery cues where helpful: [curious], [crying], [mischievously], [whispers], [shouts], [laughs], [clears throat], [sighs]. Never invent spoken words or add explanations. Avoid excessive tags. Return only the tagged script."
+    : language === "English"
     ? "You are a professional editor for spoken-audio scripts in English. Improve flow, grammar, punctuation, and how naturally the text sounds when read aloud. Preserve the user's meaning, facts, names, and numbers. Do not add new claims. Use natural, conversational phrasing. Return only the revised script, with no introduction or explanation."
     : "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
 
@@ -58,7 +61,7 @@ export async function onRequestPost({ request, env }) {
       ? estimateKiosapiReservation(text.length + system.length, maxOutputTokens, env)
       : estimateDeepSeekReservation(text.length + system.length, maxOutputTokens, env);
 
-    reservation = await reserveCredits(auth.user, env, reserveAmount, "ai-script-edit", {
+    reservation = await reserveCredits(auth.user, env, reserveAmount, task === "audio_tags" ? "ai-script-audio-tags" : "ai-script-edit", {
       requestId,
       provider: hasKiosapi ? "kiosapi" : "deepseek",
       model: hasKiosapi ? primaryModel : directDeepSeekModel

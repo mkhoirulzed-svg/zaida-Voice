@@ -42,7 +42,7 @@ function renderHistory(){
 
 const assistantState={messages:[],draft:"",busy:false};
 function assistantProfile(){return {persona:$("writerName").value.trim(),interests:[...document.querySelectorAll("#interestGrid input:checked")].map(x=>x.value),style:$("writerStyle").value,emotion:$("writerEmotion").value,audience:$("writerAudience").value.trim(),length:$("writerLength").value};}
-function applyAssistantProfile(p={}){if(p.persona!==undefined)$("writerName").value=p.persona||"";if(Array.isArray(p.interests))document.querySelectorAll("#interestGrid input").forEach(x=>x.checked=p.interests.includes(x.value));if(p.style)$("writerStyle").value=p.style;if(p.emotion)$("writerEmotion").value=p.emotion;if(p.audience!==undefined)$("writerAudience").value=p.audience||"";if(p.length)$("writerLength").value=p.length;}
+function applyAssistantProfile(p={}){if(p.persona!==undefined)$("writerName").value=p.persona||"";if(Array.isArray(p.interests))document.querySelectorAll("#interestGrid input").forEach(x=>x.checked=p.interests.includes(x.value));if(p.style)$("writerStyle").value=p.style;if(p.emotion)$("writerEmotion").value=p.emotion;if(p.audience!==undefined)$("writerAudience").value=p.audience||"";if(p.length)$("writerLength").value=p.length;syncChoiceChips();}
 async function loadPersonaProfile(){if(!currentUser)return;const defaults={persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"};applyAssistantProfile(defaults);try{const result=await api("/api/persona",{authRequired:true});applyAssistantProfile(result.profile||defaults);$("personaSaveStatus").textContent="Persona tersimpan di akun ini";}catch(error){$("personaSaveStatus").textContent="Persona belum dapat dimuat";toast("Persona belum dapat dimuat: "+error.message);}}
 async function savePersonaProfile(){if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menyimpan Persona Saya.");return;}const button=$("savePersonaButton");button.disabled=true;button.textContent="Menyimpan…";$("personaSaveStatus").textContent="Menyimpan persona…";try{const profile=assistantProfile();await api("/api/persona",{method:"PUT",authRequired:true,body:JSON.stringify({profile})});$("personaSaveStatus").textContent="Tersimpan di akun kamu";toast("Persona berhasil disimpan.");}catch(error){$("personaSaveStatus").textContent="Gagal menyimpan";toast(error.message);}finally{button.disabled=false;button.textContent="Simpan persona";}}
 ["writerName","writerStyle","writerEmotion","writerAudience","writerLength"].forEach(id=>$(id).addEventListener("input",()=>$("personaSaveStatus").textContent="Ada perubahan yang belum disimpan"));
@@ -325,7 +325,7 @@ function syncChoiceChips(){
 }
 document.querySelectorAll(".choice-chip").forEach(button=>button.addEventListener("click",()=>{
   const select=$(button.dataset.select);if(!select)return;
-  select.value=button.dataset.value;select.dispatchEvent(new Event("change",{bubbles:true}));syncChoiceChips();saveAssistantProfile();
+  select.value=button.dataset.value;select.dispatchEvent(new Event("change",{bubbles:true}));syncChoiceChips();$("personaSaveStatus").textContent="Ada perubahan yang belum disimpan";
 }));
 syncChoiceChips();
 updateCount();loadVoices();

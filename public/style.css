@@ -333,3 +333,22 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .voice-library-tools input,.voice-library-tools select{height:42px;min-width:0;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:#101319;color:var(--text);font-size:12px}
 .voice-library-note{margin:0 0 14px;color:var(--muted);font-size:11px;line-height:1.6}
 @media(max-width:560px){.voice-library-tools{grid-template-columns:1fr}.voice-progress-top{padding:12px}}
+
+
+/* Private voice clone */
+.voice-clone-panel{max-width:760px}
+.voice-clone-form{display:grid;gap:10px;margin-top:20px}
+.voice-clone-form .field-label{margin:8px 0 0}
+.voice-clone-file{height:auto!important;padding:10px!important}
+.voice-clone-help,.voice-clone-cost,.voice-clone-status{font-size:11px;line-height:1.65;color:var(--muted);margin:0}
+.voice-clone-help a{color:#c7bbff}
+.voice-clone-consent{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#101319;font-size:11px;line-height:1.55;color:#cbd0d9}
+.voice-clone-consent input{margin-top:2px;accent-color:var(--accent);flex:none}
+.voice-clone-form .primary-button{width:100%;margin-top:8px}
+.voice-clone-form[hidden]{display:none!important}
+.voice-clone-current .empty-output{min-height:130px}
+.voice-clone-owned{display:grid;gap:8px;padding:16px;border:1px solid #554a82;border-radius:9px;background:#1b1930}
+.voice-clone-owned>b{font-size:14px}
+.voice-clone-owned>small{font-size:11px;color:var(--muted)}
+.voice-clone-owned-actions{display:flex;justify-content:flex-end;margin-top:8px}
+.voice-clone-status{margin-top:12px;color:#d5cbff}

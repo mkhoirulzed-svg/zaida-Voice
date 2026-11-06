@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
   if (!/^[a-zA-Z0-9_-]{5,100}$/.test(voiceId)) return Response.json({ error: "ID suara tidak valid." }, { status: 400 });
 
   const privateIds = new Set((env.ZAIDA_PRIVATE_VOICE_IDS || "").split(",").map(id => id.trim()).filter(Boolean));
-  if (privateIds.has(voiceId)) return Response.json({ error: "Suara ini bersifat privat." }, { status: 403 });
+  const isPrivateVoice = privateIds.has(voiceId);
 
   const s = body.voiceSettings || {};
   const clamp = (v, fallback) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(1, Number(v))) : fallback;
@@ -24,15 +24,15 @@ export async function onRequestPost({ request, env }) {
     const account = await getOrCreateAccount(auth.user, env);
     const billing = calculateTtsCharge(text, env);
     if (account.credits < billing.credits) return Response.json({error:"Kredit tidak mencukupi. Saldo kamu "+account.credits+" kredit; kebutuhan audio ini "+billing.credits+" kredit."},{status:402});
-    // Public beta only permits built-in premade voices, never cloned voices.
+    if (isPrivateVoice && account.role !== "admin") return Response.json({ error: "Suara Zed Clone bersifat pribadi dan hanya tersedia untuk pemilik akun." }, { status: 403 });
     const catalogResponse = await fetch("https://api.elevenlabs.io/v1/voices", {
       headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Accept": "application/json" }
     });
     const catalog = await catalogResponse.json();
     if (!catalogResponse.ok) return Response.json({ error: "Tidak dapat memverifikasi karakter suara." }, { status: 502 });
     const selected = (catalog.voices || []).find(v => v.voice_id === voiceId);
-    if (!selected || selected.category !== "premade") {
-      return Response.json({ error: "Suara clone/pribadi tidak tersedia untuk pengguna umum." }, { status: 403 });
+    if (!selected || (isPrivateVoice ? account.role !== "admin" : selected.category !== "premade")) {
+      return Response.json({ error: "Karakter suara tidak tersedia untuk akun ini." }, { status: 403 });
     }
 
     const modelId = env.ZAIDA_TTS_MODEL || "eleven_v4";

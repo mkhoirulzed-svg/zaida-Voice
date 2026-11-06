@@ -362,7 +362,7 @@ async function generate(){
 }
 $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.trim()){toast("Masukkan naskah terlebih dahulu.");return;}setStep(2);});
 $("backToScript").addEventListener("click",()=>setStep(1));
-$("regenerateButton").addEventListener("click",()=>{if(!state.audioUrl){toast("Belum ada audio untuk dibuat ulang.");return;}if(!confirm("Buat ulang audio akan menggunakan kredit lagi. Lanjutkan?"))return;generate();});
+$("regenerateButton").addEventListener("click",()=>{if(!state.audioUrl){toast("Belum ada audio untuk dibuat ulang.");return;}setStep(2);toast("Silakan ubah naskah atau pilih suara lain, lalu buat audio kembali.");});
 $("resultAudio").addEventListener("play",()=>{if(!$("audioPlayer").paused)$("audioPlayer").pause();});
 $("audioPlayer").addEventListener("play",()=>{if(!$("resultAudio").paused)$("resultAudio").pause();});
 $("backToVoice").addEventListener("click",()=>setStep(2));

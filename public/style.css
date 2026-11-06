@@ -359,3 +359,18 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .voice-pagination span{margin-right:auto;color:var(--muted);font-size:11px}
 .voice-pagination button{min-height:34px;padding:0 12px;font-size:11px}
 .voice-pagination button:disabled{opacity:.4;cursor:not-allowed}
+
+
+/* Readable script preview with ElevenLabs-style audio tag chips */
+.script-preview{min-height:230px;max-height:62vh;overflow:auto;padding:20px 18px;background:#0d0d16;border:1px solid #302e43;border-radius:10px;color:#f0edf8;font-size:clamp(16px,2vw,19px);line-height:1.8;white-space:normal}
+.script-preview[hidden]{display:none!important}
+.script-preview p{margin:0 0 17px;overflow-wrap:anywhere}
+.script-preview p:last-child{margin-bottom:0}
+.script-preview .script-preview-spacer{height:13px;margin:0}
+.script-preview .script-audio-tag{display:inline-block;margin:0 0 5px;padding:1px 8px;border:1px solid #674477;border-radius:7px;background:#24192d;color:#d8a0eb;font-size:.86em;font-weight:650;line-height:1.55}
+.script-preview-empty{color:var(--muted);font-size:13px}
+.editor-panel.preview-mode textarea{display:none}
+.editor-panel.preview-mode .script-preview{display:block}
+.editor-panel.preview-mode .editor-tools{justify-content:flex-start}
+#toggleScriptPreview{color:#c9b6ff;border:1px solid #51416f;border-radius:7px;padding:7px 10px}
+@media(max-width:560px){.script-preview{min-height:260px;padding:17px 14px;font-size:17px;line-height:1.85}}

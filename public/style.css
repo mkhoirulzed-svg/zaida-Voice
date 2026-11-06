@@ -240,3 +240,15 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .dock-player audio{width:min(260px,34vw);height:34px;flex:none;accent-color:var(--accent)}
 .dock-player span{max-width:180px}
 @media(max-width:760px){.dock-player audio{width:min(190px,42vw);height:31px}.dock-player span{display:none}}
+
+/* Flat surfaces across secondary views */
+.brand-mark,.avatar,.top-avatar{background:var(--accent);color:#15151b;box-shadow:none}
+.generate-button{background:var(--accent);border:1px solid var(--accent);box-shadow:none;color:#15151b}
+.admin-metric,.admin-provider{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.admin-provider strong{color:var(--text)}
+.admin-metric small,.admin-provider-head span{color:var(--muted)}
+.admin-provider-head b{color:var(--text)}
+.admin-credit-form input{background:#101319;border-color:var(--line)}
+.admin-credit-form .generate-button{background:var(--accent)}
+.admin-toolbar button{border-color:var(--line);background:var(--panel2);color:#d8d3ff}
+.auth-close{border-radius:7px}

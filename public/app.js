@@ -56,7 +56,7 @@ async function sendStandaloneAssistantMessage(){
   if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return;}
   if(message.length>3000){toast("Pesan maksimal 3.000 karakter.");return;}
   assistantState.busy=true;$("standaloneSendAssistant").disabled=true;
-  const userMessage=document.createElement("div");userMessage.className="assistant-message user-message";userMessage.textContent=message;$("standaloneAssistantMessages").append(userMessage);
+  const userMessage=document.createElement("div");userMessage.className="assistant-message user-message";const userName=document.createElement("b");userName.textContent="Kamu";const userText=document.createElement("p");userText.textContent=message;userMessage.append(userName,userText);$("standaloneAssistantMessages").append(userMessage);
   input.value="";
   try{
     const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:[...assistantState.messages.slice(-10),{role:"user",content:message}]}),authRequired:true});
@@ -113,6 +113,20 @@ $("adminCreditForm").addEventListener("submit",async event=>{
 function closeSidebar(){
   $("sidebar").classList.remove("open");$("sidebarBackdrop").hidden=true;document.body.classList.remove("sidebar-open");
 }
+function renderStandaloneConversation(){
+  const box=$("standaloneAssistantMessages");box.innerHTML="";
+  if(!assistantState.messages.length){
+    box.innerHTML='<div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div>';
+  }else{
+    assistantState.messages.forEach(item=>{
+      const row=document.createElement("div");row.className="assistant-message "+(item.role==="assistant"?"ai-message":"user-message");
+      const name=document.createElement("b");name.textContent=item.role==="assistant"?"ZAIDA Assistant":"Kamu";
+      const p=document.createElement("p");p.textContent=item.content;row.append(name,p);box.append(row);
+    });
+  }
+  $("standaloneUseAssistantScript").disabled=!assistantState.draft;
+  box.scrollTop=box.scrollHeight;
+}
 function showView(requestedView){
   let view=requestedView;
   if(view==="subtitle"){
@@ -126,6 +140,7 @@ function showView(requestedView){
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
   $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",admin:"Dashboard admin"})[requestedView]||"Studio";
   if(view==="admin")loadAdminDashboard();
+  if(view==="assistant")renderStandaloneConversation();
   closeSidebar();
 }
 $("scriptText").addEventListener("input",updateCount);$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});

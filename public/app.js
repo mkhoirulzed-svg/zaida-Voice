@@ -237,7 +237,6 @@ $("voiceSelect").addEventListener("change",renderVoiceCards);
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
 $("downloadSrt").addEventListener("click",downloadSubtitle);
 $("regenerateSrt").addEventListener("click",()=>{state.subtitles=buildSubtitles(state.sourceText,state.alignment,$("audioPlayer").duration||Math.max(1,state.sourceText.length/12));renderSubtitles();toast("Subtitle dibuat ulang.");});
-$("dockPlay").addEventListener("click",()=>{const p=$("audioPlayer");if(!p.src){toast("Audio belum tersedia.");return;}if(p.paused)p.play();else p.pause();});
 $("dockAction").addEventListener("click",()=>{if(state.currentStep===1){if($("scriptText").value.trim())setStep(2);else toast("Masukkan naskah terlebih dahulu.");}else if(state.currentStep===2)generate();else if(state.currentStep===3)setStep(4);else $("newProject").click();});
 $("restartProject").addEventListener("click",()=>{$("newProject").click();});
 

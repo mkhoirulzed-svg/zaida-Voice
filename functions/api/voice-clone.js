@@ -43,7 +43,7 @@ export async function onRequestPost({ request, env }) {
     upstreamForm.append("name", name);
     upstreamForm.append("description", "Private user voice clone created in ZAIDA Voice.");
     upstreamForm.append("labels", JSON.stringify({ language: "id", use_case: "personal_voice_clone" }));
-    upstreamForm.append("files", file, file.name || "voice-sample");
+    upstreamForm.append("files[]", file, file.name || "voice-sample");
     const upstream = await fetch("https://api.elevenlabs.io/v1/voices/add", {
       method: "POST", headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Accept": "application/json" }, body: upstreamForm
     });
@@ -56,7 +56,7 @@ export async function onRequestPost({ request, env }) {
     const status = result.requires_verification ? "verification_required" : "ready";
     await updateUserVoiceClone(auth.user, env, { voiceId: upstreamVoiceId, name, status });
     const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, cost, "Pembuatan clone suara: " + name, {
-      provider: "elevenlabs", model: "instant-voice-cloning", providerCostIdr: 0, providerCostUsd: 0
+      provider: "elevenlabs", model: "instant-voice-cloning", providerCostIdr: Math.max(0, Number(env.ZAIDA_VOICE_CLONE_PROVIDER_COST_IDR) || 0), providerCostUsd: Math.max(0, Number(env.ZAIDA_VOICE_CLONE_PROVIDER_COST_USD) || 0)
     });
     return Response.json({
       voice: { voiceId: upstreamVoiceId, name, status },

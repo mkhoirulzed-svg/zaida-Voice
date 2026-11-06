@@ -124,3 +124,109 @@ export async function billUsage(user, env, credits, description, metadata = {}) 
   const remaining = await chargeCredits(user, env, credits, description, metadata);
   return { remaining, charged: credits };
 }
+
+
+// Credit reservation flow: reserve before calling a paid provider, then settle or release.
+async function readReservation(env, reservationId) {
+  try { return await firestore(env, "/credit_reservations/" + reservationId); }
+  catch (e) { if (e.status === 404) return null; throw e; }
+}
+export async function reserveCredits(user, env, amount, description, metadata = {}) {
+  const requestId = typeof metadata.requestId === "string" && /^[0-9a-f-]{36}$/i.test(metadata.requestId) ? metadata.requestId : null;
+  if (!requestId) { const e = new Error("ID permintaan tidak valid."); e.status = 400; throw e; }
+  const reserveAmount = Math.max(1, Math.ceil(Number(amount) || 0));
+  const reservationId = await stableLedgerId(user.uid, requestId);
+  const reservationName = "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/credit_reservations/" + reservationId;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const existing = await readReservation(env, reservationId);
+    if (existing) {
+      const e = new Error("Permintaan ini sudah diproses atau sedang berjalan. Jangan kirim ulang dengan ID yang sama.");
+      e.status = 409;
+      e.reservationStatus = val(existing.fields?.status);
+      throw e;
+    }
+    const accountDoc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+    const account = docData(accountDoc);
+    if (account.credits < reserveAmount) {
+      const e = new Error("Kredit tidak mencukupi. Saldo kamu " + account.credits + " kredit; reservasi yang dibutuhkan " + reserveAmount + " kredit.");
+      e.status = 402;
+      throw e;
+    }
+    const now = new Date().toISOString();
+    try {
+      await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [
+        { update: { name: accountDoc.name, fields: { credits: integer(account.credits - reserveAmount), updatedAt: str(now) } }, updateMask: { fieldPaths: ["credits", "updatedAt"] }, currentDocument: { updateTime: accountDoc.updateTime } },
+        { update: { name: reservationName, fields: { uid: str(user.uid), requestId: str(requestId), status: str("reserved"), amount: integer(reserveAmount), description: str(description || "provider-usage"), provider: str(metadata.provider || "unknown"), model: str(metadata.model || "unknown"), createdAt: str(now), updatedAt: str(now) } }, currentDocument: { exists: false } }
+      ] }) });
+      return { reservationId, reserved: reserveAmount, remaining: account.credits - reserveAmount };
+    } catch (e) {
+      if (!isFirestoreConflict(e)) throw e;
+      const raced = await readReservation(env, reservationId);
+      if (raced) { const duplicate = new Error("Permintaan ini sudah diproses atau sedang berjalan."); duplicate.status = 409; throw duplicate; }
+    }
+  }
+  const e = new Error("Saldo sedang diperbarui. Silakan coba kembali."); e.status = 409; throw e;
+}
+export async function releaseCredits(user, env, reservationId, reason = "provider-failed") {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const reservation = await readReservation(env, reservationId);
+    if (!reservation) return false;
+    const fields = reservation.fields || {};
+    if (val(fields.uid) !== user.uid || val(fields.status) !== "reserved") return false;
+    const amount = Math.max(0, Number(val(fields.amount)) || 0);
+    const accountDoc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+    const account = docData(accountDoc);
+    const now = new Date().toISOString();
+    try {
+      await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [
+        { update: { name: accountDoc.name, fields: { credits: integer(account.credits + amount), updatedAt: str(now) } }, updateMask: { fieldPaths: ["credits", "updatedAt"] }, currentDocument: { updateTime: accountDoc.updateTime } },
+        { update: { name: reservation.name, fields: { status: str("released"), releaseReason: str(reason), updatedAt: str(now) } }, updateMask: { fieldPaths: ["status", "releaseReason", "updatedAt"] }, currentDocument: { updateTime: reservation.updateTime } }
+      ] }) });
+      return true;
+    } catch (e) { if (!isFirestoreConflict(e)) throw e; }
+  }
+  const e = new Error("Gagal melepaskan reservasi kredit."); e.status = 409; throw e;
+}
+export async function settleReservedCredits(user, env, reservationId, actualCredits, description, metadata = {}) {
+  const actual = Math.max(1, Math.ceil(Number(actualCredits) || 0));
+  const ledgerId = reservationId;
+  const ledgerName = "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/credit_ledger/" + ledgerId;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const reservation = await readReservation(env, reservationId);
+    if (!reservation || val(reservation.fields?.uid) !== user.uid) { const e = new Error("Reservasi kredit tidak ditemukan."); e.status = 404; throw e; }
+    const fields = reservation.fields || {};
+    if (val(fields.status) === "settled") {
+      const current = docData(await firestore(env, "/users/" + encodeURIComponent(user.uid)));
+      return { charged: actual, remaining: current.credits };
+    }
+    if (val(fields.status) !== "reserved") { const e = new Error("Reservasi kredit tidak aktif."); e.status = 409; throw e; }
+    const reserved = Math.max(0, Number(val(fields.amount)) || 0);
+    if (actual > reserved) { const e = new Error("Biaya aktual melebihi batas reservasi. Transaksi ditahan untuk pemeriksaan."); e.status = 409; throw e; }
+    const accountDoc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+    const account = docData(accountDoc);
+    const refund = reserved - actual, next = account.credits + refund, now = new Date().toISOString();
+    try {
+      await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [
+        { update: { name: accountDoc.name, fields: { credits: integer(next), updatedAt: str(now) } }, updateMask: { fieldPaths: ["credits", "updatedAt"] }, currentDocument: { updateTime: accountDoc.updateTime } },
+        { update: { name: reservation.name, fields: { status: str("settled"), actualCredits: integer(actual), refundedCredits: integer(refund), updatedAt: str(now) } }, updateMask: { fieldPaths: ["status", "actualCredits", "refundedCredits", "updatedAt"] }, currentDocument: { updateTime: reservation.updateTime } },
+        { update: { name: ledgerName, fields: { uid: str(user.uid), type: str("usage"), amount: integer(-actual), description: str(description || val(fields.description) || "provider-usage"), provider: str(metadata.provider || val(fields.provider) || "unknown"), model: str(metadata.model || val(fields.model) || "unknown"), providerCostIdr: integer(Math.max(0, Number(metadata.providerCostIdr) || 0)), providerCostUsd: str(Number(metadata.providerCostUsd || 0).toFixed(8)), inputTokens: integer(Math.max(0, Number(metadata.inputTokens) || 0)), outputTokens: integer(Math.max(0, Number(metadata.outputTokens) || 0)), characters: integer(Math.max(0, Number(metadata.characters) || 0)), requestId: str(val(fields.requestId) || ""), createdAt: str(now) } }, currentDocument: { exists: false } }
+      ] }) });
+      return { charged: actual, remaining: next, refunded: refund };
+    } catch (e) {
+      if (!isFirestoreConflict(e)) throw e;
+      const latest = await readReservation(env, reservationId);
+      if (latest && val(latest.fields?.status) === "settled") {
+        const current = docData(await firestore(env, "/users/" + encodeURIComponent(user.uid)));
+        return { charged: actual, remaining: current.credits };
+      }
+    }
+  }
+  const e = new Error("Gagal menyelesaikan tagihan. Reservasi tetap ditahan untuk pemeriksaan."); e.status = 409; throw e;
+}
+
+export function estimateDeepSeekReservation(inputCharacters, maxOutputTokens, env) {
+  // Conservative upper bound: assume at most two characters per input token, plus prompt overhead.
+  const promptTokens = Math.max(1, Math.ceil(Math.max(0, Number(inputCharacters) || 0) / 2) + 256);
+  const outputTokens = Math.max(1, Math.ceil(Number(maxOutputTokens) || 1));
+  return calculateDeepSeekCharge({ prompt_tokens: promptTokens, completion_tokens: outputTokens }, env).credits;
+}

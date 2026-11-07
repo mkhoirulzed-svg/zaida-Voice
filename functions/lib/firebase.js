@@ -330,3 +330,77 @@ export async function deleteUserVoiceCloneRecord(user, env) {
     }]})});
   } catch (error) { if (error.status === 404) return false; throw error; }
 }
+
+
+// Midtrans payment records and idempotent credit fulfillment.
+export async function createPaymentRecord(env, payment) {
+  const name = "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/payments/" + payment.orderId;
+  const now = new Date().toISOString();
+  return firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{
+    update: { name, fields: {
+      orderId: str(payment.orderId), uid: str(payment.uid), email: str(payment.email),
+      packageId: str(payment.packageId), packageName: str(payment.packageName),
+      amount: integer(payment.amount), credits: integer(payment.credits),
+      status: str("pending"), createdAt: str(now), updatedAt: str(now)
+    }},
+    currentDocument: { exists: false }
+  }]})});
+}
+export async function updatePaymentCheckout(env, orderId, checkout) {
+  const path = "/payments/" + encodeURIComponent(orderId);
+  const doc = await firestore(env, path);
+  return firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{
+    update: { name: doc.name, fields: {
+      snapToken: str(checkout.token || ""), redirectUrl: str(checkout.redirectUrl || ""),
+      updatedAt: str(new Date().toISOString())
+    }},
+    updateMask: { fieldPaths: ["snapToken", "redirectUrl", "updatedAt"] },
+    currentDocument: { updateTime: doc.updateTime }
+  }]})});
+}
+export async function getPaymentRecord(env, orderId) {
+  try {
+    const doc = await firestore(env, "/payments/" + encodeURIComponent(orderId));
+    const f = doc.fields || {};
+    return {
+      orderId: val(f.orderId), uid: val(f.uid), email: val(f.email),
+      packageId: val(f.packageId), packageName: val(f.packageName),
+      amount: val(f.amount), credits: val(f.credits), status: val(f.status),
+      snapToken: val(f.snapToken), redirectUrl: val(f.redirectUrl)
+    };
+  } catch (error) { if (error.status === 404) return null; throw error; }
+}
+export async function fulfillPaymentCredits(env, orderId, confirmedAmount) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const paymentDoc = await firestore(env, "/payments/" + encodeURIComponent(orderId));
+    const p = paymentDoc.fields || {};
+    const uid = val(p.uid), amount = Number(val(p.amount)), credits = Number(val(p.credits));
+    if (!uid || amount !== Number(confirmedAmount)) throw new Error("Nominal pembayaran tidak cocok dengan pesanan.");
+    if (val(p.status) === "paid") {
+      const account = docData(await firestore(env, "/users/" + encodeURIComponent(uid)));
+      return { alreadyPaid: true, credits: account.credits };
+    }
+    if (val(p.status) !== "pending") throw new Error("Status pesanan tidak dapat diproses.");
+    const accountDoc = await firestore(env, "/users/" + encodeURIComponent(uid));
+    const account = docData(accountDoc);
+    const next = account.credits + credits, now = new Date().toISOString();
+    const ledgerId = "midtrans_" + orderId;
+    const ledgerName = "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/credit_ledger/" + ledgerId;
+    try {
+      await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [
+        { update: { name: accountDoc.name, fields: { credits: integer(next), updatedAt: str(now) } }, updateMask: { fieldPaths: ["credits", "updatedAt"] }, currentDocument: { updateTime: accountDoc.updateTime } },
+        { update: { name: paymentDoc.name, fields: { status: str("paid"), paidAt: str(now), updatedAt: str(now) } }, updateMask: { fieldPaths: ["status", "paidAt", "updatedAt"] }, currentDocument: { updateTime: paymentDoc.updateTime } },
+        { update: { name: ledgerName, fields: { uid: str(uid), type: str("topup"), amount: integer(credits), description: str("Top up " + val(p.packageName)), provider: str("midtrans"), orderId: str(orderId), createdAt: str(now) } }, currentDocument: { exists: false } }
+      ]})});
+      return { alreadyPaid: false, credits: next };
+    } catch (error) {
+      if (!isFirestoreConflict(error)) throw error;
+      const latest = await getPaymentRecord(env, orderId);
+      if (latest?.status === "paid") {
+        const current = docData(await firestore(env, "/users/" + encodeURIComponent(uid)));
+        return { alreadyPaid: true, credits: current.credits };
+      }
+    }
+  }
+  throw new Error("Pemrosesan kredit sedang bersamaan. Notifikasi dapat dikirim ulang.");
+}

@@ -9,6 +9,8 @@ let currentUser = null;
 let currentStoryboard = null;
 let storageKey = null;
 let renderedVideoUrls = [];
+let previewVideoUrl = null;
+let previewCaptionCues = [];
 let generatedNarrationBlob = null;
 let generatedSubtitleText = "";
 let videoVoicesLoadedFor = null;
@@ -450,9 +452,27 @@ async function generateVideoNarration() {
     button.disabled=false;button.textContent="Buat ulang audio narasi";
   }
 }
-async function startDualRender() {
+function parsePreviewSrt(srt) {
+  return String(srt || "").replace(/\\r/g, "").trim().split(/\\n\\s*\\n/).map(block => {
+    const lines=block.split("\\n"), time=lines.find(line=>line.includes("-->"));
+    if(!time)return null;
+    const m=time.match(/(\\d{2}):(\\d{2}):(\\d{2})[,.](\\d{3})\\s*-->\\s*(\\d{2}):(\\d{2}):(\\d{2})[,.](\\d{3})/);
+    if(!m)return null;
+    const sec=(h,mi,s,ms)=>Number(h)*3600+Number(mi)*60+Number(s)+Number(ms)/1000;
+    return {start:sec(...m.slice(1,5)),end:sec(...m.slice(5,9)),text:lines.slice(lines.indexOf(time)+1).join(" ").replace(/<[^>]+>/g,"").trim()};
+  }).filter(c=>c&&c.text&&c.end>c.start);
+}
+function syncCaptionPreview() {
+  const video=$("videoPreviewPlayer"), text=$("captionPreviewText");
+  if(!video || video.hidden) return;
+  const cue=previewCaptionCues.find(item=>video.currentTime>=item.start&&video.currentTime<=item.end);
+  text.textContent=$("videoIncludeSubtitles").checked && cue ? cue.text : "";
+  text.hidden=!text.textContent;
+}
+async function startDualRender(isExport = false) {
   if (!currentStoryboard) return;
-  const button = $("renderDualVideo");
+  if (isExport && !previewVideoUrl) { setStatus("Buat preview video terlebih dahulu.", true); return; }
+  const button = isExport ? $("exportFinalVideo") : $("renderDualVideo");
   const progress = $("videoRenderProgress");
   const progressBar = $("videoRenderProgressBar");
   const progressText = $("videoRenderProgressText");
@@ -461,26 +481,27 @@ async function startDualRender() {
   const selectedFormat = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const selectedSubtitleText = generatedSubtitleText;
   const burnCaptions = $("videoIncludeSubtitles").checked;
-  renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
-  renderedVideoUrls = [];
-  downloads.replaceChildren();
-  downloads.hidden = true;
+  if (isExport) {
+    renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
+    renderedVideoUrls = previewVideoUrl ? [previewVideoUrl] : [];
+    downloads.replaceChildren();
+    downloads.hidden = true;
+  }
   progress.hidden = false;
   button.disabled = true;
-  button.textContent = "Menyiapkan mesin render…";
+  button.textContent = isExport ? "Mengekspor video final…" : "Membuat preview…";
   progressBar.style.width = "0%";
-  progressText.textContent = "Memuat FFmpeg.wasm untuk pertama kali…";
-  setStatus("Render video berjalan di perangkat ini. Jangan tutup halaman.");
+  progressText.textContent = "Memuat FFmpeg.wasm…";
+  setStatus(isExport ? "Mengekspor video final dengan pengaturan caption…" : "Membuat video preview tanpa menanam caption permanen…");
   try {
-    progressText.textContent = audioFile ? "Membaca durasi audio…" : "Menyiapkan durasi video…";
     const audioDuration = await getAudioDurationSeconds(audioFile);
     const result = await renderVideo({
       scenes: currentStoryboard.scenes,
       format: selectedFormat,
       audioFile,
       audioDuration,
-      subtitleText: selectedSubtitleText,
-      burnCaptions,
+      subtitleText: isExport ? selectedSubtitleText : "",
+      burnCaptions: isExport ? burnCaptions : false,
       captionStyle: getCaptionStyle(),
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
@@ -488,34 +509,53 @@ async function startDualRender() {
           const percent = Math.round((info.progress || 0) * 100);
           progressBar.style.width = percent + "%";
           progressText.textContent = info.message || ("Merender " + (info.format || "video") + "… " + percent + "%");
-        } else if (info.phase === "log") {
-          progressText.textContent = "FFmpeg: " + (info.message || "Menjalankan proses…");
-        } else if (info.phase === "complete") {
-          progressBar.style.width = "100%";
-          progressText.textContent = info.message;
-        }
+        } else if (info.phase === "log") progressText.textContent = "FFmpeg: " + (info.message || "Menjalankan proses…");
+        else if (info.phase === "complete") { progressBar.style.width = "100%"; progressText.textContent = info.message; }
       }
     });
     const url = URL.createObjectURL(result.blob);
-    renderedVideoUrls.push(url);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = result.filename;
-    link.className = "render-download-link";
-    link.textContent = "Unduh video " + result.format + " · " + (result.blob.size / (1024 * 1024)).toFixed(1) + " MB";
-    downloads.append(link);
-    if (selectedSubtitleText.trim()) {
-      const srtUrl = URL.createObjectURL(new Blob([selectedSubtitleText], { type: "application/x-subrip;charset=utf-8" }));
-      renderedVideoUrls.push(srtUrl);
-      const srtLink = document.createElement("a");
-      srtLink.href = srtUrl;
-      srtLink.download = "zaida-video-subtitle.srt";
-      srtLink.className = "render-download-link";
-      srtLink.textContent = "Unduh subtitle SRT";
-      downloads.append(srtLink);
+    if (!isExport) {
+      if (previewVideoUrl) URL.revokeObjectURL(previewVideoUrl);
+      previewVideoUrl = url;
+      const player=$("videoPreviewPlayer");
+      player.src=url;
+      player.hidden=false;
+      player.controls=true;
+      $("captionPreviewEmpty").hidden=true;
+      $("captionPreviewText").hidden=true;
+      $("captionPreviewPlay").hidden=true;
+      player.currentTime=0;
+      previewCaptionCues=parsePreviewSrt(generatedSubtitleText);
+      $("exportFinalVideo").hidden=false;
+      $("exportFinalVideo").disabled=false;
+      $("exportFinalVideo").textContent="Export Video Final";
+      player.onloadedmetadata=()=>syncCaptionPreview();
+      player.ontimeupdate=syncCaptionPreview;
+      player.onseeked=syncCaptionPreview;
+      player.onplay=syncCaptionPreview;
+      downloads.hidden=true;
+      setStatus("Preview video siap. Putar video, atur caption, lalu tekan Export Video Final.");
+    } else {
+      renderedVideoUrls.push(url);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = result.filename;
+      link.className = "render-download-link";
+      link.textContent = "Unduh video " + result.format + " · " + (result.blob.size / (1024 * 1024)).toFixed(1) + " MB";
+      downloads.append(link);
+      if (selectedSubtitleText.trim() && !burnCaptions) {
+        const srtUrl = URL.createObjectURL(new Blob([selectedSubtitleText], { type: "application/x-subrip;charset=utf-8" }));
+        renderedVideoUrls.push(srtUrl);
+        const srtLink = document.createElement("a");
+        srtLink.href = srtUrl;
+        srtLink.download = "zaida-video-subtitle.srt";
+        srtLink.className = "render-download-link";
+        srtLink.textContent = "Unduh subtitle SRT";
+        downloads.append(srtLink);
+      }
+      downloads.hidden=false;
+      setStatus("Video final berhasil diekspor. Periksa hasilnya sebelum diunduh.");
     }
-    downloads.hidden = false;
-    setStatus("Berhasil! Video format " + result.format + " selesai dibuat.");
   } catch (error) {
     let detail = "";
     if (typeof error === "string") detail = error;
@@ -524,16 +564,16 @@ async function startDualRender() {
       if (error.name) parts.push(String(error.name));
       if (error.message) parts.push(String(error.message));
       if (error.stack) parts.push(String(error.stack).split("\\n").slice(0, 3).join(" | "));
-      if (!parts.length) { try { parts.push(JSON.stringify(error)); } catch {} }
-      detail = parts.join(" — ");
-    } else if (error !== undefined && error !== null) detail = String(error);
-    if (!detail || detail === "[object Object]") detail = "Error tidak memiliki detail. Periksa Console browser (F12) untuk pesan asli.";
-    progressText.textContent = detail;
-    setStatus("Render gagal: " + detail, true);
+      detail = parts.join(" · ");
+    }
+    progressText.textContent = "Render gagal: " + (detail || "Terjadi kesalahan.");
+    setStatus("Render gagal: " + (detail || "Terjadi kesalahan."), true);
     console.error("[ZAIDA Video Studio] Render gagal:", error);
   } finally {
     button.disabled = false;
-    button.innerHTML = "<span>▶</span> Render video " + (selectedFormat === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";
+    if (isExport) button.textContent="Export Video Final";
+    else button.innerHTML="<span>▶</span> Buat Preview Video <b>→</b>";
+    progress.hidden = true;
     updateRenderAvailability();
   }
 }
@@ -559,7 +599,9 @@ applyCaptionPreset();
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
-$("renderDualVideo").addEventListener("click", startDualRender);
+$("renderDualVideo").addEventListener("click", () => startDualRender(false));
+$("exportFinalVideo").addEventListener("click", () => startDualRender(true));
+$("videoIncludeSubtitles").addEventListener("change", syncCaptionPreview);
 document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => input.addEventListener("change", updateRenderAvailability));
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
 // Pakai Firebase Auth dan sesi yang sama dengan dashboard utama.

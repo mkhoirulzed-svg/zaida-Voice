@@ -132,7 +132,12 @@
         <section class="panel caption-editor-panel" id="captionEditorPanel">
           <div class="section-head"><div><h2>03 · Editor Caption</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>
           <div class="caption-editor-layout">
-            <div class="caption-preview-stage" id="captionPreviewStage"><span id="captionPreviewText">Contoh caption ZAIDA Voice</span></div>
+            <div class="caption-preview-stage" id="captionPreviewStage">
+              <video id="videoPreviewPlayer" playsinline preload="metadata" hidden></video>
+              <div class="caption-preview-empty" id="captionPreviewEmpty"><span>▶</span><b>Preview video belum tersedia</b><small>Buat preview terlebih dahulu untuk mengedit caption sambil video diputar.</small></div>
+              <span id="captionPreviewText">Contoh caption ZAIDA Voice</span>
+              <button class="caption-preview-play" id="captionPreviewPlay" type="button" aria-label="Putar video" hidden>▶</button>
+            </div>
             <div class="caption-controls">
               <label class="field-label" for="captionPreset">PRESET CAPTION</label>
               <select id="captionPreset"><option value="classic">Classic · putih outline</option><option value="capcut" selected>Social · kotak lembut</option><option value="cinematic">Cinematic · elegan</option><option value="karaoke">Highlight · kuning</option></select>
@@ -165,7 +170,8 @@
           <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
           <fieldset class="video-format-picker"><legend>PILIH FORMAT VIDEO</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, YouTube Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
           <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard terlebih dahulu.</div>
-          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render video vertikal (9:16) <b>→</b></button>
+          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Buat Preview Video <b>→</b></button>
+          <button class="primary-button caption-export-button" id="exportFinalVideo" type="button" hidden>Export Video Final</button>
           <div class="render-progress" id="videoRenderProgress" hidden>
             <div class="render-progress-track"><span id="videoRenderProgressBar"></span></div>
             <p id="videoRenderProgressText" role="status" aria-live="polite">Menyiapkan render…</p>

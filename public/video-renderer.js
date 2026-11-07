@@ -25,9 +25,9 @@ async function loadFFmpeg(onProgress = () => {}) {
       onProgress({ phase: "log", message: line.slice(0, 240) });
     });
 
-    const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@" + CORE_VERSION + "/dist/umd";
-    // Keep core assets on their original HTTPS origin. Blob URLs can fail when
-    // the FFmpeg module worker dynamically imports ffmpeg-core.js.
+    const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@" + CORE_VERSION + "/dist/esm";
+    // This app uses a module worker, so load the ESM core build. The UMD build
+    // does not expose the default factory expected by the worker import fallback.
     const coreURL = base + "/ffmpeg-core.js";
     const wasmURL = base + "/ffmpeg-core.wasm";
     const classWorkerURL = new URL("/ffmpeg/worker.js", window.location.origin).href;

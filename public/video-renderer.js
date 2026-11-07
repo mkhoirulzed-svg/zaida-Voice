@@ -50,30 +50,42 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
   const isPortrait = format === "9:16";
   const width = isPortrait ? 720 : 1280;
   const height = isPortrait ? 1280 : 720;
-  const listName = "zaida_concat_" + (isPortrait ? "portrait" : "landscape") + ".txt";
   const outputName = "zaida-video-" + (isPortrait ? "9x16" : "16x9") + ".mp4";
   const inputNames = [];
+  const totalSeconds = scenes.reduce((sum, scene) => sum + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)), 0);
+  const hasAllImages = scenes.every(scene => Boolean(scene.generatedImage?.b64));
   try {
-    const concatLines = [];
-    for (let i = 0; i < scenes.length; i++) {
-      const scene = scenes[i], ext = safeExtension(scene.generatedImage.mime);
-      const name = "zaida_scene_" + i + "." + ext;
-      inputNames.push(name);
-      await ffmpeg.writeFile(name, base64ToBytes(scene.generatedImage.b64));
-      concatLines.push("file '" + name + "'");
-      concatLines.push("duration " + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)).toFixed(2));
+    let args;
+    if (hasAllImages) {
+      const listName = "zaida_concat_" + (isPortrait ? "portrait" : "landscape") + ".txt";
+      const concatLines = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const scene = scenes[i], ext = safeExtension(scene.generatedImage.mime);
+        const name = "zaida_scene_" + i + "." + ext;
+        inputNames.push(name);
+        await ffmpeg.writeFile(name, base64ToBytes(scene.generatedImage.b64));
+        concatLines.push("file '" + name + "'");
+        concatLines.push("duration " + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)).toFixed(2));
+      }
+      concatLines.push("file '" + inputNames[inputNames.length - 1] + "'");
+      await ffmpeg.writeFile(listName, new TextEncoder().encode(concatLines.join("\n")));
+      inputNames.push(listName);
+      args = ["-f", "concat", "-safe", "0", "-i", listName];
+    } else {
+      // Mode tanpa gambar AI: FFmpeg membuat kanvas video langsung dari sumber lavfi.
+      args = ["-f", "lavfi", "-i", "color=c=0x111827:s=" + width + "x" + height + ":r=24:d=" + totalSeconds];
     }
-    concatLines.push("file '" + inputNames[inputNames.length - 1] + "'");
-    await ffmpeg.writeFile(listName, new TextEncoder().encode(concatLines.join("\n")));
-    const args = ["-f", "concat", "-safe", "0", "-i", listName];
+
     let nextInput = 1, audioInput = null, subtitleInput = null;
     if (audioBytes) {
       await ffmpeg.writeFile("zaida_narration_audio.mp3", audioBytes);
+      inputNames.push("zaida_narration_audio.mp3");
       args.push("-i", "zaida_narration_audio.mp3");
       audioInput = nextInput++;
     }
     if (subtitleText && subtitleText.trim()) {
       await ffmpeg.writeFile("zaida_subtitles.srt", new TextEncoder().encode(subtitleText));
+      inputNames.push("zaida_subtitles.srt");
       args.push("-i", "zaida_subtitles.srt");
       subtitleInput = nextInput++;
     }
@@ -86,13 +98,12 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
     if (audioInput !== null) args.push("-map", audioInput + ":a:0", "-af", "apad", "-c:a", "aac", "-b:a", "96k");
     else args.push("-an");
     if (subtitleInput !== null) args.push("-map", subtitleInput + ":s:0", "-c:s", "mov_text", "-metadata:s:s:0", "language=ind");
-    const totalSeconds = scenes.reduce((sum, scene) => sum + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)), 0);
     args.push("-t", String(totalSeconds), "-y", outputName);
-    onProgress({ phase: "rendering", message: "Merender format " + format + "…", format });
+    onProgress({ phase: "rendering", message: hasAllImages ? "Merender video dari gambar adegan…" : "Membuat video dasar langsung dengan FFmpeg…", format });
     await ffmpeg.exec(args);
     return new Blob([await ffmpeg.readFile(outputName)], { type: "video/mp4" });
   } finally {
-    for (const name of [...inputNames, listName, outputName, "zaida_narration_audio.mp3", "zaida_subtitles.srt"]) {
+    for (const name of [...inputNames, outputName]) {
       try { await ffmpeg.deleteFile(name); } catch {}
     }
   }
@@ -101,8 +112,6 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
 export async function renderVideo({ scenes, audioFile, subtitleText = "", format = "9:16", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
   if (!["9:16", "16:9"].includes(format)) throw new Error("Pilih format video terlebih dahulu.");
-  const missing = scenes.findIndex(scene => !scene.generatedImage?.b64);
-  if (missing !== -1) throw new Error("Gambar adegan " + (missing + 1) + " belum dibuat.");
   if (typeof WebAssembly === "undefined") throw new Error("Browser ini belum mendukung WebAssembly.");
   const ffmpeg = await loadFFmpeg(onProgress);
   const audioBytes = audioFile ? new Uint8Array(await audioFile.arrayBuffer()) : null;

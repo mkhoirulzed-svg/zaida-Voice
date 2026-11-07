@@ -11,6 +11,8 @@ let storageKey = null;
 let renderedVideoUrls = [];
 let generatedNarrationBlob = null;
 let generatedSubtitleText = "";
+let videoVoicesLoadedFor = null;
+let videoDraftRestoredFor = null;
 
 function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
@@ -400,22 +402,34 @@ async function refreshVideoAccount() {
     setStatus("Akun terhubung, tetapi saldo belum dapat diperbarui: " + error.message, true);
   }
 }
-onAuthStateChanged(auth, async user => {
+function activateVideoStudio() {
+  if (!auth.currentUser || !auth.currentUser.emailVerified) return;
+  currentUser = auth.currentUser;
+  refreshVideoAccount();
+  updateRenderAvailability();
+  if (videoVoicesLoadedFor !== currentUser.uid) {
+    videoVoicesLoadedFor = currentUser.uid;
+    loadVideoVoices();
+  }
+  if (videoDraftRestoredFor !== currentUser.uid) {
+    videoDraftRestoredFor = currentUser.uid;
+    restoreDraft();
+  }
+}
+onAuthStateChanged(auth, user => {
   currentUser = user && user.emailVerified ? user : null;
   storageKey = currentUser ? "zaida-video-studio-draft-v1-" + currentUser.uid : null;
   const allowed = Boolean(currentUser);
   $("generateStoryboard").disabled = !allowed;
   $("generateVideoNarration").disabled = !allowed;
   if (!allowed) {
+    videoVoicesLoadedFor = null;
+    videoDraftRestoredFor = null;
     updateRenderAvailability();
     if (user && !user.emailVerified) setStatus("Verifikasi email akun ZAIDA Voice terlebih dahulu untuk menggunakan fitur AI.", true);
     return;
   }
-  await refreshVideoAccount();
-  updateRenderAvailability();
-  loadVideoVoices();
-  restoreDraft();
+  if (document.body.classList.contains("video-studio-page")) activateVideoStudio();
+  else updateRenderAvailability();
 });
-window.addEventListener("zaida:video-page-open", () => {
-  if (auth.currentUser && auth.currentUser.emailVerified) refreshVideoAccount();
-});
+window.addEventListener("zaida:video-page-open", activateVideoStudio);

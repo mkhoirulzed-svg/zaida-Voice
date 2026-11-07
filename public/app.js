@@ -9,6 +9,11 @@ const firebaseApp = initializeApp({
   messagingSenderId: "146292786794",
   appId: "1:146292786794:web:da865938c177b21d5d6c13"
 });
+// Keep the mobile studio at the top after a page reload or restored browser session.
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+window.addEventListener("pageshow", () => {
+  if (!location.hash) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+});
 const auth = getAuth(firebaseApp);
 let authMode = "login";
 let currentUser = null;

@@ -53,8 +53,8 @@ function createField(labelText, value, className, onInput) {
   wrap.append(label, area);
   return wrap;
 }
-function renderGeneratedImage(scene, imageArea) {
-  imageArea.replaceChildren();
+function renderGeneratedImage(scene, previewArea) {
+  previewArea.replaceChildren();
   if (!scene.generatedImage) return;
   const figure = document.createElement("figure");
   figure.className = "scene-image-preview";
@@ -68,7 +68,7 @@ function renderGeneratedImage(scene, imageArea) {
   download.download = "zaida-adegan-" + scene.scene_number + ".png";
   download.textContent = "Unduh gambar";
   figure.append(image, caption, download);
-  imageArea.append(figure);
+  previewArea.append(figure);
 }
 async function generateSceneImage(scene, button, imageArea) {
   if (!auth.currentUser) { setStatus("Masuk ke akun ZAIDA Voice untuk membuat gambar.", true); return; }
@@ -133,17 +133,18 @@ function renderStoryboard(data) {
     const screenText = createField("TEKS DI LAYAR", scene.on_screen_text, "", value => { scene.on_screen_text = value; saveDraft(); });
     const imageArea = document.createElement("div");
     imageArea.className = "scene-image-area";
+    const imageNote = document.createElement("small");
+    imageNote.className = "scene-image-note";
+    imageNote.textContent = "GPT Image 2.5 Flare · portrait · Rp500/gambar";
+    const previewArea = document.createElement("div");
+    previewArea.className = "scene-image-preview-area";
     const imageButton = document.createElement("button");
     imageButton.type = "button";
     imageButton.className = "secondary-button scene-image-button";
     imageButton.textContent = scene.generatedImage ? "Buat ulang gambar" : "Buat gambar adegan";
-    imageButton.addEventListener("click", () => generateSceneImage(scene, imageButton, imageArea));
-    renderGeneratedImage(scene, imageArea);
-    const imageNote = document.createElement("small");
-    imageNote.className = "scene-image-note";
-    imageNote.textContent = "GPT Image 2.5 Flare · portrait · Rp500/gambar";
-    imageArea.prepend(imageNote);
-    imageArea.append(imageButton);
+    imageButton.addEventListener("click", () => generateSceneImage(scene, imageButton, previewArea));
+    renderGeneratedImage(scene, previewArea);
+    imageArea.append(imageNote, previewArea, imageButton);
     const meta = document.createElement("div");
     meta.className = "scene-meta";
     const transition = document.createElement("span");

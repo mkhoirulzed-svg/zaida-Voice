@@ -66,19 +66,26 @@ function parseSrtCues(srt) {
   }).filter(cue => cue && cue.end > cue.start);
 }
 
-async function makeCaptionOverlayPng(text, width) {
+async function makeCaptionOverlayPng(text, width, style = {}) {
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * 0.9);
-  canvas.height = width === 720 ? 174 : 190;
+  canvas.height = width === 720 ? 190 : 210;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Browser tidak dapat membuat gambar caption.");
-  const fontSize = width === 720 ? 27 : 32;
+  const preset = style.preset || "capcut";
+  const fontSize = Math.max(18, Math.min(52, Number(style.fontSize) || 28));
+  const font = style.font || (preset === "cinematic" ? "Georgia" : "Arial");
+  const textColor = preset === "karaoke" ? "#ffe45e" : (style.textColor || "#ffffff");
+  const outlineColor = style.outlineColor || "#000000";
+  const outlineWidth = Math.max(0, Math.min(6, Number(style.outlineWidth ?? 3)));
+  const background = style.background || (preset === "classic" || preset === "cinematic" ? "none" : "soft");
+  const opacity = Math.max(0, Math.min(1, Number(style.backgroundOpacity ?? 0.76)));
   const lineHeight = fontSize * 1.22;
-  ctx.font = "700 " + fontSize + "px Arial, sans-serif";
+  ctx.font = "700 " + fontSize + "px '" + font.replace(/['"]/g, "") + "', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const maxTextWidth = canvas.width - 48;
-  const words = String(text).split(/\s+/);
+  const words = String(text).split(/\\s+/);
   const lines = [];
   let line = "";
   for (const word of words) {
@@ -95,24 +102,26 @@ async function makeCaptionOverlayPng(text, width) {
   }
   const blockHeight = lines.length * lineHeight + 34;
   const top = (canvas.height - blockHeight) / 2;
-  ctx.fillStyle = "rgba(0,0,0,0.76)";
-  ctx.beginPath();
-  ctx.roundRect(8, top, canvas.width - 16, blockHeight, 18);
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(0,0,0,0.9)";
-  ctx.fillStyle = "#ffffff";
+  if (background !== "none") {
+    ctx.fillStyle = background === "solid" ? "rgba(0,0,0,1)" : "rgba(0,0,0," + opacity + ")";
+    ctx.beginPath();
+    ctx.roundRect(8, top, canvas.width - 16, blockHeight, background === "solid" ? 8 : 18);
+    ctx.fill();
+  }
+  ctx.lineWidth = outlineWidth * 2;
+  ctx.strokeStyle = outlineColor;
+  ctx.lineJoin = "round";
+  ctx.fillStyle = textColor;
   const firstY = canvas.height / 2 - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((value, index) => {
-    ctx.strokeText(value, canvas.width / 2, firstY + index * lineHeight, maxTextWidth);
+    if (outlineWidth > 0) ctx.strokeText(value, canvas.width / 2, firstY + index * lineHeight, maxTextWidth);
     ctx.fillText(value, canvas.width / 2, firstY + index * lineHeight, maxTextWidth);
   });
   const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("Gagal membuat gambar caption.");
   return new Uint8Array(await blob.arrayBuffer());
 }
-
-async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration = null, burnCaptions = false) {
+async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration = null, burnCaptions = false, captionStyle = {}) {
   const isPortrait = format === "9:16";
   const width = isPortrait ? 720 : 1280;
   const height = isPortrait ? 1280 : 720;
@@ -155,7 +164,7 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
         const cues = parseSrtCues(subtitleText);
         for (let i = 0; i < cues.length; i++) {
           const name = "zaida_caption_" + i + ".png";
-          const png = await makeCaptionOverlayPng(cues[i].text, width);
+          const png = await makeCaptionOverlayPng(cues[i].text, width, captionStyle);
           await ffmpeg.writeFile(name, png);
           inputNames.push(name);
           args.push("-loop", "1", "-framerate", "24", "-t", String(totalSeconds), "-i", name);
@@ -169,7 +178,9 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
             const next = "base" + (i + 1);
             const start = Math.max(0, cue.start).toFixed(3);
             const end = Math.min(totalSeconds, cue.end).toFixed(3);
-            graph.push("[base" + i + "][" + cue.inputIndex + ":v]overlay=x=(W-w)/2:y=H-h-" + (width === 720 ? 72 : 48) + ":eof_action=pass:enable='between(t," + start + "," + end + ")'[" + next + "]");
+            const position = captionStyle.position || "bottom";
+            const y = position === "top" ? "72" : position === "middle" ? "(H-h)/2" : "H-h-" + (width === 720 ? 72 : 48);
+            graph.push("[base" + i + "][" + cue.inputIndex + ":v]overlay=x=(W-w)/2:y=" + y + ":eof_action=pass:enable='between(t," + start + "," + end + ")'[" + next + "]");
           });
           args.push("-filter_complex", graph.join(";"), "-map", "[base" + cues.length + "]");
         } else {
@@ -207,13 +218,13 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
   }
 }
 
-export async function renderVideo({ scenes, audioFile, audioDuration = null, subtitleText = "", burnCaptions = false, format = "9:16", onProgress = () => {} }) {
+export async function renderVideo({ scenes, audioFile, audioDuration = null, subtitleText = "", burnCaptions = false, captionStyle = {}, format = "9:16", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
   if (!["9:16", "16:9"].includes(format)) throw new Error("Pilih format video terlebih dahulu.");
   if (typeof WebAssembly === "undefined") throw new Error("Browser ini belum mendukung WebAssembly.");
   const ffmpeg = await loadFFmpeg(onProgress);
   const audioBytes = audioFile ? new Uint8Array(await audioFile.arrayBuffer()) : null;
-  const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration, burnCaptions);
+  const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration, burnCaptions, captionStyle);
   onProgress({ phase: "complete", message: "Video " + format + " selesai dibuat." });
   return { format, blob, filename: format === "9:16" ? "zaida-video-vertikal.mp4" : "zaida-video-horizontal.mp4" };
 }

@@ -11,10 +11,7 @@ async function loadFFmpeg(onProgress = () => {}) {
 
   loadPromise = (async () => {
     onProgress({ phase: "loading", message: "Memuat mesin render video…" });
-    const [{ FFmpeg }, { toBlobURL }] = await Promise.all([
-      import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@" + FFMPEG_VERSION + "/dist/esm/index.js"),
-      import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js")
-    ]);
+    const { FFmpeg } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@" + FFMPEG_VERSION + "/dist/esm/index.js");
     const ffmpeg = new FFmpeg();
     ffmpeg.on("progress", ({ progress }) => {
       onProgress({ phase: "rendering", progress: Math.max(0, Math.min(1, progress)) });
@@ -29,9 +26,12 @@ async function loadFFmpeg(onProgress = () => {}) {
     });
 
     const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@" + CORE_VERSION + "/dist/umd";
-    const coreURL = await toBlobURL(base + "/ffmpeg-core.js", "text/javascript");
-    const wasmURL = await toBlobURL(base + "/ffmpeg-core.wasm", "application/wasm");
+    // Keep core assets on their original HTTPS origin. Blob URLs can fail when
+    // the FFmpeg module worker dynamically imports ffmpeg-core.js.
+    const coreURL = base + "/ffmpeg-core.js";
+    const wasmURL = base + "/ffmpeg-core.wasm";
     const classWorkerURL = new URL("/ffmpeg/worker.js", window.location.origin).href;
+    onProgress({ phase: "loading", message: "Memuat FFmpeg Core " + CORE_VERSION + "…" });
     await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
     ffmpegInstance = ffmpeg;
     return ffmpeg;

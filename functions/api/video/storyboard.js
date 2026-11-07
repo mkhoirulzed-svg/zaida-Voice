@@ -14,14 +14,14 @@ function parseJsonOutput(raw) {
   const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
   const parsed = JSON.parse(cleaned);
   if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.scenes)) throw new Error("Format storyboard dari AI tidak valid.");
-  const scenes = parsed.scenes.slice(0, 8).map((scene, index) => ({
+  const scenes = parsed.scenes.slice(0, 15).map((scene, index) => ({
     scene_number: index + 1,
     title: String(scene.title || "Adegan " + (index + 1)).slice(0, 90),
     narration: String(scene.narration || "").slice(0, 1200),
     visual_description: String(scene.visual_description || "").slice(0, 500),
     visual_prompt: String(scene.visual_prompt || "").slice(0, 1200),
     on_screen_text: String(scene.on_screen_text || "").slice(0, 140),
-    estimated_seconds: Math.max(2, Math.min(20, Number(scene.estimated_seconds) || 6)),
+    estimated_seconds: Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)),
     transition: String(scene.transition || "cut").slice(0, 40)
   }));
   if (scenes.length < 2 || scenes.some(s => !s.narration || !s.visual_prompt)) throw new Error("Storyboard belum memiliki detail adegan yang cukup.");
@@ -46,28 +46,28 @@ export async function onRequestPost({ request, env }) {
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);
   if (topic.length < 8) return jsonError("Topik video minimal 8 karakter.", 400);
 
-  const duration = [30, 45, 60, 90].includes(Number(body.duration)) ? Number(body.duration) : 45;
-  const sceneCount = Math.max(3, Math.min(8, Number(body.sceneCount) || 5));
+  const duration = [60, 90, 120, 180].includes(Number(body.duration)) ? Number(body.duration) : 60;
+  const sceneCount = Math.max(6, Math.min(15, Number(body.sceneCount) || 8));
   const audience = typeof body.audience === "string" ? body.audience.trim().slice(0, 160) : "penonton umum";
   const tone = typeof body.tone === "string" ? body.tone.trim().slice(0, 100) : "edukatif dan menarik";
   const language = body.language === "en" ? "English" : "Bahasa Indonesia";
   const visualStyle = "mixed2";
-  const system = `Kamu adalah sutradara kreatif dan penulis storyboard video pendek. Buat storyboard yang bisa langsung dipakai dalam produksi video vertikal. Bahasa keluaran: ${language}.
+  const system = `Kamu adalah sutradara kreatif dan penulis storyboard video berdurasi 1 sampai 3 menit. Buat storyboard yang bisa langsung dipakai dalam produksi video vertikal. Bahasa keluaran: ${language}.
 Ketentuan:
-- Format video 9:16 portrait, target kanvas 720x1280.
+- Output akhir akan dibuat dalam dua format: 9:16 portrait 720x1280 dan 16:9 landscape 1280x720. Visual harus aman untuk crop kedua format, subjek utama di tengah dengan ruang kosong di sekeliling.
 - Gaya visual wajib mixed2: perpaduan footage/fotografi realistis, ilustrasi, 3D, dan cinematic; pilih jenis visual yang paling mendukung isi tiap adegan dan variasikan secara wajar.
 - Durasi total sekitar ${duration} detik dengan tepat ${sceneCount} adegan.
 - Target audiens: ${audience}. Nuansa: ${tone}.
 - Awali dengan hook kuat dalam 1-3 detik pertama; alur harus jelas, tidak repetitif, dan punya penutup.
 - Narasi harus alami untuk dibacakan, faktual, tidak menambah klaim medis/ilmiah yang tidak didukung. Jika topik berisiko, gunakan bahasa hati-hati.
-- visual_prompt harus berupa prompt visual mandiri dan rinci, tanpa teks tertulis di gambar, tanpa logo/watermark. Deskripsikan subjek, komposisi vertikal, pencahayaan, mood, dan jenis visual.
+- visual_prompt harus berupa prompt visual mandiri dan rinci, tanpa teks tertulis di gambar, tanpa logo/watermark. Deskripsikan subjek, komposisi aman untuk portrait dan landscape dengan subjek terpusat, pencahayaan, mood, dan jenis visual.
 - on_screen_text singkat, maksimal 8 kata.
 Kembalikan HANYA JSON valid dengan struktur:
 {"title":"...","hook":"...","summary":"...","closing":"...","scenes":[{"title":"...","narration":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"...","estimated_seconds":6,"transition":"cut"}]}
 Jangan gunakan markdown fence atau penjelasan di luar JSON.`;
   const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
   const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";
-  const maxTokens = 2600;
+  const maxTokens = 6500;
   let reservation = null, settled = false, providerResponded = false;
 
   try {
@@ -116,7 +116,7 @@ Jangan gunakan markdown fence atau penjelasan di luar JSON.`;
       return Response.json({ error: error.message + " Provider sudah merespons; biaya pemrosesan tercatat.", creditsCharged: charged.charged, creditsRemaining: charged.remaining }, { status: 502 });
     }
     return Response.json({
-      ...storyboard, format: "9:16", resolution: "720x1280", visualStyle,
+      ...storyboard, format: "9:16+16:9", resolution: "720p", outputFormats: ["9:16", "16:9"], outputResolutions: ["720x1280", "1280x720"], visualStyle,
       provider: "kiosapi", model: modelUsed,
       creditsCharged: charged.charged, creditsRemaining: charged.remaining
     }, { headers: { "Cache-Control": "no-store" } });

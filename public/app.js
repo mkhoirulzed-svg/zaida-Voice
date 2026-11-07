@@ -168,20 +168,23 @@ function showView(requestedView){
     if(!state.audioUrl){toast("Buat suara sebelum menyiapkan subtitle.");view="studio";setStep(2);}
     else{view="studio";setStep(3);$("includeSubtitle").checked=true;$("subtitleOptions").hidden=false;renderSubtitles();}
   }
-  const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage"}[view]||"studioPage";
+  const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage",video:"videoStudioPage"}[view]||"studioPage";
   document.body.classList.toggle("in-studio",view==="studio");
+  document.body.classList.toggle("video-studio-page",view==="video");
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
-  $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",persona:"Persona Saya",admin:"Dashboard admin"})[requestedView]||"Studio";
+  $("breadcrumbPage").textContent=({studio:"Studio",history:"Riwayat",subtitle:"Subtitle",assistant:"Chat AI",persona:"Persona Saya",admin:"Dashboard admin",video:"Auto Video Studio"})[requestedView]||"Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="assistant")renderStandaloneConversation();
+  if(view==="video")window.dispatchEvent(new Event("zaida:video-page-open"));
   if(view==="persona"&&!currentUser){openAuth();toast("Persona Saya hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}
   closeSidebar();
 }
 $("scriptText").addEventListener("input",updateCount);$("editScriptFromVoice").addEventListener("click",()=>{setStep(1);$("scriptText").focus();});$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("subtitleOptions").hidden=true;$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("resultAudio").pause();$("resultAudio").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>{const panel=document.querySelector(".personalization");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"center"});}});
 [["stability","stabilityValue"],["similarity","similarityValue"],["style","styleValue"]].forEach(([id,out])=>$(id).addEventListener("input",()=>$(out).textContent=$(id).value+"%"));
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+const initialPage=new URLSearchParams(location.search).get("view");if(initialPage==="video")showView("video");
 
 function renderVoiceScriptPreview(){
   const preview=$("voiceScriptPreview");

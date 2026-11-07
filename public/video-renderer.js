@@ -97,20 +97,15 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
   }
 }
 
-export async function renderDualVideo({ scenes, audioFile, subtitleText = "", onProgress = () => {} }) {
+export async function renderVideo({ scenes, audioFile, subtitleText = "", format = "9:16", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
+  if (!["9:16", "16:9"].includes(format)) throw new Error("Pilih format video terlebih dahulu.");
   const missing = scenes.findIndex(scene => !scene.generatedImage?.b64);
   if (missing !== -1) throw new Error("Gambar adegan " + (missing + 1) + " belum dibuat.");
   if (typeof WebAssembly === "undefined") throw new Error("Browser ini belum mendukung WebAssembly.");
-
   const ffmpeg = await loadFFmpeg(onProgress);
   const audioBytes = audioFile ? new Uint8Array(await audioFile.arrayBuffer()) : null;
-  const results = [];
-
-  for (const format of ["9:16", "16:9"]) {
-    const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress);
-    results.push({ format, blob, filename: format === "9:16" ? "zaida-video-vertikal.mp4" : "zaida-video-horizontal.mp4" });
-  }
-  onProgress({ phase: "complete", message: "Kedua format video selesai dibuat." });
-  return results;
+  const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress);
+  onProgress({ phase: "complete", message: "Video " + format + " selesai dibuat." });
+  return { format, blob, filename: format === "9:16" ? "zaida-video-vertikal.mp4" : "zaida-video-horizontal.mp4" };
 }

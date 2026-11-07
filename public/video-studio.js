@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { renderDualVideo } from "/video-renderer.js";
 
 const firebaseApp = initializeApp({
   apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",
@@ -13,6 +14,7 @@ const auth = getAuth(firebaseApp);
 const $ = id => document.getElementById(id);
 let currentStoryboard = null;
 let storageKey = null;
+let renderedVideoUrls = [];
 
 function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
@@ -89,6 +91,7 @@ async function generateSceneImage(scene, button, imageArea) {
       cost: result.creditsCharged
     };
     renderGeneratedImage(scene, imageArea);
+    updateRenderAvailability();
     $("videoCreditBalance").textContent = "Sisa kredit: " + Number(result.creditsRemaining).toLocaleString("id-ID");
     setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · biaya provider Rp" +
       Number(result.providerCostIdr).toLocaleString("id-ID") + " · " +
@@ -100,6 +103,15 @@ async function generateSceneImage(scene, button, imageArea) {
     button.disabled = false;
     button.textContent = scene.generatedImage ? "Buat ulang gambar" : "Buat gambar adegan";
   }
+}
+function updateRenderAvailability() {
+  const button = $("renderDualVideo");
+  if (!button) return;
+  const scenes = currentStoryboard?.scenes || [];
+  const ready = scenes.length >= 2 && scenes.every(scene => Boolean(scene.generatedImage?.b64));
+  button.disabled = !ready || !auth.currentUser;
+  const summary = $("videoRenderSummary");
+  if (summary) summary.textContent = scenes.length ? (scenes.filter(scene => scene.generatedImage?.b64).length + " dari " + scenes.length + " gambar adegan siap · " + (ready ? "Siap render dua format." : "Lengkapi semua gambar adegan.")) : "Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.";
 }
 function renderStoryboard(data) {
   currentStoryboard = data;
@@ -156,6 +168,7 @@ function renderStoryboard(data) {
     list.append(card);
   });
   saveDraft();
+  updateRenderAvailability();
 }
 async function generateStoryboard() {
   const topic = $("videoTopic").value.trim();
@@ -201,6 +214,61 @@ async function copyStoryboard() {
     setStatus("Storyboard berhasil disalin.");
   } catch { setStatus("Browser tidak mengizinkan penyalinan otomatis.", true); }
 }
+async function startDualRender() {
+  if (!currentStoryboard) return;
+  const button = $("renderDualVideo");
+  const progress = $("videoRenderProgress");
+  const progressBar = $("videoRenderProgressBar");
+  const progressText = $("videoRenderProgressText");
+  const downloads = $("videoRenderDownloads");
+  const audioFile = $("videoNarrationAudio").files?.[0] || null;
+  renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
+  renderedVideoUrls = [];
+  downloads.replaceChildren();
+  downloads.hidden = true;
+  progress.hidden = false;
+  button.disabled = true;
+  button.textContent = "Menyiapkan mesin render…";
+  progressBar.style.width = "0%";
+  progressText.textContent = "Memuat FFmpeg.wasm untuk pertama kali…";
+  setStatus("Render video berjalan di perangkat ini. Jangan tutup halaman.");
+  try {
+    const results = await renderDualVideo({
+      scenes: currentStoryboard.scenes,
+      audioFile,
+      onProgress: info => {
+        if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
+        else if (info.phase === "rendering") {
+          const percent = Math.round((info.progress || 0) * 100);
+          progressBar.style.width = percent + "%";
+          progressText.textContent = info.message || ("Merender " + (info.format || "video") + "… " + percent + "%");
+        } else if (info.phase === "complete") {
+          progressBar.style.width = "100%";
+          progressText.textContent = info.message;
+        }
+      }
+    });
+    results.forEach(result => {
+      const url = URL.createObjectURL(result.blob);
+      renderedVideoUrls.push(url);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = result.filename;
+      link.className = "render-download-link";
+      link.textContent = "Unduh video " + result.format + " · " + (result.blob.size / (1024 * 1024)).toFixed(1) + " MB";
+      downloads.append(link);
+    });
+    downloads.hidden = false;
+    setStatus("Berhasil! Video vertikal dan horizontal sudah selesai dibuat.");
+  } catch (error) {
+    progressText.textContent = error.message || "Render gagal.";
+    setStatus("Render gagal: " + (error.message || "Kesalahan tidak diketahui."), true);
+  } finally {
+    button.disabled = false;
+    button.innerHTML = "<span>▶</span> Render video 9:16 + 16:9 <b>→</b>";
+    updateRenderAvailability();
+  }
+}
 function restoreDraft() {
   if (!storageKey) return;
   try {
@@ -214,6 +282,7 @@ function restoreDraft() {
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
+$("renderDualVideo").addEventListener("click", startDualRender);
 onAuthStateChanged(auth, user => {
   storageKey = user ? "zaida-video-studio-draft-v1-" + user.uid : null;
   if (!user) {
@@ -221,10 +290,12 @@ onAuthStateChanged(auth, user => {
     $("videoCreditBalance").textContent = "Masuk untuk memakai AI";
     setStatus("Masuk melalui ZAIDA Voice untuk membuat storyboard.", true);
     $("generateStoryboard").disabled = true;
+    updateRenderAvailability();
   } else {
     $("videoUserStatus").textContent = user.email || "Akun terhubung";
     $("generateStoryboard").disabled = false;
     setStatus("Akun terhubung. Siap membuat storyboard dan gambar.");
+    updateRenderAvailability();
   }
   restoreDraft();
 });

@@ -71,3 +71,20 @@
  .video-studio-page textarea{font-size:16px}
 }
 @media(max-width:380px){.video-studio-page .storyboard-actions{grid-template-columns:1fr}}
+
+/* Dual-format browser render controls */
+.video-render-panel{margin-top:17px;padding:21px}
+.video-render-panel .render-intro{font-size:12px;line-height:1.7;color:var(--muted);margin:-7px 0 17px}
+.video-render-panel input[type=file]{display:block;width:100%;margin:8px 0;border:1px solid var(--line);background:#101218;color:var(--text);border-radius:8px;padding:10px;font-size:11px}
+.render-hint,.render-warning{display:block;font-size:10px;line-height:1.65;color:var(--muted);margin:7px 0 14px}
+.render-summary{padding:11px 13px;background:#171923;border:1px solid var(--line);border-radius:8px;font-size:11px;color:#c6b8f5;margin:14px 0}
+.video-render-panel .generate-button:disabled{opacity:.45;cursor:not-allowed}
+.render-progress{margin-top:15px;padding:13px;border:1px solid var(--line);border-radius:9px;background:#11131a}
+.render-progress-track{height:7px;background:#282a34;border-radius:9px;overflow:hidden}
+.render-progress-track span{display:block;width:0;height:100%;background:#a88af4;transition:width .2s}
+.render-progress p{font-size:10px;color:var(--muted);margin:9px 0 0}
+.render-downloads{display:grid;gap:9px;margin-top:14px}
+.render-download-link{display:block;padding:12px 14px;border:1px solid #51416f;border-radius:8px;color:#d1c3ff;text-decoration:none;font-size:12px;background:#1b1828}
+.render-download-link:focus,.render-download-link:hover{border-color:#a88af4}
+.render-warning{margin:13px 0 0;color:#d2b98a}
+@media(max-width:760px){.video-render-panel{padding:15px}.render-download-link{font-size:11px}}

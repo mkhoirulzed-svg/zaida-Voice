@@ -1,6 +1,4 @@
 /* ZAIDA Auto Video Studio — isolated styles; does not alter Voice Studio styles */
-.video-studio-page .sidebar .brand{margin-bottom:28px}
-.video-studio-page .sidebar .nav-item{display:block;text-decoration:none;margin-bottom:7px}
 .video-studio-page .video-page{max-width:1440px;padding-top:34px}
 .video-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:25px}
 .video-heading h1{font:700 clamp(30px,4vw,42px)/1.12 Manrope,sans-serif;letter-spacing:-1.5px;margin:12px 0 8px}

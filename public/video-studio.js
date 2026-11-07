@@ -328,6 +328,7 @@ async function startDualRender() {
     const results = await renderDualVideo({
       scenes: currentStoryboard.scenes,
       audioFile,
+      subtitleText: $("videoIncludeSubtitles").checked ? generatedSubtitleText : "",
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {
@@ -388,6 +389,7 @@ onAuthStateChanged(auth, user => {
     $("generateStoryboard").disabled = false;
     setStatus("Akun terhubung. Siap membuat storyboard dan gambar.");
     updateRenderAvailability();
+    loadVideoVoices();
   }
   restoreDraft();
 });

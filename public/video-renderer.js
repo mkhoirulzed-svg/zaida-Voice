@@ -25,7 +25,8 @@ async function loadFFmpeg(onProgress = () => {}) {
     const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@" + CORE_VERSION + "/dist/umd";
     const coreURL = await toBlobURL(base + "/ffmpeg-core.js", "text/javascript");
     const wasmURL = await toBlobURL(base + "/ffmpeg-core.wasm", "application/wasm");
-    await ffmpeg.load({ coreURL, wasmURL });
+    const classWorkerURL = new URL("/ffmpeg/worker.js", window.location.origin).href;
+    await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
     ffmpegInstance = ffmpeg;
     return ffmpeg;
   })();

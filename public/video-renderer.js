@@ -1,5 +1,5 @@
 const FFMPEG_VERSION = "0.12.10";
-const CORE_VERSION = "0.12.6";
+const CORE_VERSION = "0.12.10";
 
 let ffmpegInstance = null;
 let loadPromise = null;

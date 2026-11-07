@@ -6,19 +6,20 @@ async function sha512(value) {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!env.MIDTRANS_SERVER_KEY) return Response.json({ error: "Server key belum dikonfigurasi." }, { status: 503 });
+  const serverKey = String(env.MIDTRANS_SERVER_KEY || "").trim();
+  if (!serverKey) return Response.json({ error: "Server key belum dikonfigurasi." }, { status: 503 });
   let notice;
   try { notice = await request.json(); } catch { return Response.json({ error: "Invalid notification." }, { status: 400 }); }
   const { order_id: orderId, status_code: statusCode, gross_amount: grossAmount, signature_key: signature } = notice || {};
   if (!orderId || !statusCode || !grossAmount || !signature) return Response.json({ error: "Incomplete notification." }, { status: 400 });
-  const expected = await sha512(String(orderId) + String(statusCode) + String(grossAmount) + env.MIDTRANS_SERVER_KEY);
+  const expected = await sha512(String(orderId) + String(statusCode) + String(grossAmount) + serverKey);
   if (expected !== String(signature).toLowerCase()) return Response.json({ error: "Invalid signature." }, { status: 401 });
 
   try {
     const payment = await getPaymentRecord(env, orderId);
     if (!payment) return Response.json({ error: "Order not found." }, { status: 404 });
     const statusResponse = await fetch("https://api.sandbox.midtrans.com/v2/" + encodeURIComponent(orderId) + "/status", {
-      headers: { "Authorization": "Basic " + btoa(env.MIDTRANS_SERVER_KEY + ":"), "Accept": "application/json" }
+      headers: { "Authorization": "Basic " + btoa(serverKey + ":"), "Accept": "application/json" }
     });
     const status = await statusResponse.json().catch(() => ({}));
     if (!statusResponse.ok) return Response.json({ error: "Could not verify transaction status." }, { status: 502 });

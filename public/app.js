@@ -175,6 +175,8 @@ function showView(requestedView){
   }
   const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage"}[view]||"studioPage";
   document.body.classList.toggle("in-studio",view==="studio");
+  // Restore the Studio workspace to the actual top on mobile when returning from another view or a restored browser scroll position.
+  if(view==="studio") requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));

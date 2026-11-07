@@ -348,6 +348,8 @@ async function startDualRender() {
           const percent = Math.round((info.progress || 0) * 100);
           progressBar.style.width = percent + "%";
           progressText.textContent = info.message || ("Merender " + (info.format || "video") + "… " + percent + "%");
+        } else if (info.phase === "log") {
+          progressText.textContent = "FFmpeg: " + (info.message || "Menjalankan proses…");
         } else if (info.phase === "complete") {
           progressBar.style.width = "100%";
           progressText.textContent = info.message;
@@ -365,9 +367,20 @@ async function startDualRender() {
     downloads.hidden = false;
     setStatus("Berhasil! Video format " + result.format + " selesai dibuat.");
   } catch (error) {
-    const detail = error?.stack ? error.message + " · " + String(error.stack).split("\n")[1]?.trim() : (error.message || "Kesalahan tidak diketahui.");
+    let detail = "";
+    if (typeof error === "string") detail = error;
+    else if (error && typeof error === "object") {
+      const parts = [];
+      if (error.name) parts.push(String(error.name));
+      if (error.message) parts.push(String(error.message));
+      if (error.stack) parts.push(String(error.stack).split("\\n").slice(0, 3).join(" | "));
+      if (!parts.length) { try { parts.push(JSON.stringify(error)); } catch {} }
+      detail = parts.join(" — ");
+    } else if (error !== undefined && error !== null) detail = String(error);
+    if (!detail || detail === "[object Object]") detail = "Error tidak memiliki detail. Periksa Console browser (F12) untuk pesan asli.";
     progressText.textContent = detail;
     setStatus("Render gagal: " + detail, true);
+    console.error("[ZAIDA Video Studio] Render gagal:", error);
   } finally {
     button.disabled = false;
     button.innerHTML = "<span>▶</span> Render video " + (selectedFormat === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";

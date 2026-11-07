@@ -12,7 +12,7 @@ const firebaseApp = initializeApp({
 // Keep the mobile studio at the top after a page reload or restored browser session.
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 window.addEventListener("pageshow", () => {
-  if (!location.hash) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  if (!location.hash) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
 });
 const auth = getAuth(firebaseApp);
 let authMode = "login";

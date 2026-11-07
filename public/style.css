@@ -449,3 +449,13 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
   .top-actions .credit-balance{font-size:10px;padding:6px 7px}
   .top-actions .auth-button{max-width:39vw;padding:7px 8px}
 }
+
+
+/* Mobile layout recovery: keep the application anchored to the viewport top */
+@media(max-width:760px){
+  html,body{margin:0!important;padding:0!important;}
+  body.in-studio{padding-top:0!important;}
+  body.in-studio .app-shell{display:block!important;min-height:100vh!important;margin:0!important;padding:0!important;}
+  body.in-studio .main{position:relative!important;top:0!important;inset-block-start:0!important;transform:none!important;margin-top:0!important;padding-top:0!important;}
+  body.in-studio .topbar{position:relative!important;top:0!important;inset-block-start:0!important;transform:none!important;margin-top:0!important;}
+}

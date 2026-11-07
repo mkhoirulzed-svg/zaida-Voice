@@ -3,6 +3,7 @@ const CORE_VERSION = "0.12.6";
 
 let ffmpegInstance = null;
 let loadPromise = null;
+let recentFFmpegLogs = [];
 
 async function loadFFmpeg(onProgress = () => {}) {
   if (ffmpegInstance?.loaded) return ffmpegInstance;
@@ -18,8 +19,13 @@ async function loadFFmpeg(onProgress = () => {}) {
     ffmpeg.on("progress", ({ progress }) => {
       onProgress({ phase: "rendering", progress: Math.max(0, Math.min(1, progress)) });
     });
+    recentFFmpegLogs = [];
     ffmpeg.on("log", ({ message }) => {
-      if (/error/i.test(message)) onProgress({ phase: "log", message: message.slice(0, 180) });
+      const line = String(message || "").trim();
+      if (!line) return;
+      recentFFmpegLogs.push(line);
+      if (recentFFmpegLogs.length > 30) recentFFmpegLogs.shift();
+      onProgress({ phase: "log", message: line.slice(0, 240) });
     });
 
     const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@" + CORE_VERSION + "/dist/umd";
@@ -100,8 +106,14 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
     if (subtitleInput !== null) args.push("-map", subtitleInput + ":s:0", "-c:s", "mov_text", "-metadata:s:s:0", "language=ind");
     args.push("-t", String(totalSeconds), "-y", outputName);
     onProgress({ phase: "rendering", message: hasAllImages ? "Merender video dari gambar adegan…" : "Membuat video dasar langsung dengan FFmpeg…", format });
-    await ffmpeg.exec(args);
-    return new Blob([await ffmpeg.readFile(outputName)], { type: "video/mp4" });
+    const exitCode = await ffmpeg.exec(args);
+    if (exitCode !== 0) {
+      const details = recentFFmpegLogs.slice(-8).join("\n");
+      throw new Error("FFmpeg berhenti dengan kode " + exitCode + (details ? ". Log terakhir: " + details : ". Tidak ada log FFmpeg."));
+    }
+    const output = await ffmpeg.readFile(outputName);
+    if (!output || !output.length) throw new Error("FFmpeg selesai tetapi file MP4 kosong. Log: " + recentFFmpegLogs.slice(-8).join("\n"));
+    return new Blob([output], { type: "video/mp4" });
   } finally {
     for (const name of [...inputNames, outputName]) {
       try { await ffmpeg.deleteFile(name); } catch {}

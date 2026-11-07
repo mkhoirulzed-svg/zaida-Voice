@@ -13,6 +13,8 @@ const auth = getAuth(firebaseApp);
 let authMode = "login";
 let currentUser = null;
 let accountInfo = null;
+let pendingPackageId = new URLSearchParams(location.search).get("buy");
+let checkoutStarted = false;
 let personaReady = Promise.resolve();
 async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").hidden=false;$("creditBalance").textContent="Kredit: "+Number(data.credits).toLocaleString("id-ID");$("sidebarCreditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+data.credits;$("profileEmail").textContent=data.role==="admin"?"Administrator":"Akun terverifikasi";}catch(error){$("creditBalance").hidden=false;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Saldo tidak tersedia";toast(error.message);}}
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
@@ -25,6 +27,33 @@ function toast(message){const el=$("toast");el.textContent=message;el.classList.
 function setBusy(busy,message="Sedang membuat audio…"){$("generateButton").disabled=busy;$("dockAction").disabled=busy;$("progressWrap").hidden=!busy;$("progressText").textContent=message}
 function newRequestId(){return crypto.randomUUID();}
 async function api(path,options={}){const response=await fetch(path,{...options,headers:{"Content-Type":"application/json",...(options.authRequired?await authHeaders():{}),...(options.headers||{})}});let data;try{data=await response.json()}catch{data={error:"Respons server tidak valid."}}if(!response.ok)throw new Error(data.error||"Permintaan gagal ("+response.status+")");return data}
+async function startPackageCheckout(packageId){
+  if(!currentUser){pendingPackageId=packageId;openAuth();return;}
+  if(checkoutStarted)return;
+  checkoutStarted=true;
+  try{
+    const result=await api("/api/payment/create",{method:"POST",authRequired:true,body:JSON.stringify({packageId})});
+    if(!result.redirectUrl)throw new Error("Tautan pembayaran tidak diterima.");
+    location.assign(result.redirectUrl);
+  }catch(error){checkoutStarted=false;toast(error.message);}
+}
+async function checkReturnedPayment(){
+  const params=new URLSearchParams(location.search);
+  if(params.get("payment")!=="finish")return;
+  const orderId=params.get("order_id");
+  if(!orderId||!currentUser)return;
+  try{
+    let result;
+    for(let attempt=0;attempt<4;attempt++){
+      result=await api("/api/payment/status?order_id="+encodeURIComponent(orderId),{authRequired:true});
+      if(result.status==="paid")break;
+      await new Promise(resolve=>setTimeout(resolve,2000));
+    }
+    await refreshAccount();
+    toast(result?.status==="paid"?"Pembayaran berhasil! Kredit sudah ditambahkan.":"Pembayaran sedang diverifikasi. Saldo akan diperbarui setelah Midtrans mengonfirmasi.");
+  }catch(error){toast("Belum dapat memeriksa pembayaran: "+error.message);}
+  history.replaceState({},document.title,location.pathname);
+}
 async function improveScript(){const text=$("scriptText").value.trim();if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return}if(!text){toast("Tulis topik atau naskah terlebih dahulu.");return}const button=$("improveScript");button.disabled=true;button.textContent="Menyusun…";try{const result=await api("/api/script",{method:"POST",body:JSON.stringify({requestId:newRequestId(),text,task:"polish",language:$("scriptLanguage").value}),authRequired:true});if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining)}$("scriptText").value=result.text||text;updateCount();const providerLabel=result.provider==="kiosapi"?"Kiosapi":result.provider==="deepseek-direct"?"DeepSeek langsung":"Provider belum terdeteksi";const modelLabel=result.model?" · "+result.model:"";toast("Naskah berhasil diperbarui.");}catch(error){toast(error.message)}finally{button.disabled=false;button.textContent="Perbaiki naskah"}}
 async function addAudioTags(){const text=$("scriptText").value.trim();if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return}if(!text){toast("Tulis naskah terlebih dahulu.");return}const button=$("addAudioTags");button.disabled=true;button.textContent="Menambah tag…";try{const result=await api("/api/script",{method:"POST",body:JSON.stringify({requestId:newRequestId(),text,task:"audio_tags",language:$("scriptLanguage").value}),authRequired:true});if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining)}$("scriptText").value=result.text||text;updateCount();toast("Audio Tags ditambahkan. Periksa naskah sebelum membuat suara.");}catch(error){toast(error.message)}finally{button.disabled=false;button.textContent="Audio Tags"}}
 function renderHistory(){
@@ -411,7 +440,7 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();}else{loadVoices();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
+  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }

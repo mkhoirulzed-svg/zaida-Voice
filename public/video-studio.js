@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { renderDualVideo } from "/video-renderer.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { renderVideo } from "/video-renderer.js";
 
 const firebaseApp = initializeApp({
   apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",
@@ -12,6 +12,7 @@ const firebaseApp = initializeApp({
 });
 const auth = getAuth(firebaseApp);
 const $ = id => document.getElementById(id);
+let currentUser = null;
 let currentStoryboard = null;
 let storageKey = null;
 let renderedVideoUrls = [];
@@ -94,7 +95,8 @@ async function generateSceneImage(scene, button, imageArea) {
     };
     renderGeneratedImage(scene, imageArea);
     updateRenderAvailability();
-    $("videoCreditBalance").textContent = "Sisa kredit: " + Number(result.creditsRemaining).toLocaleString("id-ID");
+    $("videoCreditBalance").textContent = "Kredit: " + Number(result.creditsRemaining).toLocaleString("id-ID");
+    $("sidebarCreditBalance").textContent = Number(result.creditsRemaining).toLocaleString("id-ID") + " kredit";
     setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · biaya provider Rp" +
       Number(result.providerCostIdr).toLocaleString("id-ID") + " · " +
       Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
@@ -113,7 +115,7 @@ function updateRenderAvailability() {
   const ready = scenes.length >= 2 && scenes.every(scene => Boolean(scene.generatedImage?.b64));
   button.disabled = !ready || !auth.currentUser;
   const summary = $("videoRenderSummary");
-  if (summary) summary.textContent = scenes.length ? (scenes.filter(scene => scene.generatedImage?.b64).length + " dari " + scenes.length + " gambar adegan siap · " + (ready ? "Siap render dua format." : "Lengkapi semua gambar adegan.")) : "Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.";
+  if (summary) summary.textContent = scenes.length ? (scenes.filter(scene => scene.generatedImage?.b64).length + " dari " + scenes.length + " gambar adegan siap · " + (ready ? "Siap render format " + (document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16") + "." : "Lengkapi semua gambar adegan.")) : "Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.";
 }
 function renderStoryboard(data) {
   currentStoryboard = data;
@@ -314,6 +316,7 @@ async function startDualRender() {
   const progressText = $("videoRenderProgressText");
   const downloads = $("videoRenderDownloads");
   const audioFile = $("videoNarrationAudio").files?.[0] || generatedNarrationBlob || null;
+  const selectedFormat = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
   renderedVideoUrls = [];
   downloads.replaceChildren();
@@ -325,8 +328,9 @@ async function startDualRender() {
   progressText.textContent = "Memuat FFmpeg.wasm untuk pertama kali…";
   setStatus("Render video berjalan di perangkat ini. Jangan tutup halaman.");
   try {
-    const results = await renderDualVideo({
+    const result = await renderVideo({
       scenes: currentStoryboard.scenes,
+      format: selectedFormat,
       audioFile,
       subtitleText: $("videoIncludeSubtitles").checked ? generatedSubtitleText : "",
       onProgress: info => {
@@ -341,24 +345,22 @@ async function startDualRender() {
         }
       }
     });
-    results.forEach(result => {
-      const url = URL.createObjectURL(result.blob);
-      renderedVideoUrls.push(url);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = result.filename;
-      link.className = "render-download-link";
-      link.textContent = "Unduh video " + result.format + " · " + (result.blob.size / (1024 * 1024)).toFixed(1) + " MB";
-      downloads.append(link);
-    });
+    const url = URL.createObjectURL(result.blob);
+    renderedVideoUrls.push(url);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = result.filename;
+    link.className = "render-download-link";
+    link.textContent = "Unduh video " + result.format + " · " + (result.blob.size / (1024 * 1024)).toFixed(1) + " MB";
+    downloads.append(link);
     downloads.hidden = false;
-    setStatus("Berhasil! Video vertikal dan horizontal sudah selesai dibuat.");
+    setStatus("Berhasil! Video format " + result.format + " selesai dibuat.");
   } catch (error) {
     progressText.textContent = error.message || "Render gagal.";
     setStatus("Render gagal: " + (error.message || "Kesalahan tidak diketahui."), true);
   } finally {
     button.disabled = false;
-    button.innerHTML = "<span>▶</span> Render video 9:16 + 16:9 <b>→</b>";
+    button.innerHTML = "<span>▶</span> Render video " + (selectedFormat === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";
     updateRenderAvailability();
   }
 }
@@ -376,36 +378,64 @@ $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
 $("renderDualVideo").addEventListener("click", startDualRender);
+document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => input.addEventListener("change", updateRenderAvailability));
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
-// Gunakan penyimpanan autentikasi lokal yang sama dengan halaman utama ZAIDA Voice.
-setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    onAuthStateChanged(auth, user => {
-      const verifiedUser = user && user.emailVerified ? user : null;
-      storageKey = verifiedUser ? "zaida-video-studio-draft-v1-" + verifiedUser.uid : null;
-      if (!verifiedUser) {
-        $("videoUserStatus").textContent = user ? "Email belum diverifikasi" : "Belum masuk";
-        $("videoCreditBalance").textContent = user ? "Verifikasi email terlebih dahulu" : "Masuk untuk memakai AI";
-        setStatus(user
-          ? "Verifikasi email akun ZAIDA Voice terlebih dahulu, lalu muat ulang halaman ini."
-          : "Sesi login belum terbaca. Kembali ke ZAIDA Voice, pastikan sudah masuk, lalu buka Auto Video Studio lagi.", true);
-        $("generateStoryboard").disabled = true;
-        $("generateVideoNarration").disabled = true;
-        updateRenderAvailability();
-        return;
-      }
-      $("videoUserStatus").textContent = verifiedUser.email || "Akun terhubung";
-      $("generateStoryboard").disabled = false;
-      setStatus("Akun ZAIDA Voice terdeteksi. Siap membuat storyboard dan gambar.");
+// Sesi Firebase, saldo kredit, dan status akun mengikuti dashboard ZAIDA Voice.
+async function refreshVideoAccount() {
+  if (!currentUser) return;
+  try {
+    const token = await currentUser.getIdToken();
+    const response = await fetch("/api/account", { headers: { Authorization: "Bearer " + token } });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Saldo tidak dapat dimuat.");
+    $("videoCreditBalance").hidden = false;
+    $("videoCreditBalance").textContent = "Kredit: " + Number(data.credits).toLocaleString("id-ID");
+    $("sidebarCreditBalance").textContent = Number(data.credits).toLocaleString("id-ID") + " kredit";
+  } catch {
+    $("videoCreditBalance").hidden = false;
+    $("videoCreditBalance").textContent = "Kredit: —";
+    $("sidebarCreditBalance").textContent = "Saldo tidak tersedia";
+  }
+}
+function closeVideoSidebar() { document.body.classList.remove("video-sidebar-open"); $("sidebarBackdrop").hidden = true; }
+$("mobileMenu").addEventListener("click", () => { document.body.classList.add("video-sidebar-open"); $("sidebarBackdrop").hidden = false; });
+$("sidebarClose").addEventListener("click", closeVideoSidebar);
+$("sidebarBackdrop").addEventListener("click", closeVideoSidebar);
+$("authButton").addEventListener("click", async () => {
+  if (currentUser) {
+    try { await signOut(auth); setStatus("Kamu sudah keluar dari akun."); }
+    catch (error) { setStatus(error.message, true); }
+  } else location.href = "/";
+});
+setPersistence(auth, browserLocalPersistence).then(() => {
+  onAuthStateChanged(auth, async user => {
+    currentUser = user && user.emailVerified ? user : null;
+    storageKey = currentUser ? "zaida-video-studio-draft-v1-" + currentUser.uid : null;
+    const allowed = Boolean(currentUser);
+    $("videoUserStatus").textContent = allowed ? "Akun terverifikasi" : (user ? "Email belum diverifikasi" : "Belum masuk");
+    $("videoProfileName").textContent = allowed ? (user.displayName || user.email || "Pengguna") : "Pengunjung";
+    $("videoProfileAvatar").textContent = allowed ? (user.displayName || user.email || "U").slice(0,1).toUpperCase() : "Z";
+    $("videoTopAvatar").textContent = allowed ? (user.displayName || user.email || "U").slice(0,1).toUpperCase() : "Z";
+    $("authButton").textContent = allowed ? "Keluar" : "Masuk / Daftar";
+    $("generateStoryboard").disabled = !allowed;
+    $("generateVideoNarration").disabled = !allowed;
+    if (!allowed) {
+      $("videoCreditBalance").hidden = true;
+      $("sidebarCreditBalance").textContent = user ? "Verifikasi email dahulu" : "Masuk untuk melihat saldo";
+      setStatus(user ? "Verifikasi email akun ZAIDA Voice terlebih dahulu, lalu muat ulang halaman ini." : "Masuk ke ZAIDA Voice untuk menggunakan fitur AI Auto Video Studio.", true);
       updateRenderAvailability();
-      loadVideoVoices();
-      restoreDraft();
-    });
-  })
-  .catch(error => {
-    $("videoUserStatus").textContent = "Gagal memuat sesi akun";
-    setStatus("Tidak dapat membaca sesi login ZAIDA Voice: " + error.message, true);
-    $("generateStoryboard").disabled = true;
-    $("generateVideoNarration").disabled = true;
+      return;
+    }
+    await refreshVideoAccount();
+    setStatus("Akun ZAIDA Voice terhubung. Siap membuat storyboard dan gambar.");
     updateRenderAvailability();
+    loadVideoVoices();
+    restoreDraft();
   });
+}).catch(error => {
+  $("videoUserStatus").textContent = "Gagal memuat sesi akun";
+  setStatus("Tidak dapat membaca sesi login ZAIDA Voice: " + error.message, true);
+  $("generateStoryboard").disabled = true;
+  $("generateVideoNarration").disabled = true;
+  updateRenderAvailability();
+});

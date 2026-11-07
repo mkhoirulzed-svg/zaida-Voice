@@ -114,8 +114,10 @@ function updateRenderAvailability() {
   const scenes = currentStoryboard?.scenes || [];
   const ready = scenes.length >= 2 && scenes.every(scene => Boolean(scene.generatedImage?.b64));
   button.disabled = !ready || !auth.currentUser;
+  const selected = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const summary = $("videoRenderSummary");
-  if (summary) summary.textContent = scenes.length ? (scenes.filter(scene => scene.generatedImage?.b64).length + " dari " + scenes.length + " gambar adegan siap · " + (ready ? "Siap render format " + (document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16") + "." : "Lengkapi semua gambar adegan.")) : "Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.";
+  if (summary) summary.textContent = scenes.length ? (scenes.filter(scene => scene.generatedImage?.b64).length + " dari " + scenes.length + " gambar adegan siap · " + (ready ? "Siap render format " + selected + "." : "Lengkapi semua gambar adegan.")) : "Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.";
+  if (!button.disabled) button.innerHTML = "<span>▶</span> Render video " + (selected === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";
 }
 function renderStoryboard(data) {
   currentStoryboard = data;
@@ -194,7 +196,10 @@ async function generateStoryboard() {
       })
     });
     renderStoryboard(result);
-    if (result.creditsRemaining !== undefined) $("videoCreditBalance").textContent = "Sisa kredit: " + Number(result.creditsRemaining).toLocaleString("id-ID");
+    if (result.creditsRemaining !== undefined) {
+      $("videoCreditBalance").textContent = "Kredit: " + Number(result.creditsRemaining).toLocaleString("id-ID");
+      $("sidebarCreditBalance").textContent = Number(result.creditsRemaining).toLocaleString("id-ID") + " kredit";
+    }
     setStatus("Storyboard berhasil dibuat · " + (result.model || "Kiosapi") + " · biaya " + (result.creditsCharged ?? "—") + " kredit.");
   } catch (error) {
     setStatus(error.message, true);

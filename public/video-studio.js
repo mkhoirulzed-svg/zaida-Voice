@@ -114,11 +114,11 @@ function updateRenderAvailability() {
   const button = $("renderDualVideo");
   if (!button) return;
   const scenes = currentStoryboard?.scenes || [];
-  const ready = scenes.length >= 2 && scenes.every(scene => Boolean(scene.generatedImage?.b64));
-  button.disabled = !ready || !auth.currentUser;
+  const ready = scenes.length >= 2 && Boolean(auth.currentUser);
+  button.disabled = !ready;
   const selected = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const summary = $("videoRenderSummary");
-  if (summary) summary.textContent = scenes.length ? (scenes.filter(scene => scene.generatedImage?.b64).length + " dari " + scenes.length + " gambar adegan siap · " + (ready ? "Siap render format " + selected + "." : "Lengkapi semua gambar adegan.")) : "Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.";
+  if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan siap · gambar AI opsional · " + (ready ? "Siap render format " + selected + "." : "Masuk untuk mulai render.")) : "Belum siap render · Buat storyboard terlebih dahulu.";
   if (!button.disabled) button.innerHTML = "<span>▶</span> Render video " + (selected === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";
 }
 function renderStoryboard(data) {
@@ -379,7 +379,7 @@ function restoreDraft() {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
     if (saved && Array.isArray(saved.scenes) && saved.scenes.length) {
       renderStoryboard(saved);
-      setStatus("Draft storyboard lokal dipulihkan. Gambar yang belum diunduh perlu dibuat kembali setelah halaman dimuat ulang.");
+      setStatus("Draft storyboard lokal dipulihkan. Video bisa dirender tanpa membuat gambar AI.");
     }
   } catch {}
 }

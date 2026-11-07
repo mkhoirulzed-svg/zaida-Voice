@@ -306,7 +306,7 @@ async function generateVideoNarration() {
   if(!currentStoryboard?.scenes?.length){setStatus("Buat storyboard terlebih dahulu.",true);return;}
   const voiceId=$("videoVoiceSelect").value;
   if(!voiceId){setStatus("Pilih karakter suara terlebih dahulu.",true);return;}
-  const text=currentStoryboard.scenes.map(scene=>scene.narration.trim()).filter(Boolean).join("\\n\\n");
+  const text=currentStoryboard.scenes.map(scene=>scene.narration.trim()).filter(Boolean).join("\n\n");
   if(!text||text.length>5000){setStatus("Gabungan narasi harus berisi 1–5.000 karakter.",true);return;}
   const button=$("generateVideoNarration");
   button.disabled=true;button.textContent="Membuat narasi…";

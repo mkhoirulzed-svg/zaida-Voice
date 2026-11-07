@@ -225,6 +225,28 @@ async function copyStoryboard() {
     setStatus("Storyboard berhasil disalin.");
   } catch { setStatus("Browser tidak mengizinkan penyalinan otomatis.", true); }
 }
+async function getAudioDurationSeconds(file) {
+  if (!file) return null;
+  const url = URL.createObjectURL(file);
+  const audio = document.createElement("audio");
+  audio.preload = "metadata";
+  try {
+    return await new Promise(resolve => {
+      const finish = value => {
+        audio.removeAttribute("src");
+        audio.load();
+        URL.revokeObjectURL(url);
+        resolve(Number.isFinite(value) && value > 0 ? value : null);
+      };
+      audio.onloadedmetadata = () => finish(audio.duration);
+      audio.onerror = () => finish(null);
+      audio.src = url;
+    });
+  } catch {
+    URL.revokeObjectURL(url);
+    return null;
+  }
+}
 function videoSrtTime(seconds) {
   const ms=Math.max(0,Math.round((Number(seconds)||0)*1000));
   const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),r=ms%1000;
@@ -339,6 +361,7 @@ async function startDualRender() {
   const downloads = $("videoRenderDownloads");
   const audioFile = $("videoNarrationAudio").files?.[0] || generatedNarrationBlob || null;
   const selectedFormat = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
+  const selectedSubtitleText = $("videoIncludeSubtitles").checked ? generatedSubtitleText : "";
   renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
   renderedVideoUrls = [];
   downloads.replaceChildren();
@@ -350,11 +373,14 @@ async function startDualRender() {
   progressText.textContent = "Memuat FFmpeg.wasm untuk pertama kali…";
   setStatus("Render video berjalan di perangkat ini. Jangan tutup halaman.");
   try {
+    progressText.textContent = audioFile ? "Membaca durasi audio…" : "Menyiapkan durasi video…";
+    const audioDuration = await getAudioDurationSeconds(audioFile);
     const result = await renderVideo({
       scenes: currentStoryboard.scenes,
       format: selectedFormat,
       audioFile,
-      subtitleText: $("videoIncludeSubtitles").checked ? generatedSubtitleText : "",
+      audioDuration,
+      subtitleText: selectedSubtitleText,
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {
@@ -377,6 +403,16 @@ async function startDualRender() {
     link.className = "render-download-link";
     link.textContent = "Unduh video " + result.format + " · " + (result.blob.size / (1024 * 1024)).toFixed(1) + " MB";
     downloads.append(link);
+    if (selectedSubtitleText.trim()) {
+      const srtUrl = URL.createObjectURL(new Blob([selectedSubtitleText], { type: "application/x-subrip;charset=utf-8" }));
+      renderedVideoUrls.push(srtUrl);
+      const srtLink = document.createElement("a");
+      srtLink.href = srtUrl;
+      srtLink.download = "zaida-video-subtitle.srt";
+      srtLink.className = "render-download-link";
+      srtLink.textContent = "Unduh subtitle SRT";
+      downloads.append(srtLink);
+    }
     downloads.hidden = false;
     setStatus("Berhasil! Video format " + result.format + " selesai dibuat.");
   } catch (error) {

@@ -54,9 +54,17 @@
         <section class="panel video-render-panel" id="videoRenderPanel">
           <div class="section-head"><h2>03 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
           <p class="render-intro">Setelah semua gambar adegan siap, buat dua file MP4 langsung dari browser. Narasi audio bersifat opsional untuk uji render awal.</p>
-          <label class="field-label" for="videoNarrationAudio">AUDIO NARASI (OPSIONAL)</label>
+          <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
+          <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
+          <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
+          <button class="secondary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi dari storyboard</button>
+          <audio id="videoNarrationPreview" controls hidden></audio>
+          <small class="render-hint" id="videoNarrationStatus">Narasi dibuat dari gabungan teks semua adegan. Tarif tetap mengikuti ZAIDA Voice: 3 kredit per karakter.</small>
+          <label class="field-label" for="videoNarrationAudio">ATAU GUNAKAN AUDIO SENDIRI</label>
           <input id="videoNarrationAudio" type="file" accept="audio/*">
-          <small class="render-hint">Pilih MP3, M4A, atau WAV jika sudah memiliki narasi. Jika belum, video tetap dapat dibuat sebagai rangkaian gambar.</small>
+          <small class="render-hint">Audio file lokal akan menggantikan audio hasil TTS.</small>
+          <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Sertakan subtitle</b><small>Subtitle SRT dibuat dari timestamp ElevenLabs jika tersedia.</small></span></label>
+          <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
           <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.</div>
           <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render video 9:16 + 16:9 <b>→</b></button>
           <div class="render-progress" id="videoRenderProgress" hidden>

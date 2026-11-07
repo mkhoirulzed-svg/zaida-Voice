@@ -48,3 +48,14 @@
 .video-studio-page .footer{margin-top:30px}
 @media(max-width:1000px){.video-layout{grid-template-columns:1fr}.storyboard-empty{min-height:220px}}
 @media(max-width:760px){.video-studio-page .video-page{padding:22px 15px 24px}.video-heading{align-items:flex-start}.format-chip{padding:9px 10px}.format-chip b{font-size:16px}.format-chip span{font-size:8px}.video-form-panel,.storyboard-panel{padding:15px}.video-field-grid{gap:9px}.storyboard-actions button{flex:1}.video-heading h1{font-size:30px}.video-heading p{font-size:11px;max-width:260px}}
+
+/* Scene image generation — isolated to Auto Video Studio */
+.scene-image-area{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:9px;background:#171923;display:grid;gap:9px}
+.scene-image-note{font-size:10px;color:var(--muted)}
+.scene-image-button{width:100%;min-height:38px}
+.scene-image-button:disabled{opacity:.6;cursor:wait}
+.scene-image-preview{margin:0;display:grid;grid-template-columns:minmax(0,190px) 1fr;gap:7px 12px;align-items:center}
+.scene-image-preview img{grid-row:span 2;width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:8px;background:#0b0d12;border:1px solid var(--line)}
+.scene-image-preview figcaption{font-size:10px;color:var(--muted)}
+.scene-image-preview a{font-size:11px;color:#c6b8f5;text-decoration:none}
+@media(max-width:520px){.scene-image-preview{grid-template-columns:minmax(0,120px) 1fr}}

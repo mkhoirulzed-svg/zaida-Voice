@@ -126,7 +126,7 @@
         </div>
         <section class="panel video-render-panel" id="videoRenderPanel">
           <div class="section-head"><h2>03 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
-          <p class="render-intro">Setelah semua gambar adegan siap, pilih satu format video lalu render MP4 langsung dari browser. Narasi audio bersifat opsional.</p>
+          <p class="render-intro">Pilih satu format dan render MP4 langsung dengan FFmpeg. Gambar AI bersifat opsional; video dasar dapat dibuat langsung dari storyboard. Narasi audio juga opsional.</p>
           <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
           <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
           <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
@@ -139,7 +139,7 @@
           <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Sertakan subtitle</b><small>Subtitle SRT dibuat dari timestamp ElevenLabs jika tersedia.</small></span></label>
           <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
           <fieldset class="video-format-picker"><legend>PILIH FORMAT VIDEO</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, YouTube Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
-          <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.</div>
+          <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard terlebih dahulu.</div>
           <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render video vertikal (9:16) <b>→</b></button>
           <div class="render-progress" id="videoRenderProgress" hidden>
             <div class="render-progress-track"><span id="videoRenderProgressBar"></span></div>

@@ -438,7 +438,6 @@ onAuthStateChanged(auth,user=>{
   $("profileName").textContent=allowed?(user.displayName||user.email?.split("@")[0]||"Pengguna"):"Pengunjung";
   $("profileEmail").textContent=allowed?(user.email||"Akun terverifikasi"):(user?"Email belum diverifikasi":"Belum masuk");
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
-  $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
   if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){

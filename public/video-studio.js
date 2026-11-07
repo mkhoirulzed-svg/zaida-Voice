@@ -11,7 +11,6 @@ const firebaseApp = initializeApp({
 });
 const auth = getAuth(firebaseApp);
 const $ = id => document.getElementById(id);
-let currentUser = null;
 let currentStoryboard = null;
 let storageKey = null;
 
@@ -36,7 +35,7 @@ function buildPayload() {
     title: currentStoryboard.title, hook: currentStoryboard.hook, summary: currentStoryboard.summary,
     closing: currentStoryboard.closing, format: currentStoryboard.format,
     resolution: currentStoryboard.resolution, visualStyle: currentStoryboard.visualStyle,
-    scenes: currentStoryboard.scenes
+    scenes: currentStoryboard.scenes.map(({ generatedImage, imageBusy, ...scene }) => scene)
   };
 }
 function saveDraft() {
@@ -53,6 +52,54 @@ function createField(labelText, value, className, onInput) {
   area.addEventListener("input", () => onInput(area.value));
   wrap.append(label, area);
   return wrap;
+}
+function renderGeneratedImage(scene, imageArea) {
+  imageArea.replaceChildren();
+  if (!scene.generatedImage) return;
+  const figure = document.createElement("figure");
+  figure.className = "scene-image-preview";
+  const image = document.createElement("img");
+  image.alt = "Hasil gambar adegan " + scene.scene_number;
+  image.src = "data:" + scene.generatedImage.mime + ";base64," + scene.generatedImage.b64;
+  const caption = document.createElement("figcaption");
+  caption.textContent = "Gambar siap · " + Number(scene.generatedImage.cost).toLocaleString("id-ID") + " kredit";
+  const download = document.createElement("a");
+  download.href = image.src;
+  download.download = "zaida-adegan-" + scene.scene_number + ".png";
+  download.textContent = "Unduh gambar";
+  figure.append(image, caption, download);
+  imageArea.append(figure);
+}
+async function generateSceneImage(scene, button, imageArea) {
+  if (!auth.currentUser) { setStatus("Masuk ke akun ZAIDA Voice untuk membuat gambar.", true); return; }
+  if (scene.imageBusy) return;
+  if (scene.generatedImage && !confirm("Buat ulang gambar adegan ini? Gambar baru akan dikenakan biaya lagi.")) return;
+  scene.imageBusy = true;
+  button.disabled = true;
+  button.textContent = "Membuat gambar…";
+  setStatus("Mengirim prompt adegan " + scene.scene_number + " ke Kiosapi. Proses dapat memerlukan beberapa puluh detik…");
+  try {
+    const result = await api("/api/video/image", {
+      method: "POST",
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, prompt: scene.visual_prompt })
+    });
+    scene.generatedImage = {
+      b64: result.image.b64,
+      mime: result.image.mime,
+      cost: result.creditsCharged
+    };
+    renderGeneratedImage(scene, imageArea);
+    $("videoCreditBalance").textContent = "Sisa kredit: " + Number(result.creditsRemaining).toLocaleString("id-ID");
+    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · biaya provider Rp" +
+      Number(result.providerCostIdr).toLocaleString("id-ID") + " · " +
+      Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    scene.imageBusy = false;
+    button.disabled = false;
+    button.textContent = scene.generatedImage ? "Buat ulang gambar" : "Buat gambar adegan";
+  }
 }
 function renderStoryboard(data) {
   currentStoryboard = data;
@@ -82,8 +129,21 @@ function renderStoryboard(data) {
     head.append(left, duration);
     const narration = createField("NARASI", scene.narration, "scene-narration", value => { scene.narration = value; saveDraft(); });
     const description = createField("ARAHAN VISUAL", scene.visual_description, "", value => { scene.visual_description = value; saveDraft(); });
-    const prompt = createField("PROMPT VISUAL (UNTUK FASE GENERATE GAMBAR)", scene.visual_prompt, "scene-prompt", value => { scene.visual_prompt = value; saveDraft(); });
+    const prompt = createField("PROMPT VISUAL", scene.visual_prompt, "scene-prompt", value => { scene.visual_prompt = value; saveDraft(); });
     const screenText = createField("TEKS DI LAYAR", scene.on_screen_text, "", value => { scene.on_screen_text = value; saveDraft(); });
+    const imageArea = document.createElement("div");
+    imageArea.className = "scene-image-area";
+    const imageButton = document.createElement("button");
+    imageButton.type = "button";
+    imageButton.className = "secondary-button scene-image-button";
+    imageButton.textContent = scene.generatedImage ? "Buat ulang gambar" : "Buat gambar adegan";
+    imageButton.addEventListener("click", () => generateSceneImage(scene, imageButton, imageArea));
+    renderGeneratedImage(scene, imageArea);
+    const imageNote = document.createElement("small");
+    imageNote.className = "scene-image-note";
+    imageNote.textContent = "GPT Image 2.5 Flare · portrait · Rp500/gambar";
+    imageArea.prepend(imageNote);
+    imageArea.append(imageButton);
     const meta = document.createElement("div");
     meta.className = "scene-meta";
     const transition = document.createElement("span");
@@ -91,7 +151,7 @@ function renderStoryboard(data) {
     const style = document.createElement("span");
     style.textContent = "Mixed2 visual";
     meta.append(transition, style);
-    card.append(head, narration, description, prompt, screenText, meta);
+    card.append(head, narration, description, prompt, screenText, imageArea, meta);
     list.append(card);
   });
   saveDraft();
@@ -146,7 +206,7 @@ function restoreDraft() {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
     if (saved && Array.isArray(saved.scenes) && saved.scenes.length) {
       renderStoryboard(saved);
-      setStatus("Draft storyboard lokal dipulihkan. Belum tersimpan ke cloud.");
+      setStatus("Draft storyboard lokal dipulihkan. Gambar yang belum diunduh perlu dibuat kembali setelah halaman dimuat ulang.");
     }
   } catch {}
 }
@@ -154,7 +214,6 @@ $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
 onAuthStateChanged(auth, user => {
-  currentUser = user;
   storageKey = user ? "zaida-video-studio-draft-v1-" + user.uid : null;
   if (!user) {
     $("videoUserStatus").textContent = "Belum masuk";
@@ -164,7 +223,7 @@ onAuthStateChanged(auth, user => {
   } else {
     $("videoUserStatus").textContent = user.email || "Akun terhubung";
     $("generateStoryboard").disabled = false;
-    setStatus("Akun terhubung. Siap membuat storyboard.");
+    setStatus("Akun terhubung. Siap membuat storyboard dan gambar.");
   }
   restoreDraft();
 });

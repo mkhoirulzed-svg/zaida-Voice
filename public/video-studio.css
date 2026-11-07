@@ -59,3 +59,15 @@
 .scene-image-preview figcaption{font-size:10px;color:var(--muted)}
 .scene-image-preview a{font-size:11px;color:#c6b8f5;text-decoration:none}
 @media(max-width:520px){.scene-image-preview{grid-template-columns:minmax(0,120px) 1fr}}
+
+/* Mobile-first adjustments for longer dual-format projects */
+@media(max-width:760px){
+ .video-studio-page .video-heading{flex-direction:column;gap:12px}
+ .video-studio-page .format-chip{align-self:flex-start}
+ .video-studio-page .video-layout{min-width:0}
+ .video-studio-page .scene-card{overflow-wrap:anywhere}
+ .video-studio-page .scene-card-head{align-items:flex-start}
+ .video-studio-page .storyboard-actions{display:grid;grid-template-columns:1fr 1fr}
+ .video-studio-page textarea{font-size:16px}
+}
+@media(max-width:380px){.video-studio-page .storyboard-actions{grid-template-columns:1fr}}

@@ -33,8 +33,8 @@ async function api(path, options = {}) {
 function buildPayload() {
   return {
     title: currentStoryboard.title, hook: currentStoryboard.hook, summary: currentStoryboard.summary,
-    closing: currentStoryboard.closing, format: currentStoryboard.format,
-    resolution: currentStoryboard.resolution, visualStyle: currentStoryboard.visualStyle,
+    closing: currentStoryboard.closing, format: currentStoryboard.format, outputFormats: currentStoryboard.outputFormats || ["9:16", "16:9"],
+    resolution: currentStoryboard.resolution, outputResolutions: currentStoryboard.outputResolutions || ["720x1280", "1280x720"], visualStyle: currentStoryboard.visualStyle,
     scenes: currentStoryboard.scenes.map(({ generatedImage, imageBusy, ...scene }) => scene)
   };
 }

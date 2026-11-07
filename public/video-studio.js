@@ -13,7 +13,7 @@ const auth = getAuth(firebaseApp);
 const $ = id => document.getElementById(id);
 let currentUser = null;
 let currentStoryboard = null;
-const storageKey = "zaida-video-studio-draft-v1";
+let storageKey = null;
 
 function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
@@ -40,7 +40,7 @@ function buildPayload() {
   };
 }
 function saveDraft() {
-  if (!currentStoryboard) return;
+  if (!currentStoryboard || !storageKey) return;
   try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {}
 }
 function createField(labelText, value, className, onInput) {
@@ -141,6 +141,7 @@ async function copyStoryboard() {
   } catch { setStatus("Browser tidak mengizinkan penyalinan otomatis.", true); }
 }
 function restoreDraft() {
+  if (!storageKey) return;
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
     if (saved && Array.isArray(saved.scenes) && saved.scenes.length) {
@@ -154,6 +155,7 @@ $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
 onAuthStateChanged(auth, user => {
   currentUser = user;
+  storageKey = user ? "zaida-video-studio-draft-v1-" + user.uid : null;
   if (!user) {
     $("videoUserStatus").textContent = "Belum masuk";
     $("videoCreditBalance").textContent = "Masuk untuk memakai AI";
@@ -164,5 +166,5 @@ onAuthStateChanged(auth, user => {
     $("generateStoryboard").disabled = false;
     setStatus("Akun terhubung. Siap membuat storyboard.");
   }
+  restoreDraft();
 });
-restoreDraft();

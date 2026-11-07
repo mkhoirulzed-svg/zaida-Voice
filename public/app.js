@@ -9,11 +9,6 @@ const firebaseApp = initializeApp({
   messagingSenderId: "146292786794",
   appId: "1:146292786794:web:da865938c177b21d5d6c13"
 });
-// Keep the mobile studio at the top after a page reload or restored browser session.
-if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-window.addEventListener("pageshow", () => {
-  if (!location.hash) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
-});
 const auth = getAuth(firebaseApp);
 let authMode = "login";
 let currentUser = null;
@@ -21,7 +16,7 @@ let accountInfo = null;
 let pendingPackageId = new URLSearchParams(location.search).get("buy");
 let checkoutStarted = false;
 let personaReady = Promise.resolve();
-async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").hidden=false;$("creditBalance").textContent="Kredit: "+Number(data.credits).toLocaleString("id-ID");$("sidebarCreditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+data.credits;$("profileEmail").textContent=currentUser?.email||"Akun terverifikasi";}catch(error){$("creditBalance").hidden=false;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Saldo tidak tersedia";toast(error.message);}}
+async function refreshAccount(){if(!currentUser)return;try{const data=await api("/api/account",{authRequired:true});accountInfo=data;$("adminNav").hidden=data.role!=="admin";$("creditBalance").hidden=false;$("creditBalance").textContent="Kredit: "+Number(data.credits).toLocaleString("id-ID");$("sidebarCreditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+data.credits;$("profileEmail").textContent=data.role==="admin"?"Administrator":"Akun terverifikasi";}catch(error){$("creditBalance").hidden=false;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Saldo tidak tersedia";toast(error.message);}}
 async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan masuk terlebih dahulu."); return {Authorization:"Bearer "+await auth.currentUser.getIdToken()}; }
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").textContent=mode==="login"?"Masuk":"Buat akun"; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
 function closeAuth(){$("authOverlay").hidden=true;}
@@ -175,8 +170,6 @@ function showView(requestedView){
   }
   const pageId={studio:"studioPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage"}[view]||"studioPage";
   document.body.classList.toggle("in-studio",view==="studio");
-  // Restore the Studio workspace to the actual top on mobile when returning from another view or a restored browser scroll position.
-  if(view==="studio") requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
@@ -421,7 +414,7 @@ document.querySelectorAll(".choice-chip").forEach(button=>button.addEventListene
 }));
 syncChoiceChips();
 updateCount();loadVoices();
-$("profileAuthButton").addEventListener("click",async()=>{if(currentUser){try{await signOut(auth);toast("Berhasil logout.");}catch(error){toast("Gagal logout: "+error.message);}}else{openAuth("login");}});
+$("authButton").addEventListener("click",()=>currentUser?signOut(auth):openAuth());
 $("googleAuthButton").addEventListener("click",async()=>{const button=$("googleAuthButton");button.disabled=true;$("authMessage").textContent="Menghubungkan ke Google…";try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);closeAuth();toast("Berhasil masuk dengan Google.");}catch(error){const messages={"auth/popup-closed-by-user":"Jendela login ditutup sebelum selesai.","auth/popup-blocked":"Popup diblokir browser. Izinkan popup lalu coba lagi.","auth/account-exists-with-different-credential":"Email ini sudah terdaftar dengan metode login lain."};$("authMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});
 $("resendVerification").addEventListener("click",async()=>{try{if(!auth.currentUser)throw new Error("Masuk kembali menggunakan email dan password.");await sendEmailVerification(auth.currentUser);$("authMessage").textContent="Email verifikasi telah dikirim ulang.";}catch(error){$("authMessage").textContent=error.message;}});
 $("authClose").addEventListener("click",closeAuth);
@@ -441,10 +434,11 @@ onAuthStateChanged(auth,user=>{
   const allowed=Boolean(currentUser);
   // Public-first: the studio shell remains accessible to visitors.
   $("authOverlay").hidden=true;
-  $("profileAuthButton").textContent=allowed?"Logout":"Login";
-  $("profileName").textContent=allowed?(user.displayName||user.email?.split("@")[0]||"Pengguna"):"Pengunjung";
-  $("profileEmail").textContent=allowed?(user.email||"Akun terverifikasi"):(user?"Email belum diverifikasi":"Belum masuk");
+  $("authButton").textContent=allowed?(user.email||"Akun")+" · Keluar":"Masuk / Daftar";
+  $("profileName").textContent=allowed?(user.displayName||"Pengguna"):"Pengunjung";
+  $("profileEmail").textContent=allowed?"Akun terverifikasi":(user?"Email belum diverifikasi":"Belum masuk");
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
+  $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
   if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){

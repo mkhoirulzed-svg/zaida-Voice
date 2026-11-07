@@ -125,6 +125,11 @@ function renderStoryboard(data) {
   currentStoryboard = data;
   $("storyboardEmpty").hidden = true;
   $("storyboardResult").hidden = false;
+  $("storyboardQuickTitle").textContent = data.title;
+  $("storyboardQuickMeta").textContent = data.scenes.length + " adegan · storyboard dan gambar siap diedit";
+  $("storyboardEditor").hidden = true;
+  $("toggleStoryboardEditor").setAttribute("aria-expanded", "false");
+  $("toggleStoryboardEditor").textContent = "✎ Edit storyboard, teks & gambar";
   $("storyboardTitle").textContent = data.title;
   $("storyboardSummary").textContent = data.summary;
   $("storyboardHook").textContent = data.hook;
@@ -203,12 +208,71 @@ async function generateStoryboard() {
       $("sidebarCreditBalance").textContent = Number(result.creditsRemaining).toLocaleString("id-ID") + " kredit";
     }
     setStatus("Storyboard berhasil dibuat · " + (result.model || "Kiosapi") + " · biaya " + (result.creditsCharged ?? "—") + " kredit.");
+    await generateAllSceneImages();
   } catch (error) {
     setStatus(error.message, true);
   } finally {
     button.disabled = false;
     button.innerHTML = "<span>✧</span> Buat storyboard <b>→</b>";
   }
+}
+async function generateAllSceneImages() {
+  const scenes = currentStoryboard?.scenes || [];
+  const pending = scenes.filter(scene => !scene.generatedImage);
+  if (!pending.length) return;
+  const estimate = pending.length * 500;
+  const approved = confirm(
+    "Storyboard selesai dengan " + scenes.length + " adegan.\n\n" +
+    "ZAIDA akan membuat otomatis " + pending.length + " gambar yang belum tersedia.\n" +
+    "Estimasi biaya provider: Rp" + estimate.toLocaleString("id-ID") + ".\n" +
+    "Kredit ZAIDA dipotong sesuai tarif akun dan ditampilkan setelah tiap gambar selesai.\n\n" +
+    "Lanjutkan membuat semua gambar?"
+  );
+  if (!approved) {
+    setStatus("Storyboard siap. Gambar dapat dibuat satu per satu dari menu Edit Storyboard.");
+    return;
+  }
+  const cards = $("sceneList").querySelectorAll(".scene-card");
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i];
+    if (scene.generatedImage) continue;
+    const card = cards[i];
+    const button = card?.querySelector(".scene-image-button");
+    const preview = card?.querySelector(".scene-image-preview-area");
+    if (!button || !preview) continue;
+    await generateSceneImage(scene, button, preview);
+    if (!scene.generatedImage) {
+      setStatus("Pembuatan gambar berhenti pada adegan " + scene.scene_number + ". Kamu bisa melanjutkan dari Edit Storyboard.", true);
+      break;
+    }
+  }
+  $("storyboardQuickMeta").textContent = scenes.filter(scene => scene.generatedImage).length + "/" + scenes.length + " gambar selesai";
+}
+function getCaptionStyle() {
+  return {
+    preset: $("captionPreset").value,
+    font: $("captionFont").value,
+    fontSize: Number($("captionFontSize").value),
+    textColor: $("captionTextColor").value,
+    outlineColor: $("captionOutlineColor").value,
+    outlineWidth: Number($("captionOutlineWidth").value),
+    background: $("captionBackground").value,
+    backgroundOpacity: Number($("captionBackgroundOpacity").value) / 100,
+    position: $("captionPosition").value
+  };
+}
+function updateCaptionPreview() {
+  const style = getCaptionStyle();
+  const preview = $("captionPreviewText");
+  const stage = $("captionPreviewStage");
+  $("captionFontSizeValue").textContent = style.fontSize + " px";
+  preview.style.fontFamily = style.font + ", sans-serif";
+  preview.style.fontSize = Math.max(12, style.fontSize * 0.62) + "px";
+  preview.style.color = style.preset === "karaoke" ? "#ffe45e" : style.textColor;
+  preview.style.textShadow = style.outlineWidth ? "0 1px " + style.outlineWidth + "px " + style.outlineColor + ", 1px 0 " + style.outlineWidth + "px " + style.outlineColor + ", -1px 0 " + style.outlineWidth + "px " + style.outlineColor : "none";
+  preview.style.background = style.background === "none" ? "transparent" : (style.background === "solid" ? "rgba(0,0,0,1)" : "rgba(0,0,0," + style.backgroundOpacity + ")");
+  preview.style.padding = style.background === "none" ? "4px 0" : "10px 16px";
+  stage.dataset.position = style.position;
 }
 function downloadJson() {
   if (!currentStoryboard) return;
@@ -383,6 +447,7 @@ async function startDualRender() {
       audioDuration,
       subtitleText: selectedSubtitleText,
       burnCaptions,
+      captionStyle: getCaptionStyle(),
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {
@@ -448,6 +513,15 @@ function restoreDraft() {
     }
   } catch {}
 }
+$("toggleStoryboardEditor").addEventListener("click", () => {
+  const editor = $("storyboardEditor");
+  editor.hidden = !editor.hidden;
+  $("toggleStoryboardEditor").setAttribute("aria-expanded", String(!editor.hidden));
+  $("toggleStoryboardEditor").textContent = editor.hidden ? "✎ Edit storyboard, teks & gambar" : "Tutup editor storyboard";
+});
+["captionPreset","captionFont","captionFontSize","captionTextColor","captionOutlineColor","captionOutlineWidth","captionBackground","captionBackgroundOpacity","captionPosition"].forEach(id => $(id).addEventListener("input", updateCaptionPreview));
+["captionPreset","captionFont","captionBackground","captionPosition"].forEach(id => $(id).addEventListener("change", updateCaptionPreview));
+updateCaptionPreview();
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);

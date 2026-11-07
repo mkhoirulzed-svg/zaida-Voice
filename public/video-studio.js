@@ -15,6 +15,8 @@ const $ = id => document.getElementById(id);
 let currentStoryboard = null;
 let storageKey = null;
 let renderedVideoUrls = [];
+let generatedNarrationBlob = null;
+let generatedSubtitleText = "";
 
 function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
@@ -214,6 +216,96 @@ async function copyStoryboard() {
     setStatus("Storyboard berhasil disalin.");
   } catch { setStatus("Browser tidak mengizinkan penyalinan otomatis.", true); }
 }
+function videoSrtTime(seconds) {
+  const ms=Math.max(0,Math.round((Number(seconds)||0)*1000));
+  const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),r=ms%1000;
+  return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":")+","+String(r).padStart(3,"0");
+}
+function makeVideoSrt(text, alignment) {
+  const chars=Array.from(text), starts=alignment?.character_start_times_seconds||[], ends=alignment?.character_end_times_seconds||[];
+  const aligned=starts.length===chars.length&&ends.length===chars.length;
+  const matches=[...text.matchAll(/[^.!?。！？\\n]+[.!?。！？]?/gu)];
+  const cues=[];
+  for(const match of matches){
+    const raw=match[0], leading=raw.match(/^\\s*/)?.[0].length||0, value=raw.trim();
+    if(!value)continue;
+    const startIndex=Array.from(text.slice(0,match.index+leading)).length;
+    const endIndex=startIndex+Array.from(value).length-1;
+    const start=aligned?Number(starts[startIndex]||0):cues.length*3;
+    const end=aligned?Number(ends[endIndex]||start+2):start+3;
+    cues.push((cues.length+1)+"\\n"+videoSrtTime(start)+" --> "+videoSrtTime(Math.max(start+.8,end))+"\\n"+value);
+  }
+  return cues.join("\\n\\n")+"\\n";
+}
+async function loadVideoVoices() {
+  const select=$("videoVoiceSelect");
+  try {
+    const headers=auth.currentUser?{Authorization:"Bearer "+await auth.currentUser.getIdToken()}:{};
+    const response=await fetch("/api/voices",{headers});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||"Gagal memuat katalog suara.");
+    select.replaceChildren();
+    (data.voices||[]).forEach(voice=>{
+      const option=document.createElement("option");
+      option.value=voice.voice_id; option.textContent=voice.name+(voice.gender?" · "+voice.gender:"");
+      select.append(option);
+    });
+    if(!data.voices?.length)throw new Error("Belum ada suara yang tersedia.");
+    $("generateVideoNarration").disabled=!auth.currentUser;
+  } catch(error) {
+    select.replaceChildren(new Option("Katalog suara tidak tersedia",""));
+    $("videoNarrationStatus").textContent=error.message;
+  }
+}
+async function generateVideoNarration() {
+  if(!auth.currentUser){setStatus("Masuk ke akun ZAIDA Voice terlebih dahulu.",true);return;}
+  if(!currentStoryboard?.scenes?.length){setStatus("Buat storyboard terlebih dahulu.",true);return;}
+  const voiceId=$("videoVoiceSelect").value;
+  if(!voiceId){setStatus("Pilih karakter suara terlebih dahulu.",true);return;}
+  const text=currentStoryboard.scenes.map(scene=>scene.narration.trim()).filter(Boolean).join("\\n\\n");
+  if(!text||text.length>5000){setStatus("Gabungan narasi harus berisi 1–5.000 karakter.",true);return;}
+  const button=$("generateVideoNarration");
+  button.disabled=true;button.textContent="Membuat narasi…";
+  $("videoNarrationStatus").textContent="Mengirim narasi ke ElevenLabs. Biaya 3 kredit per karakter.";
+  try {
+    const response=await fetch("/api/tts?timestamps=1",{
+      method:"POST",
+      headers:{"Content-Type":"application/json",Authorization:"Bearer "+await auth.currentUser.getIdToken()},
+      body:JSON.stringify({
+        requestId:requestId(),text,voiceId,
+        voiceSettings:{
+          stability:Number($("videoVoiceStability").value)/100,
+          similarity_boost:Number($("videoVoiceSimilarity").value)/100,
+          style:0
+        }
+      })
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||"Gagal membuat audio narasi.");
+    const binary=atob(data.audioBase64||"");
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    generatedNarrationBlob=new Blob([bytes],{type:"audio/mpeg"});
+    generatedSubtitleText=makeVideoSrt(text,data.alignment);
+    const audioUrl=URL.createObjectURL(generatedNarrationBlob);
+    const player=$("videoNarrationPreview");
+    if(player.dataset.objectUrl)URL.revokeObjectURL(player.dataset.objectUrl);
+    player.dataset.objectUrl=audioUrl;player.src=audioUrl;player.hidden=false;
+    $("videoNarrationAudio").value="";
+    $("videoNarrationStatus").textContent="Narasi selesai · "+text.length.toLocaleString("id-ID")+" karakter · "+(Number(response.headers.get("X-Credits-Remaining"))>=0?"sisa kredit "+response.headers.get("X-Credits-Remaining"):"kredit diperbarui");
+    const link=$("videoSubtitleDownload");
+    if(generatedSubtitleText.trim()){
+      link.href=URL.createObjectURL(new Blob([generatedSubtitleText],{type:"text/plain;charset=utf-8"}));
+      link.hidden=false;
+    } else {link.hidden=true;}
+    setStatus("Audio narasi dan subtitle berhasil dibuat.");
+  } catch(error) {
+    $("videoNarrationStatus").textContent=error.message;
+    setStatus(error.message,true);
+  } finally {
+    button.disabled=false;button.textContent="Buat ulang audio narasi";
+  }
+}
 async function startDualRender() {
   if (!currentStoryboard) return;
   const button = $("renderDualVideo");
@@ -221,7 +313,7 @@ async function startDualRender() {
   const progressBar = $("videoRenderProgressBar");
   const progressText = $("videoRenderProgressText");
   const downloads = $("videoRenderDownloads");
-  const audioFile = $("videoNarrationAudio").files?.[0] || null;
+  const audioFile = $("videoNarrationAudio").files?.[0] || generatedNarrationBlob || null;
   renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
   renderedVideoUrls = [];
   downloads.replaceChildren();
@@ -282,7 +374,7 @@ function restoreDraft() {
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
-$("renderDualVideo").addEventListener("click", startDualRender);
+$("renderDualVideo").addEventListener("click", startDualRender);\n$("generateVideoNarration").addEventListener("click", generateVideoNarration);
 onAuthStateChanged(auth, user => {
   storageKey = user ? "zaida-video-studio-draft-v1-" + user.uid : null;
   if (!user) {

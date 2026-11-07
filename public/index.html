@@ -118,14 +118,39 @@
             <div class="section-head"><h2>02 · Storyboard</h2><span id="sceneCountLabel">Belum ada adegan</span></div>
             <div id="storyboardEmpty" class="storyboard-empty"><div class="storyboard-empty-icon">▧</div><b>Ide kamu dimulai di sini</b><p>Isi topik, lalu buat storyboard. Hasilnya bisa kamu edit sebelum masuk tahap visual.</p></div>
             <div id="storyboardResult" hidden>
-              <div class="storyboard-summary"><span class="storyboard-tag">STORYBOARD · 720P</span><h3 id="storyboardTitle"></h3><p id="storyboardSummary"></p><div class="hook-box"><small>HOOK PEMBUKA</small><p id="storyboardHook"></p></div></div>
-              <div id="sceneList" class="scene-list"></div>
-              <div class="storyboard-actions"><button class="secondary-button" id="copyStoryboard">Salin storyboard</button><button class="primary-button" id="downloadStoryboard">Unduh JSON</button></div>
+              <div class="storyboard-quick-summary"><b id="storyboardQuickTitle"></b><span id="storyboardQuickMeta"></span></div>
+              <div class="storyboard-image-strip" id="storyboardImageStrip" aria-label="Gambar hasil storyboard"></div>
+              <button class="secondary-button storyboard-edit-toggle" id="toggleStoryboardEditor" type="button" aria-expanded="false">✎ Edit storyboard, teks & gambar</button>
+              <div id="storyboardEditor" hidden>
+                <div class="storyboard-summary"><span class="storyboard-tag">STORYBOARD · 720P</span><h3 id="storyboardTitle"></h3><p id="storyboardSummary"></p><div class="hook-box"><small>HOOK PEMBUKA</small><p id="storyboardHook"></p></div></div>
+                <div id="sceneList" class="scene-list"></div>
+                <div class="storyboard-actions"><button class="secondary-button" id="copyStoryboard">Salin storyboard</button><button class="primary-button" id="downloadStoryboard">Unduh JSON</button></div>
+              </div>
             </div>
           </section>
         </div>
+        <section class="panel caption-editor-panel" id="captionEditorPanel">
+          <div class="section-head"><div><h2>03 · Editor Caption</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>
+          <div class="caption-editor-layout">
+            <div class="caption-preview-stage" id="captionPreviewStage"><span id="captionPreviewText">Contoh caption ZAIDA Voice</span></div>
+            <div class="caption-controls">
+              <label class="field-label" for="captionPreset">PRESET CAPTION</label>
+              <select id="captionPreset"><option value="classic">Classic · putih outline</option><option value="capcut" selected>Social · kotak lembut</option><option value="cinematic">Cinematic · elegan</option><option value="karaoke">Highlight · kuning</option></select>
+              <div class="caption-control-grid">
+                <label>Font <select id="captionFont"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Verdana">Verdana</option></select></label>
+                <label>Ukuran <input id="captionFontSize" type="range" min="18" max="52" value="28"><output id="captionFontSizeValue">28 px</output></label>
+                <label>Warna teks <input id="captionTextColor" type="color" value="#ffffff"></label>
+                <label>Warna outline <input id="captionOutlineColor" type="color" value="#000000"></label>
+                <label>Ketebalan outline <input id="captionOutlineWidth" type="range" min="0" max="6" value="2"></label>
+                <label>Background <select id="captionBackground"><option value="soft">Kotak lembut</option><option value="none">Tanpa background</option><option value="solid">Kotak solid</option></select></label>
+                <label>Transparansi <input id="captionBackgroundOpacity" type="range" min="0" max="100" value="76"></label>
+                <label>Posisi <select id="captionPosition"><option value="bottom">Bawah</option><option value="middle">Tengah</option><option value="top">Atas</option></select></label>
+              </div>
+            </div>
+          </div>
+        </section>
         <section class="panel video-render-panel" id="videoRenderPanel">
-          <div class="section-head"><h2>03 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
+          <div class="section-head"><h2>04 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
           <p class="render-intro">Pilih satu format dan render MP4 langsung dengan FFmpeg. Gambar AI bersifat opsional; video dasar dapat dibuat langsung dari storyboard. Narasi audio juga opsional.</p>
           <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
           <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>

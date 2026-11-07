@@ -122,7 +122,7 @@ function updateRenderAvailability() {
   const selected = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const summary = $("videoRenderSummary");
   if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan siap · gambar AI opsional · " + (ready ? "Siap render format " + selected + "." : "Masuk untuk mulai render.")) : "Belum siap render · Buat storyboard terlebih dahulu.";
-  if (!button.disabled) button.innerHTML = "<span>▶</span> Render video " + (selected === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";
+  if (!button.disabled) button.innerHTML = "<span>▶</span> Buat Preview Video <b>→</b>";
 }
 function renderStoryboard(data) {
   currentStoryboard = data;

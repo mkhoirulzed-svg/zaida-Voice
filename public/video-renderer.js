@@ -45,7 +45,7 @@ function safeExtension(mime) {
   return String(mime || "").includes("jpeg") || String(mime || "").includes("jpg") ? "jpg" : "png";
 }
 
-async function renderFormat(ffmpeg, scenes, audioBytes, format, onProgress) {
+async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress) {
   const isPortrait = format === "9:16";
   const width = isPortrait ? 720 : 1280;
   const height = isPortrait ? 1280 : 720;
@@ -91,13 +91,13 @@ async function renderFormat(ffmpeg, scenes, audioBytes, format, onProgress) {
     const output = await ffmpeg.readFile(outputName);
     return new Blob([output], { type: "video/mp4" });
   } finally {
-    for (const name of [...inputNames, listName, outputName, "zaida_narration_audio"]) {
+    for (const name of [...inputNames, listName, outputName, "zaida_narration_audio", "zaida_subtitles.srt"]) {
       try { await ffmpeg.deleteFile(name); } catch {}
     }
   }
 }
 
-export async function renderDualVideo({ scenes, audioFile, onProgress = () => {} }) {
+export async function renderDualVideo({ scenes, audioFile, subtitleText = "", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
   const missing = scenes.findIndex(scene => !scene.generatedImage?.b64);
   if (missing !== -1) throw new Error("Gambar adegan " + (missing + 1) + " belum dibuat.");
@@ -108,7 +108,7 @@ export async function renderDualVideo({ scenes, audioFile, onProgress = () => {}
   const results = [];
 
   for (const format of ["9:16", "16:9"]) {
-    const blob = await renderFormat(ffmpeg, scenes, audioBytes, format, onProgress);
+    const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress);
     results.push({ format, blob, filename: format === "9:16" ? "zaida-video-vertikal.mp4" : "zaida-video-horizontal.mp4" });
   }
   onProgress({ phase: "complete", message: "Kedua format video selesai dibuat." });

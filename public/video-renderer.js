@@ -52,7 +52,7 @@ function safeExtension(mime) {
   return String(mime || "").includes("jpeg") || String(mime || "").includes("jpg") ? "jpg" : "png";
 }
 
-async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration = null) {
+async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration = null, burnCaptions = false) {
   const isPortrait = format === "9:16";
   const width = isPortrait ? 720 : 1280;
   const height = isPortrait ? 1280 : 720;
@@ -98,13 +98,13 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
     }
     args.push(
       "-map", "0:v:0",
-      "-vf", "scale=" + width + ":" + height + ":force_original_aspect_ratio=increase,crop=" + width + ":" + height + ",setsar=1",
+      "-vf", "scale=" + width + ":" + height + ":force_original_aspect_ratio=increase,crop=" + width + ":" + height + ",setsar=1" + (burnCaptions && subtitleInput !== null ? ",subtitles=filename=zaida_subtitles.srt:force_style='FontName=Arial,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,Alignment=2,MarginV=72'" : ""),
       "-r", "24", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
       "-pix_fmt", "yuv420p", "-movflags", "+faststart"
     );
     if (audioInput !== null) args.push("-map", audioInput + ":a:0", "-c:a", "aac", "-b:a", "96k");
     else args.push("-an");
-    if (subtitleInput !== null) args.push("-map", subtitleInput + ":s:0", "-c:s", "mov_text", "-metadata:s:s:0", "language=ind");
+    if (subtitleInput !== null && !burnCaptions) args.push("-map", subtitleInput + ":s:0", "-c:s", "mov_text", "-metadata:s:s:0", "language=ind");
     args.push("-t", String(totalSeconds), "-y", outputName);
     onProgress({ phase: "rendering", message: hasAllImages ? "Merender video dari gambar adegan…" : "Membuat video dasar langsung dengan FFmpeg…", format });
     const exitCode = await ffmpeg.exec(args);
@@ -122,13 +122,13 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
   }
 }
 
-export async function renderVideo({ scenes, audioFile, audioDuration = null, subtitleText = "", format = "9:16", onProgress = () => {} }) {
+export async function renderVideo({ scenes, audioFile, audioDuration = null, subtitleText = "", burnCaptions = false, format = "9:16", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
   if (!["9:16", "16:9"].includes(format)) throw new Error("Pilih format video terlebih dahulu.");
   if (typeof WebAssembly === "undefined") throw new Error("Browser ini belum mendukung WebAssembly.");
   const ffmpeg = await loadFFmpeg(onProgress);
   const audioBytes = audioFile ? new Uint8Array(await audioFile.arrayBuffer()) : null;
-  const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration);
+  const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration, burnCaptions);
   onProgress({ phase: "complete", message: "Video " + format + " selesai dibuat." });
   return { format, blob, filename: format === "9:16" ? "zaida-video-vertikal.mp4" : "zaida-video-horizontal.mp4" };
 }

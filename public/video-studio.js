@@ -365,8 +365,9 @@ async function startDualRender() {
     downloads.hidden = false;
     setStatus("Berhasil! Video format " + result.format + " selesai dibuat.");
   } catch (error) {
-    progressText.textContent = error.message || "Render gagal.";
-    setStatus("Render gagal: " + (error.message || "Kesalahan tidak diketahui."), true);
+    const detail = error?.stack ? error.message + " · " + String(error.stack).split("\n")[1]?.trim() : (error.message || "Kesalahan tidak diketahui.");
+    progressText.textContent = detail;
+    setStatus("Render gagal: " + detail, true);
   } finally {
     button.disabled = false;
     button.innerHTML = "<span>▶</span> Render video " + (selectedFormat === "9:16" ? "vertikal (9:16)" : "horizontal (16:9)") + " <b>→</b>";

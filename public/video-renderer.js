@@ -45,19 +45,17 @@ function safeExtension(mime) {
   return String(mime || "").includes("jpeg") || String(mime || "").includes("jpg") ? "jpg" : "png";
 }
 
-async function renderFormat(ffmpeg, scenes, audioBytes, format, onProgress) {
+async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress) {
   const isPortrait = format === "9:16";
   const width = isPortrait ? 720 : 1280;
   const height = isPortrait ? 1280 : 720;
   const listName = "zaida_concat_" + (isPortrait ? "portrait" : "landscape") + ".txt";
   const outputName = "zaida-video-" + (isPortrait ? "9x16" : "16x9") + ".mp4";
   const inputNames = [];
-
   try {
     const concatLines = [];
     for (let i = 0; i < scenes.length; i++) {
-      const scene = scenes[i];
-      const ext = safeExtension(scene.generatedImage.mime);
+      const scene = scenes[i], ext = safeExtension(scene.generatedImage.mime);
       const name = "zaida_scene_" + i + "." + ext;
       inputNames.push(name);
       await ffmpeg.writeFile(name, base64ToBytes(scene.generatedImage.b64));
@@ -66,38 +64,40 @@ async function renderFormat(ffmpeg, scenes, audioBytes, format, onProgress) {
     }
     concatLines.push("file '" + inputNames[inputNames.length - 1] + "'");
     await ffmpeg.writeFile(listName, new TextEncoder().encode(concatLines.join("\n")));
-
-    const args = [
-      "-f", "concat", "-safe", "0", "-i", listName
-    ];
+    const args = ["-f", "concat", "-safe", "0", "-i", listName];
+    let nextInput = 1, audioInput = null, subtitleInput = null;
     if (audioBytes) {
-      await ffmpeg.writeFile("zaida_narration_audio", audioBytes);
-      args.push("-i", "zaida_narration_audio");
+      await ffmpeg.writeFile("zaida_narration_audio.mp3", audioBytes);
+      args.push("-i", "zaida_narration_audio.mp3");
+      audioInput = nextInput++;
+    }
+    if (subtitleText && subtitleText.trim()) {
+      await ffmpeg.writeFile("zaida_subtitles.srt", new TextEncoder().encode(subtitleText));
+      args.push("-i", "zaida_subtitles.srt");
+      subtitleInput = nextInput++;
     }
     args.push(
+      "-map", "0:v:0",
       "-vf", "scale=" + width + ":" + height + ":force_original_aspect_ratio=increase,crop=" + width + ":" + height + ",setsar=1",
       "-r", "24", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
       "-pix_fmt", "yuv420p", "-movflags", "+faststart"
     );
-    if (audioBytes) {
-      args.push("-map", "0:v:0", "-map", "1:a:0", "-af", "apad", "-c:a", "aac", "-b:a", "96k");
-    } else {
-      args.push("-an");
-    }
+    if (audioInput !== null) args.push("-map", audioInput + ":a:0", "-af", "apad", "-c:a", "aac", "-b:a", "96k");
+    else args.push("-an");
+    if (subtitleInput !== null) args.push("-map", subtitleInput + ":s:0", "-c:s", "mov_text", "-metadata:s:s:0", "language=ind");
     const totalSeconds = scenes.reduce((sum, scene) => sum + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)), 0);
     args.push("-t", String(totalSeconds), "-y", outputName);
     onProgress({ phase: "rendering", message: "Merender format " + format + "…", format });
     await ffmpeg.exec(args);
-    const output = await ffmpeg.readFile(outputName);
-    return new Blob([output], { type: "video/mp4" });
+    return new Blob([await ffmpeg.readFile(outputName)], { type: "video/mp4" });
   } finally {
-    for (const name of [...inputNames, listName, outputName, "zaida_narration_audio"]) {
+    for (const name of [...inputNames, listName, outputName, "zaida_narration_audio.mp3", "zaida_subtitles.srt"]) {
       try { await ffmpeg.deleteFile(name); } catch {}
     }
   }
 }
 
-export async function renderDualVideo({ scenes, audioFile, onProgress = () => {} }) {
+export async function renderDualVideo({ scenes, audioFile, subtitleText = "", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
   const missing = scenes.findIndex(scene => !scene.generatedImage?.b64);
   if (missing !== -1) throw new Error("Gambar adegan " + (missing + 1) + " belum dibuat.");
@@ -108,7 +108,7 @@ export async function renderDualVideo({ scenes, audioFile, onProgress = () => {}
   const results = [];
 
   for (const format of ["9:16", "16:9"]) {
-    const blob = await renderFormat(ffmpeg, scenes, audioBytes, format, onProgress);
+    const blob = await renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress);
     results.push({ format, blob, filename: format === "9:16" ? "zaida-video-vertikal.mp4" : "zaida-video-horizontal.mp4" });
   }
   onProgress({ phase: "complete", message: "Kedua format video selesai dibuat." });

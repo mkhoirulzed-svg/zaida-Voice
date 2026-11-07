@@ -75,7 +75,7 @@ async function makeCaptionOverlayPng(text, width, style = {}) {
   const preset = style.preset || "capcut";
   const fontSize = Math.max(18, Math.min(52, Number(style.fontSize) || 28));
   const font = style.font || (preset === "cinematic" ? "Georgia" : "Arial");
-  const textColor = preset === "karaoke" ? "#ffe45e" : (style.textColor || "#ffffff");
+  const textColor = style.textColor || (preset === "karaoke" ? "#ffe45e" : "#ffffff");
   const outlineColor = style.outlineColor || "#000000";
   const outlineWidth = Math.max(0, Math.min(6, Number(style.outlineWidth ?? 3)));
   const background = style.background || (preset === "classic" || preset === "cinematic" ? "none" : "soft");

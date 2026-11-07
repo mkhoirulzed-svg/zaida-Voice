@@ -361,7 +361,8 @@ async function startDualRender() {
   const downloads = $("videoRenderDownloads");
   const audioFile = $("videoNarrationAudio").files?.[0] || generatedNarrationBlob || null;
   const selectedFormat = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
-  const selectedSubtitleText = $("videoIncludeSubtitles").checked ? generatedSubtitleText : "";
+  const selectedSubtitleText = generatedSubtitleText;
+  const burnCaptions = $("videoIncludeSubtitles").checked;
   renderedVideoUrls.forEach(url => URL.revokeObjectURL(url));
   renderedVideoUrls = [];
   downloads.replaceChildren();
@@ -381,6 +382,7 @@ async function startDualRender() {
       audioFile,
       audioDuration,
       subtitleText: selectedSubtitleText,
+      burnCaptions,
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {

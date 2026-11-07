@@ -375,7 +375,8 @@ function restoreDraft() {
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
-$("renderDualVideo").addEventListener("click", startDualRender);\n$("generateVideoNarration").addEventListener("click", generateVideoNarration);
+$("renderDualVideo").addEventListener("click", startDualRender);
+$("generateVideoNarration").addEventListener("click", generateVideoNarration);
 onAuthStateChanged(auth, user => {
   storageKey = user ? "zaida-video-studio-draft-v1-" + user.uid : null;
   if (!user) {

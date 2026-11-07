@@ -1,0 +1,8 @@
+/* Sidebar account identity and authentication action */
+.profile{align-items:flex-start;gap:10px;padding:10px 2px 3px;border-top:1px solid var(--line)}
+.profile-details{flex:1;min-width:0;padding-top:1px}
+.profile-details b{font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.profile-details small{font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.profile .profile-auth-button{display:inline-flex;align-items:center;justify-content:center;margin:9px 0 0;padding:6px 13px;min-width:76px;border:1px solid #51416f;border-radius:7px;background:var(--accent-soft);color:#ddd7ff;font-size:10px;font-weight:700}
+.profile .profile-auth-button:hover{border-color:var(--accent);background:#302a49}
+.top-actions{gap:0}

@@ -12,19 +12,18 @@
 </head>
 <body class="in-studio video-studio-page">
   <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="/" aria-label="Kembali ke ZAIDA Voice"><span class="brand-mark">Z</span><span><strong>ZAIDA <i>Labs</i></strong><small>CREATOR WORKSPACE</small></span></a>
-      <a class="nav-item" href="/">← Kembali ke Voice Studio</a>
-      <div class="nav-label">VIDEO WORKSPACE</div>
-      <div class="nav-item active">▣ Auto Video Studio</div>
-      <div class="sidebar-bottom">
-        <div class="profile"><div class="avatar">Z</div><div><b>ZAIDA Labs</b><small id="videoUserStatus">Memeriksa akun…</small></div></div>
-      </div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row"><a class="brand" href="/" aria-label="ZAIDA Voice beranda"><span class="brand-mark">Z</span><span><strong>ZAIDA <i>Voice</i></strong><small>STUDIO SUARA AI</small></span></a><button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">×</button></div>
+      <section class="sidebar-credit"><div class="sidebar-credit-top"><span>Kredit</span><b id="sidebarCreditBalance">Masuk untuk melihat saldo</b></div><a href="/harga.html">Lihat paket kredit <span>→</span></a></section>
+      <a class="nav-item" href="/">Studio Suara</a><a class="nav-item" href="/#historyPage">Riwayat</a>
+      <div class="nav-label">CREATOR TOOLS</div><a class="nav-item active" href="/video-studio.html">▣ Auto Video Studio</a>
+      <div class="sidebar-bottom"><nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav>
+      <div class="profile"><div class="avatar" id="videoProfileAvatar">Z</div><div><b id="videoProfileName">Pengunjung</b><small id="videoUserStatus">Belum masuk</small></div></div></div>
     </aside>
     <main class="main">
-      <header class="topbar"><div class="breadcrumb"><a href="/">Workspace</a> <span>/</span> <b>Auto Video Studio</b></div><div class="top-actions"><span class="credit-balance" id="videoCreditBalance">Kredit: —</span></div></header>
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu">☰</button><div class="breadcrumb"><a href="/">Ruang kerja</a> <span>/</span> <b>Auto Video Studio</b></div><div class="top-actions"><span class="credit-balance" id="videoCreditBalance" hidden>Kredit: —</span><button class="auth-button" id="authButton">Masuk / Daftar</button><div class="top-avatar" id="videoTopAvatar">Z</div></div></header>
       <section class="page active video-page">
-        <div class="video-heading"><div><div class="eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Auto Video <em>Studio.</em></h1><p>Buat konsep video dari HP, untuk format vertikal dan horizontal.</p></div><div class="format-chip"><b>9:16 + 16:9</b><span>DUA FORMAT · 720P</span></div></div>
+        <div class="video-heading"><div><div class="eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Auto Video <em>Studio.</em></h1><p>Buat konsep video dari HP, untuk format vertikal dan horizontal.</p></div><div class="format-chip"><b>720P</b><span>PILIH FORMAT SAAT RENDER</span></div></div>
         <div class="video-layout">
           <section class="panel video-form-panel">
             <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
@@ -45,7 +44,7 @@
             <div class="section-head"><h2>02 · Storyboard</h2><span id="sceneCountLabel">Belum ada adegan</span></div>
             <div id="storyboardEmpty" class="storyboard-empty"><div class="storyboard-empty-icon">▧</div><b>Ide kamu dimulai di sini</b><p>Isi topik, lalu buat storyboard. Hasilnya bisa kamu edit sebelum masuk tahap visual.</p></div>
             <div id="storyboardResult" hidden>
-              <div class="storyboard-summary"><span class="storyboard-tag">9:16 + 16:9 · 720P</span><h3 id="storyboardTitle"></h3><p id="storyboardSummary"></p><div class="hook-box"><small>HOOK PEMBUKA</small><p id="storyboardHook"></p></div></div>
+              <div class="storyboard-summary"><span class="storyboard-tag">STORYBOARD · 720P</span><h3 id="storyboardTitle"></h3><p id="storyboardSummary"></p><div class="hook-box"><small>HOOK PEMBUKA</small><p id="storyboardHook"></p></div></div>
               <div id="sceneList" class="scene-list"></div>
               <div class="storyboard-actions"><button class="secondary-button" id="copyStoryboard">Salin storyboard</button><button class="primary-button" id="downloadStoryboard">Unduh JSON</button></div>
             </div>
@@ -53,7 +52,7 @@
         </div>
         <section class="panel video-render-panel" id="videoRenderPanel">
           <div class="section-head"><h2>03 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
-          <p class="render-intro">Setelah semua gambar adegan siap, buat dua file MP4 langsung dari browser. Narasi audio bersifat opsional untuk uji render awal.</p>
+          <p class="render-intro">Setelah semua gambar adegan siap, pilih satu format video lalu render MP4 langsung dari browser. Narasi audio bersifat opsional.</p>
           <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
           <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
           <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
@@ -65,8 +64,9 @@
           <small class="render-hint">Audio file lokal akan menggantikan audio hasil TTS.</small>
           <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Sertakan subtitle</b><small>Subtitle SRT dibuat dari timestamp ElevenLabs jika tersedia.</small></span></label>
           <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
+          <fieldset class="video-format-picker"><legend>PILIH FORMAT VIDEO</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, YouTube Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
           <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.</div>
-          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render video 9:16 + 16:9 <b>→</b></button>
+          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render video vertikal (9:16) <b>→</b></button>
           <div class="render-progress" id="videoRenderProgress" hidden>
             <div class="render-progress-track"><span id="videoRenderProgressBar"></span></div>
             <p id="videoRenderProgressText" role="status" aria-live="polite">Menyiapkan render…</p>

@@ -231,20 +231,33 @@ function videoSrtTime(seconds) {
   return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":")+","+String(r).padStart(3,"0");
 }
 function makeVideoSrt(text, alignment) {
-  const chars=Array.from(text), starts=alignment?.character_start_times_seconds||[], ends=alignment?.character_end_times_seconds||[];
-  const aligned=starts.length===chars.length&&ends.length===chars.length;
-  const matches=[...text.matchAll(/[^.!?。！？\\n]+[.!?。！？]?/gu)];
-  const cues=[];
-  for(const match of matches){
-    const raw=match[0], leading=raw.match(/^\\s*/)?.[0].length||0, value=raw.trim();
-    if(!value)continue;
-    const startIndex=Array.from(text.slice(0,match.index+leading)).length;
-    const endIndex=startIndex+Array.from(value).length-1;
-    const start=aligned?Number(starts[startIndex]||0):cues.length*3;
-    const end=aligned?Number(ends[endIndex]||start+2):start+3;
-    cues.push((cues.length+1)+"\\n"+videoSrtTime(start)+" --> "+videoSrtTime(Math.max(start+.8,end))+"\\n"+value);
+  const chars = Array.from(text);
+  const starts = alignment?.character_start_times_seconds || [];
+  const ends = alignment?.character_end_times_seconds || [];
+  const aligned = starts.length === chars.length && ends.length === chars.length;
+  const matches = [...text.matchAll(/[^.!?。！？\n]+[.!?。！？]?/gu)];
+  const cues = [];
+
+  for (const match of matches) {
+    const raw = match[0];
+    const leading = raw.match(/^\s*/)?.[0].length || 0;
+    const value = raw.trim();
+    if (!value) continue;
+
+    const startIndex = Array.from(text.slice(0, match.index + leading)).length;
+    const endIndex = startIndex + Array.from(value).length - 1;
+    const start = aligned ? Number(starts[startIndex] || 0) : cues.length * 3;
+    const end = aligned ? Number(ends[endIndex] || start + 2) : start + 3;
+
+    cues.push(
+      (cues.length + 1) + "\n" +
+      videoSrtTime(start) + " --> " +
+      videoSrtTime(Math.max(start + 0.8, end)) + "\n" +
+      value
+    );
   }
-  return cues.join("\\n\\n")+"\\n";
+
+  return cues.join("\n\n") + "\n";
 }
 async function loadVideoVoices() {
   const select=$("videoVoiceSelect");

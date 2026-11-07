@@ -9,6 +9,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/video-studio.css">
 </head>
 <body class="in-studio">
   <div class="app-shell">
@@ -22,7 +23,7 @@
       <div class="nav-label">PROYEK</div><button class="nav-item active" data-view="studio">Proyek saat ini</button>
       <button class="nav-item" data-view="assistant">Chat AI khusus</button>
       <button class="nav-item" id="personaNav" data-view="persona" hidden>Persona Saya</button>
-      <button class="nav-item" data-view="history">Riwayat</button>\n      <a class="nav-item" href="/video-studio.html" style="display:block;text-decoration:none">▣ Auto Video Studio</a>
+      <button class="nav-item" data-view="history">Riwayat</button>\n      <button class="nav-item" data-view="video">▣ Auto Video Studio</button>
       <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden>Dashboard admin</button>
       <div class="sidebar-bottom">
         <nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav>
@@ -95,7 +96,60 @@
           <div class="admin-toolbar"><span id="adminUpdated">Data belum dimuat</span><button class="subtle-button" id="refreshAdmin">Perbarui data</button></div><div class="admin-metrics" id="adminMetrics"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div>
           <div class="panel admin-credit-panel"><div class="panel-heading"><div><div><h2>Tambah kredit pengguna</h2></div></div></div><form id="adminCreditForm" class="admin-credit-form"><label>Email pengguna<input id="adminCreditEmail" type="email" placeholder="nama@email.com" required></label><label>Jumlah kredit<input id="adminCreditAmount" type="number" min="1" max="1000000" step="1" value="10000" required></label><button class="generate-button" id="adminCreditSubmit" type="submit">Tambahkan kredit</button></form></div><div class="admin-provider-grid" id="adminProviders"></div>
           <section class="panel admin-transactions"><div class="panel-heading"><div><h2>Transaksi terbaru</h2></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b></div></div></section></section>
-      <div class="bottom-dock"><div class="dock-player"><audio id="audioPlayer" controls preload="metadata"></audio><span id="dockTrack">Belum ada audio</span></div><span class="dock-credits" id="dockCredits">Kredit: —</span><button class="dock-action" id="dockAction">Lanjut</button></div>
+<section class="page video-page" id="videoStudioPage">
+        <div class="video-heading"><div><div class="eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Auto Video <em>Studio.</em></h1><p>Buat konsep video dari HP, untuk format vertikal dan horizontal.</p></div><div class="format-chip"><b>720P</b><span>PILIH FORMAT SAAT RENDER</span></div></div>
+        <div class="video-layout">
+          <section class="panel video-form-panel">
+            <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
+            <label class="field-label" for="videoTopic">TOPIK ATAU IDE VIDEO</label>
+            <textarea id="videoTopic" maxlength="500" rows="4" placeholder="Contoh: 5 kebiasaan sederhana untuk menjaga kesehatan ginjal…"></textarea>
+            <div class="video-field-grid">
+              <div><label class="field-label" for="videoDuration">DURASI TARGET</label><select id="videoDuration"><option value="60" selected>1 menit</option><option value="90">1,5 menit</option><option value="120">2 menit</option><option value="180">3 menit</option></select></div>
+              <div><label class="field-label" for="videoSceneCount">JUMLAH ADEGAN</label><select id="videoSceneCount"><option value="6">6 adegan</option><option value="8" selected>8 adegan</option><option value="10">10 adegan</option><option value="12">12 adegan</option><option value="15">15 adegan</option></select></div>
+            </div>
+            <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
+            <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>
+            <div class="visual-style-card"><div><b>Gaya visual · Mixed2</b><small>Campuran realistis, ilustrasi, 3D, dan cinematic sesuai kebutuhan adegan.</small></div><span> MIXED2 </span></div>
+            <button class="generate-button" id="generateStoryboard"><span>✧</span> Buat storyboard <b>→</b></button>
+            <p class="privacy-note">Storyboard dan gambar dibuat melalui Kiosapi. GPT Image 2.5 Flare: Rp500 per gambar; kredit ZAIDA dipotong sesuai biaya provider dan markup akun.</p>
+            <div class="video-status" id="videoStatus" role="status" aria-live="polite"></div>
+          </section>
+          <section class="panel storyboard-panel">
+            <div class="section-head"><h2>02 · Storyboard</h2><span id="sceneCountLabel">Belum ada adegan</span></div>
+            <div id="storyboardEmpty" class="storyboard-empty"><div class="storyboard-empty-icon">▧</div><b>Ide kamu dimulai di sini</b><p>Isi topik, lalu buat storyboard. Hasilnya bisa kamu edit sebelum masuk tahap visual.</p></div>
+            <div id="storyboardResult" hidden>
+              <div class="storyboard-summary"><span class="storyboard-tag">STORYBOARD · 720P</span><h3 id="storyboardTitle"></h3><p id="storyboardSummary"></p><div class="hook-box"><small>HOOK PEMBUKA</small><p id="storyboardHook"></p></div></div>
+              <div id="sceneList" class="scene-list"></div>
+              <div class="storyboard-actions"><button class="secondary-button" id="copyStoryboard">Salin storyboard</button><button class="primary-button" id="downloadStoryboard">Unduh JSON</button></div>
+            </div>
+          </section>
+        </div>
+        <section class="panel video-render-panel" id="videoRenderPanel">
+          <div class="section-head"><h2>03 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
+          <p class="render-intro">Setelah semua gambar adegan siap, pilih satu format video lalu render MP4 langsung dari browser. Narasi audio bersifat opsional.</p>
+          <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
+          <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
+          <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
+          <button class="secondary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi dari storyboard</button>
+          <audio id="videoNarrationPreview" controls hidden></audio>
+          <small class="render-hint" id="videoNarrationStatus">Narasi dibuat dari gabungan teks semua adegan. Tarif tetap mengikuti ZAIDA Voice: 3 kredit per karakter.</small>
+          <label class="field-label" for="videoNarrationAudio">ATAU GUNAKAN AUDIO SENDIRI</label>
+          <input id="videoNarrationAudio" type="file" accept="audio/*">
+          <small class="render-hint">Audio file lokal akan menggantikan audio hasil TTS.</small>
+          <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Sertakan subtitle</b><small>Subtitle SRT dibuat dari timestamp ElevenLabs jika tersedia.</small></span></label>
+          <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
+          <fieldset class="video-format-picker"><legend>PILIH FORMAT VIDEO</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, YouTube Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
+          <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard dan seluruh gambar adegan terlebih dahulu.</div>
+          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render video vertikal (9:16) <b>→</b></button>
+          <div class="render-progress" id="videoRenderProgress" hidden>
+            <div class="render-progress-track"><span id="videoRenderProgressBar"></span></div>
+            <p id="videoRenderProgressText" role="status" aria-live="polite">Menyiapkan render…</p>
+          </div>
+          <div class="render-downloads" id="videoRenderDownloads" hidden></div>
+          <p class="render-warning">Render berjalan di perangkat kamu, bukan di server ZAIDA. Proses 1–3 menit bisa berat di HP dan membutuhkan ruang memori. Jangan tutup tab sampai selesai. Tahap ini belum menyimpan MP4 ke cloud.</p>
+        </section>
+      </section>
+            <div class="bottom-dock"><div class="dock-player"><audio id="audioPlayer" controls preload="metadata"></audio><span id="dockTrack">Belum ada audio</span></div><span class="dock-credits" id="dockCredits">Kredit: —</span><button class="dock-action" id="dockAction">Lanjut</button></div>
       <footer class="footer">Kebijakan privasi · <a href="/privasi.html">Baca selengkapnya</a></footer>
     </main>
   </div>
@@ -118,5 +172,5 @@
       <p class="auth-message" id="authMessage" role="status"></p>
     </section>
   </div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script><script type="module" src="/video-studio.js"></script>
 </body></html>

@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { renderDualVideo } from "/video-renderer.js";
 
 const firebaseApp = initializeApp({
@@ -377,20 +377,35 @@ $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);
 $("renderDualVideo").addEventListener("click", startDualRender);
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
-onAuthStateChanged(auth, user => {
-  storageKey = user ? "zaida-video-studio-draft-v1-" + user.uid : null;
-  if (!user) {
-    $("videoUserStatus").textContent = "Belum masuk";
-    $("videoCreditBalance").textContent = "Masuk untuk memakai AI";
-    setStatus("Masuk melalui ZAIDA Voice untuk membuat storyboard.", true);
+// Gunakan penyimpanan autentikasi lokal yang sama dengan halaman utama ZAIDA Voice.
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    onAuthStateChanged(auth, user => {
+      const verifiedUser = user && user.emailVerified ? user : null;
+      storageKey = verifiedUser ? "zaida-video-studio-draft-v1-" + verifiedUser.uid : null;
+      if (!verifiedUser) {
+        $("videoUserStatus").textContent = user ? "Email belum diverifikasi" : "Belum masuk";
+        $("videoCreditBalance").textContent = user ? "Verifikasi email terlebih dahulu" : "Masuk untuk memakai AI";
+        setStatus(user
+          ? "Verifikasi email akun ZAIDA Voice terlebih dahulu, lalu muat ulang halaman ini."
+          : "Sesi login belum terbaca. Kembali ke ZAIDA Voice, pastikan sudah masuk, lalu buka Auto Video Studio lagi.", true);
+        $("generateStoryboard").disabled = true;
+        $("generateVideoNarration").disabled = true;
+        updateRenderAvailability();
+        return;
+      }
+      $("videoUserStatus").textContent = verifiedUser.email || "Akun terhubung";
+      $("generateStoryboard").disabled = false;
+      setStatus("Akun ZAIDA Voice terdeteksi. Siap membuat storyboard dan gambar.");
+      updateRenderAvailability();
+      loadVideoVoices();
+      restoreDraft();
+    });
+  })
+  .catch(error => {
+    $("videoUserStatus").textContent = "Gagal memuat sesi akun";
+    setStatus("Tidak dapat membaca sesi login ZAIDA Voice: " + error.message, true);
     $("generateStoryboard").disabled = true;
+    $("generateVideoNarration").disabled = true;
     updateRenderAvailability();
-  } else {
-    $("videoUserStatus").textContent = user.email || "Akun terhubung";
-    $("generateStoryboard").disabled = false;
-    setStatus("Akun terhubung. Siap membuat storyboard dan gambar.");
-    updateRenderAvailability();
-    loadVideoVoices();
-  }
-  restoreDraft();
-});
+  });

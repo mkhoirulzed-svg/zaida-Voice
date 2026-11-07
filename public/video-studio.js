@@ -299,6 +299,8 @@ async function generateVideoNarration() {
     if(player.dataset.objectUrl)URL.revokeObjectURL(player.dataset.objectUrl);
     player.dataset.objectUrl=audioUrl;player.src=audioUrl;player.hidden=false;
     $("videoNarrationAudio").value="";
+    const remainingCredits = response.headers.get("X-Credits-Remaining");
+    if (remainingCredits !== null) syncCredits(remainingCredits);
     $("videoNarrationStatus").textContent="Narasi selesai · "+text.length.toLocaleString("id-ID")+" karakter · "+(Number(response.headers.get("X-Credits-Remaining"))>=0?"sisa kredit "+response.headers.get("X-Credits-Remaining"):"kredit diperbarui");
     const link=$("videoSubtitleDownload");
     if(generatedSubtitleText.trim()){

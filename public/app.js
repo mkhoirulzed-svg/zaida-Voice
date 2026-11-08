@@ -134,6 +134,46 @@ $("assistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftK
 $("clearAssistant").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();scriptAssistantState.messages=[];scriptAssistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ada yang ingin kamu diskusikan atau tanyakan?</p></div>';$("useAssistantScript").disabled=true;});
 $("useAssistantScript").addEventListener("click",()=>{if(!scriptAssistantState.draft)return;$("scriptText").value=scriptAssistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
 
+function updateSuperChatScrollbar(){
+  const box=$("standaloneAssistantMessages"),track=$("superChatScrollTrack"),thumb=$("superChatScrollThumb");
+  if(!box||!track||!thumb)return;
+  const visible=box.clientHeight,full=box.scrollHeight,trackHeight=track.clientHeight;
+  const overflow=full>visible+2;
+  track.classList.toggle("is-scrollable",overflow);
+  if(!overflow){thumb.style.height="100%";thumb.style.transform="translateY(0)";return;}
+  const thumbHeight=Math.max(30,trackHeight*(visible/full));
+  const maxTravel=Math.max(0,trackHeight-thumbHeight);
+  const progress=box.scrollTop/Math.max(1,full-visible);
+  thumb.style.height=thumbHeight+"px";
+  thumb.style.transform="translateY("+Math.min(maxTravel,Math.max(0,progress*maxTravel))+"px)";
+}
+(function setupSuperChatScrollbar(){
+  const box=$("standaloneAssistantMessages"),track=$("superChatScrollTrack"),thumb=$("superChatScrollThumb");
+  if(!box||!track||!thumb)return;
+  box.addEventListener("scroll",updateSuperChatScrollbar,{passive:true});
+  const resize=()=>updateSuperChatScrollbar();
+  if(typeof ResizeObserver!=="undefined"){const observer=new ResizeObserver(resize);observer.observe(box);observer.observe(box.parentElement);}
+  window.addEventListener("resize",resize);
+  let dragStart=0,scrollStart=0;
+  thumb.addEventListener("pointerdown",event=>{
+    event.preventDefault();dragStart=event.clientY;scrollStart=box.scrollTop;thumb.setPointerCapture(event.pointerId);thumb.classList.add("is-dragging");
+  });
+  thumb.addEventListener("pointermove",event=>{
+    if(!thumb.hasPointerCapture(event.pointerId))return;
+    const thumbHeight=thumb.getBoundingClientRect().height;
+    const travel=Math.max(1,track.clientHeight-thumbHeight);
+    const scrollRange=Math.max(1,box.scrollHeight-box.clientHeight);
+    box.scrollTop=scrollStart+(event.clientY-dragStart)*(scrollRange/travel);
+  });
+  const stop=()=>thumb.classList.remove("is-dragging");
+  thumb.addEventListener("pointerup",stop);thumb.addEventListener("pointercancel",stop);
+  track.addEventListener("pointerdown",event=>{
+    if(event.target===thumb)return;
+    const rect=track.getBoundingClientRect(),ratio=(event.clientY-rect.top)/Math.max(1,rect.height);
+    box.scrollTop=ratio*Math.max(0,box.scrollHeight-box.clientHeight);
+  });
+  updateSuperChatScrollbar();
+})();
 function addStandaloneAssistantMessage(role,content){
   const box=$("standaloneAssistantMessages");
   const row=document.createElement("div");row.className="assistant-message "+(role==="assistant"?"ai-message":"user-message");
@@ -149,7 +189,7 @@ function addStandaloneThinking(){
   const row=document.createElement("div");row.className="assistant-message ai-message assistant-thinking";
   const label=document.createElement("span");label.textContent="Sedang berpikir";
   const dots=document.createElement("span");dots.className="assistant-thinking-dots";dots.setAttribute("aria-hidden","true");dots.textContent="•••";
-  row.append(label,dots);$("standaloneAssistantMessages").append(row);$("standaloneAssistantMessages").scrollTop=$("standaloneAssistantMessages").scrollHeight;return row;
+  row.append(label,dots);$("standaloneAssistantMessages").append(row);$("standaloneAssistantMessages").scrollTop=$("standaloneAssistantMessages").scrollHeight;updateSuperChatScrollbar();return row;
 }
 function addStandaloneDraft(content){
   const row=document.createElement("div");row.className="assistant-message ai-message assistant-draft";
@@ -157,7 +197,7 @@ function addStandaloneDraft(content){
   const note=document.createElement("span");note.className="assistant-draft-note";note.textContent="Kamu bisa mengedit naskah ini sebelum digunakan.";
   const editor=document.createElement("textarea");editor.className="assistant-draft-editor";editor.rows=7;editor.value=content;editor.setAttribute("aria-label","Edit hasil naskah dari AI");
   editor.addEventListener("input",()=>{superChatState.draft=editor.value;$("standaloneUseAssistantScript").disabled=!editor.value.trim();});
-  row.append(title,note,editor);$("standaloneAssistantMessages").append(row);$("standaloneAssistantMessages").scrollTop=$("standaloneAssistantMessages").scrollHeight;
+  row.append(title,note,editor);$("standaloneAssistantMessages").append(row);$("standaloneAssistantMessages").scrollTop=$("standaloneAssistantMessages").scrollHeight;updateSuperChatScrollbar();
 }
 async function sendStandaloneAssistantMessage(){
   const input=$("standaloneAssistantInput"),message=input.value.trim();
@@ -186,7 +226,7 @@ async function sendStandaloneAssistantMessage(){
 $("standaloneSendAssistant").addEventListener("click",sendStandaloneAssistantMessage);
 $("standaloneAssistantInput").addEventListener("input",()=>{const el=$("standaloneAssistantInput");el.style.height="auto";el.style.height=Math.min(el.scrollHeight,150)+"px";el.closest(".chat-compose").classList.toggle("has-text",Boolean(el.value.trim()));});
 $("standaloneAssistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendStandaloneAssistantMessage();}});
-$("clearStandaloneAssistant").addEventListener("click",()=>{$("standaloneAssistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';superChatState.messages=[];superChatState.draft="";$("standaloneUseAssistantScript").disabled=true;});
+$("clearStandaloneAssistant").addEventListener("click",()=>{$("standaloneAssistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';superChatState.messages=[];superChatState.draft="";$("standaloneUseAssistantScript").disabled=true;updateSuperChatScrollbar();});
 $("standaloneUseAssistantScript").addEventListener("click",()=>{if(!superChatState.draft)return;$("scriptText").value=superChatState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
 
 
@@ -236,7 +276,7 @@ function renderStandaloneConversation(){
   }
   if(superChatState.draft)addStandaloneDraft(superChatState.draft);
   $("standaloneUseAssistantScript").disabled=!superChatState.draft;
-  box.scrollTop=box.scrollHeight;
+  box.scrollTop=box.scrollHeight;updateSuperChatScrollbar();
 }
 function showView(requestedView){
   let view=requestedView;

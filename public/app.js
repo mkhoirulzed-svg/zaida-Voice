@@ -75,7 +75,8 @@ function renderHistory(){
   });
 }
 
-const assistantState={messages:[],draft:"",busy:false};
+const scriptAssistantState={messages:[],draft:"",busy:false};
+const superChatState={messages:[],draft:"",busy:false};
 function assistantProfile(){return {persona:$("writerName").value.trim(),interests:[...document.querySelectorAll("#interestGrid input:checked")].map(x=>x.value),style:$("writerStyle").value,emotion:$("writerEmotion").value,audience:$("writerAudience").value.trim(),length:$("writerLength").value};}
 function applyAssistantProfile(p={}){if(p.persona!==undefined)$("writerName").value=p.persona||"";if(Array.isArray(p.interests))document.querySelectorAll("#interestGrid input").forEach(x=>x.checked=p.interests.includes(x.value));if(p.style)$("writerStyle").value=p.style;if(p.emotion)$("writerEmotion").value=p.emotion;if(p.audience!==undefined)$("writerAudience").value=p.audience||"";if(p.length)$("writerLength").value=p.length;syncChoiceChips();if($("settingsWriterLength"))$("settingsWriterLength").value=$("writerLength").value;}
 async function loadPersonaProfile(){if(!currentUser)return;const defaults={persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"};applyAssistantProfile(defaults);try{const result=await api("/api/persona",{authRequired:true});applyAssistantProfile(result.profile||defaults);$("personaSaveStatus").textContent="Persona tersimpan di akun ini";}catch(error){$("personaSaveStatus").textContent="Persona belum dapat dimuat";toast("Persona belum dapat dimuat: "+error.message);}}
@@ -104,34 +105,34 @@ function addAssistantDraft(content){
   const title=document.createElement("b");title.className="assistant-draft-title";title.textContent="Draf Naskah";
   const note=document.createElement("span");note.className="assistant-draft-note";note.textContent="Kamu bisa mengedit naskah ini sebelum digunakan.";
   const editor=document.createElement("textarea");editor.className="assistant-draft-editor";editor.rows=7;editor.value=content;editor.setAttribute("aria-label","Edit hasil naskah dari AI");
-  editor.addEventListener("input",()=>{assistantState.draft=editor.value;$("useAssistantScript").disabled=!editor.value.trim();});
+  editor.addEventListener("input",()=>{scriptAssistantState.draft=editor.value;$("useAssistantScript").disabled=!editor.value.trim();});
   row.append(title,note,editor);$("assistantMessages").append(row);$("assistantMessages").scrollTop=$("assistantMessages").scrollHeight;
 }
 async function sendAssistantMessage(){
   const input=$("assistantInput"),message=input.value.trim();
-  if(!message||assistantState.busy)return;
+  if(!message||scriptAssistantState.busy)return;
   if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return;}
   await personaReady;
   if(message.length>3000){toast("Pesan maksimal 3.000 karakter.");return;}
-  assistantState.messages.push({role:"user",content:message});addAssistantMessage("user",message);
+  scriptAssistantState.messages.push({role:"user",content:message});addAssistantMessage("user",message);
   input.value="";input.style.height="32px";input.closest(".chat-compose").classList.remove("has-text");
-  assistantState.busy=true;const sendButton=$("sendAssistant");sendButton.disabled=true;sendButton.classList.add("is-loading");sendButton.setAttribute("aria-label","AI sedang berpikir");
+  scriptAssistantState.busy=true;const sendButton=$("sendAssistant");sendButton.disabled=true;sendButton.classList.add("is-loading");sendButton.setAttribute("aria-label","AI sedang berpikir");
   const thinking=addAssistantThinking();
   try{
-    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:assistantState.messages.slice(-12)}),authRequired:true});
+    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:scriptAssistantState.messages.slice(-12),mode:"script-assistant"}),authRequired:true});
     if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining);}
     const answer=(result.reply||"").trim();if(!answer)throw new Error("AI tidak mengembalikan jawaban.");
-    assistantState.messages.push({role:"assistant",content:answer});addAssistantMessage("assistant",answer);
-    const draft=result.script?.trim();if(draft){assistantState.draft=draft;$("useAssistantScript").disabled=false;addAssistantDraft(draft);}
+    scriptAssistantState.messages.push({role:"assistant",content:answer});addAssistantMessage("assistant",answer);
+    const draft=result.script?.trim();if(draft){scriptAssistantState.draft=draft;$("useAssistantScript").disabled=false;addAssistantDraft(draft);}
     toast("Balasan diterima.");
-  }catch(error){assistantState.messages.pop();addAssistantMessage("assistant","Maaf, terjadi kendala: "+error.message);}
-  finally{thinking.remove();assistantState.busy=false;sendButton.disabled=false;sendButton.classList.remove("is-loading");sendButton.setAttribute("aria-label","Kirim pesan");input.focus();}
+  }catch(error){scriptAssistantState.messages.pop();addAssistantMessage("assistant","Maaf, terjadi kendala: "+error.message);}
+  finally{thinking.remove();scriptAssistantState.busy=false;sendButton.disabled=false;sendButton.classList.remove("is-loading");sendButton.setAttribute("aria-label","Kirim pesan");input.focus();}
 }
 $("sendAssistant").addEventListener("click",sendAssistantMessage);
 $("assistantInput").addEventListener("input",()=>{const el=$("assistantInput");el.style.height="auto";el.style.height=Math.min(el.scrollHeight,150)+"px";el.closest(".chat-compose").classList.toggle("has-text",Boolean(el.value.trim()));});
 $("assistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAssistantMessage();}});
-$("clearAssistant").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();assistantState.messages=[];assistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
-$("useAssistantScript").addEventListener("click",()=>{if(!assistantState.draft)return;$("scriptText").value=assistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
+$("clearAssistant").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();scriptAssistantState.messages=[];scriptAssistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
+$("useAssistantScript").addEventListener("click",()=>{if(!scriptAssistantState.draft)return;$("scriptText").value=scriptAssistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
 
 function addStandaloneAssistantMessage(role,content){
   const box=$("standaloneAssistantMessages");
@@ -155,38 +156,38 @@ function addStandaloneDraft(content){
   const title=document.createElement("b");title.className="assistant-draft-title";title.textContent="Draf Naskah";
   const note=document.createElement("span");note.className="assistant-draft-note";note.textContent="Kamu bisa mengedit naskah ini sebelum digunakan.";
   const editor=document.createElement("textarea");editor.className="assistant-draft-editor";editor.rows=7;editor.value=content;editor.setAttribute("aria-label","Edit hasil naskah dari AI");
-  editor.addEventListener("input",()=>{assistantState.draft=editor.value;$("standaloneUseAssistantScript").disabled=!editor.value.trim();});
+  editor.addEventListener("input",()=>{superChatState.draft=editor.value;$("standaloneUseAssistantScript").disabled=!editor.value.trim();});
   row.append(title,note,editor);$("standaloneAssistantMessages").append(row);$("standaloneAssistantMessages").scrollTop=$("standaloneAssistantMessages").scrollHeight;
 }
 async function sendStandaloneAssistantMessage(){
   const input=$("standaloneAssistantInput"),message=input.value.trim();
-  if(!message||assistantState.busy)return;
+  if(!message||superChatState.busy)return;
   if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return;}
   await personaReady;
   if(message.length>3000){toast("Pesan maksimal 3.000 karakter.");return;}
-  assistantState.busy=true;const sendButton=$("standaloneSendAssistant");sendButton.disabled=true;sendButton.classList.add("is-loading");sendButton.setAttribute("aria-label","AI sedang berpikir");
-  assistantState.messages.push({role:"user",content:message});addStandaloneAssistantMessage("user",message);
+  superChatState.busy=true;const sendButton=$("standaloneSendAssistant");sendButton.disabled=true;sendButton.classList.add("is-loading");sendButton.setAttribute("aria-label","AI sedang berpikir");
+  superChatState.messages.push({role:"user",content:message});addStandaloneAssistantMessage("user",message);
   input.value="";input.style.height="32px";input.closest(".chat-compose").classList.remove("has-text");
   const thinking=addStandaloneThinking();
   try{
-    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:assistantState.messages.slice(-12)}),authRequired:true});
+    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:superChatState.messages.slice(-12),mode:"super-chat"}),authRequired:true});
     if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining);}
     const answer=(result.reply||"").trim();if(!answer)throw new Error("AI tidak mengembalikan jawaban.");
-    assistantState.messages.push({role:"assistant",content:answer});addStandaloneAssistantMessage("assistant",answer);
-    const draft=result.script?.trim();if(draft){assistantState.draft=draft;$("standaloneUseAssistantScript").disabled=false;addStandaloneDraft(draft);}
+    superChatState.messages.push({role:"assistant",content:answer});addStandaloneAssistantMessage("assistant",answer);
+    const draft=result.script?.trim();if(draft){superChatState.draft=draft;$("standaloneUseAssistantScript").disabled=false;addStandaloneDraft(draft);}
     toast("Balasan diterima.");
   }catch(error){
-    assistantState.messages.pop();
+    superChatState.messages.pop();
     addStandaloneAssistantMessage("assistant","Maaf, terjadi kendala: "+error.message);
   }finally{
-    thinking.remove();assistantState.busy=false;sendButton.disabled=false;sendButton.classList.remove("is-loading");sendButton.setAttribute("aria-label","Kirim pesan");input.focus();
+    thinking.remove();superChatState.busy=false;sendButton.disabled=false;sendButton.classList.remove("is-loading");sendButton.setAttribute("aria-label","Kirim pesan");input.focus();
   }
 }
 $("standaloneSendAssistant").addEventListener("click",sendStandaloneAssistantMessage);
 $("standaloneAssistantInput").addEventListener("input",()=>{const el=$("standaloneAssistantInput");el.style.height="auto";el.style.height=Math.min(el.scrollHeight,150)+"px";el.closest(".chat-compose").classList.toggle("has-text",Boolean(el.value.trim()));});
 $("standaloneAssistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendStandaloneAssistantMessage();}});
-$("clearStandaloneAssistant").addEventListener("click",()=>{$("standaloneAssistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';assistantState.messages=[];assistantState.draft="";$("standaloneUseAssistantScript").disabled=true;});
-$("standaloneUseAssistantScript").addEventListener("click",()=>{if(!assistantState.draft)return;$("scriptText").value=assistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
+$("clearStandaloneAssistant").addEventListener("click",()=>{$("standaloneAssistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';superChatState.messages=[];superChatState.draft="";$("standaloneUseAssistantScript").disabled=true;});
+$("standaloneUseAssistantScript").addEventListener("click",()=>{if(!superChatState.draft)return;$("scriptText").value=superChatState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
 
 
 function formatRupiah(value){return "Rp"+Math.round(Number(value)||0).toLocaleString("id-ID");}
@@ -228,13 +229,13 @@ function closeSidebar(){
 }
 function renderStandaloneConversation(){
   const box=$("standaloneAssistantMessages");box.innerHTML="";
-  if(!assistantState.messages.length){
-    box.innerHTML='<div class="assistant-message ai-message"><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div>';
+  if(!superChatState.messages.length){
+    box.innerHTML='<div class="assistant-message ai-message"><p>Halo! Aku ZAIDA AI. Ada yang ingin kamu diskusikan atau tanyakan?</p></div>';
   }else{
-    assistantState.messages.forEach(item=>addStandaloneAssistantMessage(item.role,item.content));
+    superChatState.messages.forEach(item=>addStandaloneAssistantMessage(item.role,item.content));
   }
-  if(assistantState.draft)addStandaloneDraft(assistantState.draft);
-  $("standaloneUseAssistantScript").disabled=!assistantState.draft;
+  if(superChatState.draft)addStandaloneDraft(superChatState.draft);
+  $("standaloneUseAssistantScript").disabled=!superChatState.draft;
   box.scrollTop=box.scrollHeight;
 }
 function showView(requestedView){

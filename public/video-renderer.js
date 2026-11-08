@@ -121,22 +121,70 @@ async function makeCaptionOverlayPng(text, width, style = {}) {
   if (!blob) throw new Error("Gagal membuat gambar caption.");
   return new Uint8Array(await blob.arrayBuffer());
 }
+async function makeMissingSceneImage(scene, index, width, height) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Browser tidak dapat menyiapkan visual untuk adegan yang belum memiliki gambar.");
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#172554");
+  gradient.addColorStop(1, "#111827");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "rgba(255,255,255,.08)";
+  ctx.beginPath();
+  ctx.arc(width * .78, height * .22, Math.min(width, height) * .22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#a5b4fc";
+  ctx.font = "600 " + Math.round(width * .025) + "px Arial";
+  ctx.fillText("ADEGAN " + String(index + 1).padStart(2, "0"), width / 2, height * .39);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "700 " + Math.round(width * .052) + "px Arial";
+  const title = String(scene.title || "Visual adegan").trim();
+  const words = title.split(/\\s+/);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? line + " " + word : word;
+    if (line && ctx.measureText(candidate).width > width * .82) { lines.push(line); line = word; }
+    else line = candidate;
+  }
+  if (line) lines.push(line);
+  lines.slice(0, 3).forEach((value, i) => ctx.fillText(value, width / 2, height * .48 + i * width * .065, width * .84));
+  ctx.fillStyle = "rgba(255,255,255,.72)";
+  ctx.font = "400 " + Math.round(width * .022) + "px Arial";
+  ctx.fillText("Gambar adegan belum tersedia", width / 2, height * .78);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error("Gagal membuat visual pengganti adegan " + (index + 1) + ".");
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return { b64: btoa(binary), mime: "image/png" };
+}
+
 async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, onProgress, audioDuration = null, burnCaptions = false, captionStyle = {}) {
   const isPortrait = format === "9:16";
   const width = isPortrait ? 720 : 1280;
   const height = isPortrait ? 1280 : 720;
   const outputName = "zaida-video-" + (isPortrait ? "9x16" : "16x9") + ".mp4";
   const inputNames = [];
-  const sceneDuration = scenes.reduce((sum, scene) => sum + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)), 0);
+  const renderScenes = await Promise.all(scenes.map(async (scene, index) => ({
+    ...scene,
+    generatedImage: scene.generatedImage?.b64 ? scene.generatedImage : await makeMissingSceneImage(scene, index, width, height)
+  })));
+  const sceneDuration = renderScenes.reduce((sum, scene) => sum + Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)), 0);
   const totalSeconds = Number.isFinite(Number(audioDuration)) && Number(audioDuration) > 0 ? Number(audioDuration) : sceneDuration;
-  const hasAllImages = scenes.every(scene => Boolean(scene.generatedImage?.b64));
+  const hasAllImages = renderScenes.every(scene => Boolean(scene.generatedImage?.b64));
+  const missingImageCount = scenes.filter(scene => !scene.generatedImage?.b64).length;
   try {
     let args;
     if (hasAllImages) {
       const listName = "zaida_concat_" + (isPortrait ? "portrait" : "landscape") + ".txt";
       const concatLines = [];
-      for (let i = 0; i < scenes.length; i++) {
-        const scene = scenes[i], ext = safeExtension(scene.generatedImage.mime);
+      for (let i = 0; i < renderScenes.length; i++) {
+        const scene = renderScenes[i], ext = safeExtension(scene.generatedImage.mime);
         const name = "zaida_scene_" + i + "." + ext;
         inputNames.push(name);
         await ffmpeg.writeFile(name, base64ToBytes(scene.generatedImage.b64));
@@ -202,7 +250,7 @@ async function renderFormat(ffmpeg, scenes, audioBytes, subtitleText, format, on
     else args.push("-an");
     if (subtitleInput !== null) args.push("-map", subtitleInput + ":s:0", "-c:s", "mov_text", "-metadata:s:s:0", "language=ind");
     args.push("-t", String(totalSeconds), "-y", outputName);
-    onProgress({ phase: "rendering", message: hasAllImages ? "Merender video dari gambar adegan…" : "Membuat video dasar langsung dengan FFmpeg…", format });
+    onProgress({ phase: "rendering", message: missingImageCount ? "Merender gambar adegan (" + (scenes.length - missingImageCount) + "/" + scenes.length + " tersedia; sisanya visual sementara)…" : "Merender video dari gambar adegan…", format });
     const exitCode = await ffmpeg.exec(args);
     if (exitCode !== 0) {
       const details = recentFFmpegLogs.slice(-8).join("\n");

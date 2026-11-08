@@ -467,3 +467,38 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   font-weight:600!important;
   letter-spacing:-.2px!important;
 }
+
+
+/* Compact iOS-style subtitle preview toolbar. */
+.studio-subtitle-toolbar{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  margin:22px 0 14px!important;
+  padding:0!important;
+  border:0!important;
+}
+.studio-subtitle-toolbar>b{
+  color:#29292e!important;
+  font-size:15px!important;
+  font-weight:600!important;
+  letter-spacing:-.2px!important;
+}
+.subtitle-toolbar-actions{display:flex!important;align-items:center!important;gap:8px!important}
+.subtitle-icon-button{
+  display:grid!important;
+  place-items:center!important;
+  width:38px!important;
+  height:38px!important;
+  padding:0!important;
+  border:1px solid #e7e7ed!important;
+  border-radius:12px!important;
+  background:#f7f7fa!important;
+  color:#5b52c4!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+}
+.subtitle-icon-button svg{width:18px!important;height:18px!important}
+.subtitle-icon-button:active{background:#eeecfa!important;transform:scale(.96)}
+.studio-result-panel #subtitleList{margin-top:0!important}

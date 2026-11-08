@@ -6,6 +6,7 @@
   page.dataset.editorV2Ready = "true";
 
   const heading = page.querySelector(".video-heading");
+  const layout = page.querySelector(".video-layout");
   const toggle = document.createElement("button");
   toggle.type = "button";
   toggle.className = "video-v2-toggle";

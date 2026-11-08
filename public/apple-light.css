@@ -911,3 +911,18 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   border-color:#bcb4ef!important;
   box-shadow:0 0 0 3px rgba(102,90,203,.09)!important;
 }
+
+
+/* Give the assistant conversation more room for longer exchanges and editable drafts. */
+.studio-assistant-panel .chat-messages{
+  height: min(58vh, 560px)!important;
+  min-height: 390px!important;
+  max-height: 560px!important;
+}
+@media(max-width:600px){
+  .studio-assistant-panel .chat-messages{
+    height: min(55vh, 520px)!important;
+    min-height: 360px!important;
+    max-height: 520px!important;
+  }
+}

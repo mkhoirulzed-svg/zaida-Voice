@@ -131,7 +131,7 @@ async function sendAssistantMessage(){
 $("sendAssistant").addEventListener("click",sendAssistantMessage);
 $("assistantInput").addEventListener("input",()=>{const el=$("assistantInput");el.style.height="auto";el.style.height=Math.min(el.scrollHeight,150)+"px";el.closest(".chat-compose").classList.toggle("has-text",Boolean(el.value.trim()));});
 $("assistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAssistantMessage();}});
-$("clearAssistant").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();scriptAssistantState.messages=[];scriptAssistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
+$("clearAssistant").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();scriptAssistantState.messages=[];scriptAssistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ada yang ingin kamu diskusikan atau tanyakan?</p></div>';$("useAssistantScript").disabled=true;});
 $("useAssistantScript").addEventListener("click",()=>{if(!scriptAssistantState.draft)return;$("scriptText").value=scriptAssistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
 
 function addStandaloneAssistantMessage(role,content){

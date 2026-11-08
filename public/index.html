@@ -36,45 +36,55 @@
     <main class="main">
       <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="breadcrumb">Ruang kerja <span>/</span> <b id="breadcrumbPage">Studio Suara</b></div><div class="top-actions"><span id="creditBalance" class="credit-balance" hidden>Kredit: —</span><button class="auth-button" id="authButton">Masuk / Daftar</button><div class="top-avatar" id="topAvatar">Z</div></div></header>
       <section class="page active" id="studioPage">
-        <div class="workflow-header"><div class="workflow-title"><h1 id="workflowTitle">Naskah</h1><span id="workflowCount">0 karakter</span></div>
-          <nav class="stepper" aria-label="Tahapan produksi"><button class="stepper-item active" data-step="1"><span>1</span>Naskah</button><i></i><button class="stepper-item" data-step="2"><span>2</span>Suara</button><i></i><button class="stepper-item" data-step="3"><span>3</span>Ekspor</button></nav></div>
-        <section class="workflow-panel active" id="step1"><div class="script-workspace">
-          <section class="panel editor-panel"><div class="section-head"><h2>Naskah</h2><span id="charCount">0 karakter</span></div>
-            <select id="scriptLanguage" class="language-select" hidden><option value="id" selected>Bahasa Indonesia</option></select>
-            <textarea id="scriptText" maxlength="5000" placeholder="Tulis atau tempel naskah di sini…"></textarea>
-            <div class="editor-tools"><button class="text-tool" id="clearText">Hapus</button><button class="text-tool" id="improveScript">Perbaiki naskah</button><button class="text-tool" id="addAudioTags" title="AI menambahkan arahan emosi untuk ElevenLabs v4; menggunakan kredit AI">Audio Tags</button></div>
-              <div class="quick-options">
-                <div><span class="quick-label">Gaya</span><div class="chip-row" id="styleChips"><button type="button" class="choice-chip active" data-select="writerStyle" data-value="santai dan akrab">Santai</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="formal dan profesional">Formal</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="edukatif dan mudah dipahami">Edukatif</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="dramatis dan bercerita">Bercerita</button></div></div>
-                <div><span class="quick-label">Durasi</span><div class="chip-row" id="durationChips"><button type="button" class="choice-chip active" data-select="writerLength" data-value="singkat, sekitar 30 detik">30 dtk</button><button type="button" class="choice-chip" data-select="writerLength" data-value="sekitar 1 menit">1 mnt</button><button type="button" class="choice-chip" data-select="writerLength" data-value="sekitar 3 menit">3 mnt</button><button type="button" class="choice-chip" data-select="writerLength" data-value="fleksibel sesuai kebutuhan">Fleksibel</button></div></div>
+        <div class="workflow-header studio-maker-header"><div class="workflow-title"><h1 id="workflowTitle">Voice Studio</h1><span id="workflowCount">0 karakter</span></div><p>Ubah naskah menjadi suara dalam satu ruang kerja.</p></div>
+        <div class="studio-maker-layout">
+          <div class="studio-maker-main">
+            <section class="workflow-panel active" id="step1">
+              <section class="panel editor-panel studio-script-panel">
+                <div class="section-head"><div><h2>Naskah</h2><span class="studio-field-hint">Tulis atau tempel teks yang ingin diubah menjadi audio.</span></div><span id="charCount">0 karakter</span></div>
+                <select id="scriptLanguage" class="language-select" hidden><option value="id" selected>Bahasa Indonesia</option></select>
+                <textarea id="scriptText" maxlength="5000" placeholder="Mulai tulis naskah di sini…"></textarea>
+                <div class="editor-tools"><button class="text-tool" id="clearText">Hapus naskah</button><button class="text-tool" id="improveScript">Perbaiki naskah</button><button class="text-tool" id="addAudioTags" title="AI menambahkan arahan emosi untuk ElevenLabs v4; menggunakan kredit AI">Audio Tags</button></div>
+                <div class="quick-options studio-quick-options">
+                  <div><span class="quick-label">Gaya penulisan</span><div class="chip-row" id="styleChips"><button type="button" class="choice-chip active" data-select="writerStyle" data-value="santai dan akrab">Santai</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="formal dan profesional">Formal</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="edukatif dan mudah dipahami">Edukatif</button><button type="button" class="choice-chip" data-select="writerStyle" data-value="dramatis dan bercerita">Bercerita</button></div></div>
+                  <div><span class="quick-label">Target durasi naskah</span><div class="chip-row" id="durationChips"><button type="button" class="choice-chip active" data-select="writerLength" data-value="singkat, sekitar 30 detik">30 dtk</button><button type="button" class="choice-chip" data-select="writerLength" data-value="sekitar 1 menit">1 mnt</button><button type="button" class="choice-chip" data-select="writerLength" data-value="sekitar 3 menit">3 mnt</button><button type="button" class="choice-chip" data-select="writerLength" data-value="fleksibel sesuai kebutuhan">Fleksibel</button></div></div>
+                </div>
+                <button id="continueToVoice" hidden></button>
+              </section>
+              <aside class="panel assistant-panel studio-assistant-panel"><details><summary class="studio-assistant-summary"><span><b>Asisten naskah</b><small>Bantu susun atau poles naskah dengan AI</small></span><span class="studio-assistant-toggle">Buka</span></summary>
+                <div class="chat-messages" id="assistantMessages"><div class="assistant-message ai-message"><b>Asisten</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div></div>
+                <div class="chat-compose"><textarea id="assistantInput" rows="3" maxlength="3000" placeholder="Tulis pesan…"></textarea><button id="sendAssistant" class="primary-button">Kirim</button></div>
+                <div class="script-export"><button id="clearAssistant" class="text-tool">Percakapan baru</button><button id="useAssistantScript" class="subtle-button" disabled>Gunakan naskah</button></div>
+              </details></aside>
+            </section>
+            <section class="workflow-panel" id="step3">
+              <div class="panel export-panel studio-result-panel"><div class="section-head"><div><h2>Hasil audio</h2><span class="studio-field-hint">Audio yang selesai dibuat akan muncul di sini.</span></div><span class="result-status" id="resultDetails">MP3</span></div>
+                <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small>Format MP3</small></div></div>
+                <div class="result-player-wrap"><audio id="resultAudio" controls preload="metadata"></audio><p class="result-player-hint">Dengarkan hasilnya terlebih dahulu sebelum mengunduh.</p></div>
+                <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a><button type="button" class="secondary-button" id="regenerateButton">Buat ulang audio</button></div>
+                <label class="subtitle-option"><input type="checkbox" id="includeSubtitle"><span><b>Tambahkan subtitle</b><small>Siapkan file SRT bersama audio.</small></span></label>
+                <section class="subtitle-options" id="subtitleOptions" hidden><div class="subtitle-toolbar"><span id="subtitleStatus">Subtitle siap diedit</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div><div id="subtitleList" class="subtitle-list"><div class="empty-output"><b>Subtitle belum dibuat</b></div></div><button class="secondary-button" id="downloadSrt">Unduh SRT</button></section>
+                <div class="step-actions"><button id="restartProject" hidden></button></div>
               </div>
-            <button id="continueToVoice" hidden></button></section>
-          <aside class="panel assistant-panel"><div class="section-head"><h2>Asisten naskah</h2><button id="clearAssistant" class="text-tool">Percakapan baru</button></div>
-            <div class="chat-messages" id="assistantMessages"><div class="assistant-message ai-message"><b>Asisten</b><p>Ceritakan ide atau naskah yang ingin kamu susun.</p></div></div>
-            <div class="chat-compose"><textarea id="assistantInput" rows="3" maxlength="3000" placeholder="Tulis pesan…"></textarea><button id="sendAssistant" class="primary-button">Kirim</button></div>
-            <div class="script-export"><button id="useAssistantScript" class="subtle-button" disabled>Gunakan naskah</button></div></aside></div></section>
-        <section class="workflow-panel" id="step2"><div class="panel voice-panel">
-          <section class="script-review-panel"><div class="script-review-head"><div><h2>Pratinjau naskah</h2><span id="voiceScriptCharCount">0 karakter</span></div><button type="button" id="editScriptFromVoice" class="text-tool">Edit naskah</button></div><div id="voiceScriptPreview" class="script-preview" aria-live="polite"></div></section>
-          <div class="progress-wrap voice-progress-top" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div>
-          <div class="section-head"><h2>Pilih suara</h2><span id="voiceStatus">Memuat suara…</span></div>
-          <div class="voice-library-tools"><input id="voiceSearch" type="search" placeholder="Cari nama suara…" aria-label="Cari nama suara"><select id="voiceGenderFilter" aria-label="Filter jenis suara"><option value="all">Semua suara</option><option value="female">Perempuan</option><option value="male">Laki-laki</option></select></div>
-          <p class="voice-library-note" id="voiceLibraryNote">Memuat katalog suara…</p>
-          <select id="voiceSelect" class="voice-select-native" aria-label="Pilih suara"><option value="">Memuat daftar suara…</option></select><div class="voice-card-grid" id="voiceCards"></div><div id="voicePagination" class="voice-pagination"></div>
-          <details class="personalization voice-advanced"><summary>Pengaturan lanjutan</summary>
-            <div class="range-field"><div><label for="similarity">Kemiripan</label><output id="similarityValue">75%</output></div><input id="similarity" type="range" min="0" max="100" value="75"></div>
-            <div class="range-field"><div><label for="style">Penekanan gaya</label><output id="styleValue">0%</output></div><input id="style" type="range" min="0" max="100" value="0"></div><input id="stability" type="hidden" value="50"><output id="stabilityValue" hidden>50%</output></details>
-          <div class="voice-actions"><button id="generateButton" hidden></button></div>
-        </div></section>
-        <section class="workflow-panel" id="step3"><div class="panel export-panel"><div class="section-head"><h2>Ekspor</h2></div>
-          <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small id="resultDetails">MP3</small></div></div>
-          <div class="result-player-wrap"><audio id="resultAudio" controls preload="metadata"></audio><p class="result-player-hint">Dengarkan hasilnya terlebih dahulu sebelum mengunduh.</p></div>
-          <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a><button type="button" class="secondary-button" id="regenerateButton">Buat ulang audio</button></div>
-          <label class="subtitle-option"><input type="checkbox" id="includeSubtitle"><span><b>Tambahkan subtitle</b><small>Siapkan file SRT bersama audio.</small></span></label>
-          <section class="subtitle-options" id="subtitleOptions" hidden>
-            <div class="subtitle-toolbar"><span id="subtitleStatus">Subtitle siap diedit</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div>
-            <div id="subtitleList" class="subtitle-list"><div class="empty-output"><b>Subtitle belum dibuat</b></div></div>
-            <button class="secondary-button" id="downloadSrt">Unduh SRT</button>
-          </section>
-          <div class="step-actions"><button id="restartProject" hidden></button></div></div></section>
+            </section>
+          </div>
+          <aside class="studio-maker-side">
+            <section class="workflow-panel active" id="step2">
+              <div class="panel voice-panel studio-voice-panel">
+                <div class="studio-side-heading"><div><h2>Pengaturan suara</h2><p>Pilih karakter suara untuk naskahmu.</p></div><a href="#" id="openVoicesCatalog">Lihat Voices</a></div>
+                <div class="studio-selected-voice"><label for="voiceSelect">Voice</label><select id="voiceSelect" class="voice-select-native" aria-label="Pilih suara"><option value="">Memuat daftar suara…</option></select><button type="button" id="studioVoicePreview" class="secondary-button studio-preview-button">▶ Pratinjau suara</button><span id="voiceStatus" class="studio-voice-status">Memuat suara…</span><p id="voiceLibraryNote" class="voice-library-note">Memuat katalog suara…</p></div>
+                <div class="studio-voice-controls"><details class="personalization voice-advanced"><summary>Pengaturan lanjutan</summary>
+                  <div class="range-field"><div><label for="similarity">Kemiripan</label><output id="similarityValue">75%</output></div><input id="similarity" type="range" min="0" max="100" value="75"></div>
+                  <div class="range-field"><div><label for="style">Penekanan gaya</label><output id="styleValue">0%</output></div><input id="style" type="range" min="0" max="100" value="0"></div><input id="stability" type="hidden" value="50"><output id="stabilityValue" hidden>50%</output>
+                </details></div>
+                <div class="progress-wrap voice-progress-top" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div>
+                <div class="voice-actions studio-generate-actions"><button id="generateButton" class="primary-button studio-generate-button" type="button">Buat Audio</button><small>Maksimal 5.000 karakter per proses.</small></div>
+                <div class="studio-legacy-voice-tools" aria-hidden="true"><input id="voiceSearch" type="search"><select id="voiceGenderFilter"><option value="all">Semua</option></select><div id="voiceCards"></div><div id="voicePagination"></div></div>
+                <div class="script-review-panel studio-hidden-support"><span id="voiceScriptCharCount">0 karakter</span><button type="button" id="editScriptFromVoice">Edit naskah</button><div id="voiceScriptPreview"></div></div>
+              </div>
+            </section>
+          </aside>
+        </div>
       </section>
       <section class="page" id="voicesPage">
         <div class="history-heading voices-heading"><div><h1>Voices</h1><p>Temukan karakter suara yang tepat untuk narasimu.</p></div><span class="voices-count" id="catalogVoiceCount">Memuat katalog…</span></div>

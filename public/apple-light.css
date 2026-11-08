@@ -424,3 +424,27 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .studio-advanced-fixed .studio-advanced-heading{display:block!important;min-height:0!important;margin:0 0 12px!important;padding:0!important;color:#34343b!important;font-size:12px!important;font-weight:700!important}
 .studio-advanced-fixed .studio-advanced-heading:after{display:none!important;content:none!important}
 .studio-advanced-fixed .range-field{display:block!important}
+
+
+/* iOS-style typography for the voice settings section. */
+.studio-advanced-fixed{
+  background:#f7f7fa!important;
+  border:1px solid rgba(60,60,67,.10)!important;
+  border-radius:20px!important;
+  padding:18px 18px 16px!important;
+  margin-top:16px!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.025)!important;
+}
+.studio-advanced-fixed > .studio-advanced-heading{
+  display:block!important;
+  margin:0 0 18px!important;
+  padding:0!important;
+  min-height:0!important;
+  color:#1c1c1e!important;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif!important;
+  font-size:17px!important;
+  font-weight:600!important;
+  line-height:1.25!important;
+  letter-spacing:-.35px!important;
+}
+.studio-advanced-fixed > .studio-advanced-heading:after{display:none!important;content:none!important}

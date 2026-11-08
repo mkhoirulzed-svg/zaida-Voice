@@ -41,7 +41,7 @@
           <div class="studio-maker-main">
             <section class="workflow-panel active" id="step1">
               <section class="panel editor-panel studio-script-panel">
-                <div class="section-head"><div><h2>Naskah</h2><span class="studio-field-hint">Tulis atau tempel teks yang ingin diubah menjadi audio.</span></div><span id="charCount">0 karakter</span></div>
+                <div class="section-head studio-minimal-section-head"><span id="charCount">0 karakter</span></div>
                 <select id="scriptLanguage" class="language-select" hidden><option value="id" selected>Bahasa Indonesia</option></select>
                 <textarea id="scriptText" maxlength="5000" placeholder="Mulai tulis naskah di sini…"></textarea>
                 <div class="editor-tools"><button class="text-tool" id="clearText">Hapus naskah</button><button class="text-tool" id="improveScript">Perbaiki naskah</button></div>
@@ -58,9 +58,10 @@
               </details></aside>
             </section>
             <section class="workflow-panel" id="step3">
-              <div class="panel export-panel studio-result-panel"><div class="section-head"><div><h2>Hasil audio</h2><span class="studio-field-hint">Audio yang selesai dibuat akan muncul di sini.</span></div><span class="result-status" id="resultDetails">MP3</span></div>
-                <div class="export-audio"><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small>Format MP3</small></div></div>
-                <div class="result-player-wrap"><audio id="resultAudio" controls preload="metadata"></audio><p class="result-player-hint">Dengarkan hasilnya terlebih dahulu sebelum mengunduh.</p></div>
+              <div class="panel export-panel studio-result-panel">
+                <span class="result-status" id="resultDetails" hidden>MP3</span>
+                <div class="export-audio" hidden><span class="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><div><b id="resultTitle">Audio belum dibuat</b><small>Format MP3</small></div></div>
+                <div class="result-player-wrap"><audio id="resultAudio" controls preload="metadata"></audio></div>
                 <div class="export-actions"><a class="primary-button download-button" id="downloadButton" download="zaida-voice.mp3">Unduh MP3</a><button type="button" class="secondary-button" id="regenerateButton">Buat ulang audio</button></div>
                 <section class="subtitle-options" id="subtitleOptions" hidden><div class="subtitle-toolbar"><span id="subtitleStatus">Subtitle siap diedit</span><button class="secondary-button" id="regenerateSrt">Buat ulang</button></div><div id="subtitleList" class="subtitle-list"><div class="empty-output"><b>Subtitle belum dibuat</b></div></div><button class="secondary-button" id="downloadSrt">Unduh SRT</button></section>
                 <div class="step-actions"><button id="restartProject" hidden></button></div>
@@ -70,10 +71,9 @@
           <aside class="studio-maker-side">
             <section class="workflow-panel active" id="step2">
               <div class="panel voice-panel studio-voice-panel">
-                <div class="studio-side-heading"><div><h2>Pengaturan suara</h2><p>Pilih karakter suara untuk naskahmu.</p></div><a href="#" id="openVoicesCatalog">Lihat Voices</a></div>
-                <div class="studio-selected-voice"><label for="voiceSelect">Voice</label><div class="studio-voice-picker"><select id="voiceSelect" class="voice-select-native" aria-label="Pilih suara"><option value="">Memuat daftar suara…</option></select><button type="button" id="studioVoicePreview" class="studio-preview-button" aria-label="Pratinjau suara" title="Pratinjau suara">▶</button></div><span id="voiceStatus" class="studio-voice-status">Memuat suara…</span><p id="voiceLibraryNote" class="voice-library-note" hidden></p></div>
+                <div class="studio-selected-voice"><div class="studio-voice-picker"><select id="voiceSelect" class="voice-select-native" aria-label="Pilih suara"><option value="">Memuat daftar suara…</option></select><button type="button" id="studioVoicePreview" class="studio-preview-button" aria-label="Pratinjau suara" title="Pratinjau suara">▶</button></div><span id="voiceStatus" class="studio-voice-status" hidden>Memuat suara…</span><p id="voiceLibraryNote" class="voice-library-note" hidden></p></div>
                 <div class="progress-wrap voice-progress-top" id="progressWrap" hidden><div class="progress-label"><span id="progressText">Menyiapkan suara…</span><span class="spinner"></span></div><div class="progress-track"><i></i></div></div>
-                <div class="voice-actions studio-generate-actions"><button id="generateButton" class="primary-button studio-generate-button" type="button">Buat Audio</button><small>Maksimal 5.000 karakter per proses.</small></div>
+                <div class="voice-actions studio-generate-actions" hidden><button id="generateButton" class="primary-button studio-generate-button" type="button" hidden>Buat Audio</button></div>
                 <div class="studio-legacy-voice-tools" aria-hidden="true"><input id="voiceSearch" type="search"><select id="voiceGenderFilter"><option value="all">Semua</option></select><div id="voiceCards"></div><div id="voicePagination"></div></div>
                 <div class="script-review-panel studio-hidden-support"><span id="voiceScriptCharCount">0 karakter</span><button type="button" id="editScriptFromVoice">Edit naskah</button><div id="voiceScriptPreview"></div></div>
               </div>

@@ -279,6 +279,26 @@ export async function saveUserPersonaProfile(user, env, profile) {
 }
 
 
+export async function getUserStudioSettings(user, env) {
+  const doc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+  const raw = val(doc.fields?.studioSettings);
+  if (!raw) return {};
+  try { const parsed = JSON.parse(raw); return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {}; }
+  catch { return {}; }
+}
+export async function saveUserStudioSettings(user, env, settings) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const doc = await firestore(env, "/users/" + encodeURIComponent(user.uid));
+    const now = new Date().toISOString();
+    try {
+      await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{ update: { name: doc.name, fields: { studioSettings: str(JSON.stringify(settings)), updatedAt: str(now) } }, updateMask: { fieldPaths: ["studioSettings", "updatedAt"] }, currentDocument: { updateTime: doc.updateTime } }] }) });
+      return settings;
+    } catch (error) { if (!isFirestoreConflict(error)) throw error; }
+  }
+  const error = new Error("Pengaturan sedang diperbarui. Coba simpan kembali."); error.status = 409; throw error;
+}
+
+
 // One private Instant Voice Clone record per Firebase UID.
 function voiceCloneData(doc) {
   const f = doc?.fields || {};

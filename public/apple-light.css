@@ -448,3 +448,22 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   letter-spacing:-.35px!important;
 }
 .studio-advanced-fixed > .studio-advanced-heading:after{display:none!important;content:none!important}
+
+
+/* Collapsed AI assistant should occupy only its header row. */
+.studio-assistant-panel{
+  align-self:start!important;
+  height:fit-content!important;
+  min-height:0!important;
+}
+.studio-assistant-panel details{padding-bottom:0!important}
+.studio-assistant-panel details:not([open]){height:auto!important;min-height:0!important}
+.studio-assistant-panel details:not([open])>.studio-assistant-summary{padding-bottom:17px!important}
+.studio-assistant-panel details[open]{padding-bottom:16px!important}
+.studio-assistant-summary{min-height:0!important}
+.studio-assistant-summary>b{
+  color:#29292e!important;
+  font-size:15px!important;
+  font-weight:600!important;
+  letter-spacing:-.2px!important;
+}

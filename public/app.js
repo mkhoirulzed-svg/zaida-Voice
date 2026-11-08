@@ -366,7 +366,7 @@ function renderSubtitles(){
     row.innerHTML='<div class="subtitle-number">'+(i+1)+'</div><div class="subtitle-fields"><label>Mulai<input data-field="start" data-index="'+i+'" value="'+srtTime(cue.start)+'"></label><label>Selesai<input data-field="end" data-index="'+i+'" value="'+srtTime(cue.end)+'"></label><label class="subtitle-copy">Teks<textarea data-field="text" data-index="'+i+'" rows="2" maxlength="84">'+escapeHtml(cue.text)+'</textarea></label></div>';
     list.append(row);
   });
-  $("subtitleStatus").textContent=state.subtitles.length+" baris";
+  const status=$("subtitleStatus");if(status)status.textContent=state.subtitles.length+" baris";
 }
 function downloadSubtitle(){
   if(!state.subtitles.length){toast("Subtitle belum tersedia.");return;}

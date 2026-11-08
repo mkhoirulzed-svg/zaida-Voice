@@ -76,7 +76,15 @@
           </section>
           <div class="step-actions"><button id="restartProject" hidden></button></div></div></section>
       </section>
-      <section class="page" id="voicesPage"><div class="history-heading"><h1>Voices</h1><p>Jelajahi koleksi suara ZAIDA, dengarkan pratinjau, lalu pilih suara untuk produksi.</p></div><div class="panel history-panel"><div class="empty-output"><b>Katalog suara sedang disiapkan</b><p>Di tahap berikutnya, katalog ini akan menampilkan suara yang tersedia di ZAIDA Voice.</p></div></div></section>
+      <section class="page" id="voicesPage">
+        <div class="history-heading voices-heading"><div><h1>Voices</h1><p>Temukan karakter suara yang tepat untuk narasimu.</p></div><span class="voices-count" id="catalogVoiceCount">Memuat katalog…</span></div>
+        <section class="panel voices-catalog-panel">
+          <div class="voices-catalog-toolbar"><input id="catalogVoiceSearch" type="search" placeholder="Cari nama suara…" aria-label="Cari nama suara"><select id="catalogVoiceGenderFilter" aria-label="Filter gender"><option value="all">Semua suara</option><option value="female">Perempuan</option><option value="male">Laki-laki</option></select></div>
+          <div class="voices-catalog-meta"><span id="catalogVoiceNote">Memuat suara yang tersedia di ZAIDA Voice…</span><span id="catalogVoiceSelection">Belum memilih suara</span></div>
+          <div class="voice-card-grid voices-catalog-grid" id="catalogVoiceCards"><div class="empty-output"><b>Memuat katalog suara…</b></div></div>
+          <div class="voice-pagination" id="catalogVoicePagination"></div>
+        </section>
+      </section>
       <section class="page" id="personaPage"><div class="history-heading"><h1>Persona Saya</h1><p class="persona-intro">Atur karakter, minat, dan gaya komunikasi. ZAIDA akan menggunakan preferensi ini sebagai konteks saat membantu membuat naskah dan berdiskusi.</p></div>
         <div class="panel persona-panel">
           <label class="field-label" for="writerName">Nama persona / identitas kreator</label><input id="writerName" class="writer-input" maxlength="40" placeholder="Contoh: Kreator edukasi, pemilik bisnis, storyteller">

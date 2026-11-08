@@ -195,3 +195,91 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 @media(max-width:1050px){.studio-maker-layout{grid-template-columns:minmax(0,1fr) 300px;gap:14px}}
 @media(max-width:800px){.studio-maker-layout{grid-template-columns:1fr}.studio-maker-side{position:static;grid-row:1}.studio-maker-main{grid-row:2}.studio-maker-header{align-items:flex-start;flex-direction:column;gap:6px}.studio-script-panel textarea{min-height:260px}}
 @media(max-width:600px){.studio-script-panel,.studio-voice-panel,.studio-result-panel{padding:16px!important}.studio-maker-header .workflow-title{align-items:center;flex-wrap:wrap}.studio-quick-options .chip-row{flex-wrap:wrap}.studio-side-heading{align-items:flex-start}}
+
+
+/* Light-theme completion: remove remaining dark legacy surfaces in the studio. */
+.voice-preview,
+.studio-preview-button,
+.voice-card button,
+.voice-option button {
+  background:#f4f3fb!important;
+  color:#5148b8!important;
+  border:1px solid #e1def5!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+}
+.voice-preview:hover,
+.studio-preview-button:hover,
+.voice-card button:hover,
+.voice-option button:hover {
+  background:#eceafb!important;
+  border-color:#c9c4ee!important;
+}
+.voice-card-icon {
+  background:#efeffb!important;
+  color:#5b52c4!important;
+}
+.persona-panel .interest-grid label span,
+.interest-grid label span {
+  background:#f7f7fa!important;
+  color:#45454d!important;
+  border:1px solid #e5e5eb!important;
+  border-radius:10px!important;
+}
+.persona-panel .interest-grid input:checked+span,
+.interest-grid input:checked+span {
+  background:#efeffb!important;
+  color:#5148b8!important;
+  border-color:#cfcaf1!important;
+}
+.result-player-wrap {
+  background:#f7f7fa!important;
+  border-color:#e8e8ed!important;
+  border-radius:14px!important;
+}
+.result-player-wrap audio {
+  color-scheme:light;
+}
+.subtitle-option,
+.subtitle-option.video-subtitle-option {
+  background:#f8f8fb!important;
+  border:1px solid #e8e8ed!important;
+  color:#35353c!important;
+  border-radius:12px!important;
+}
+.subtitle-option b,
+.subtitle-option small {
+  color:inherit!important;
+}
+.subtitle-option small {
+  color:#85858e!important;
+}
+.subtitle-option input {
+  accent-color:#6258cf!important;
+}
+.bottom-dock {
+  background:rgba(255,255,255,.96)!important;
+  color:#35353c!important;
+  border-top:1px solid #e7e7eb!important;
+  box-shadow:0 -6px 24px rgba(20,20,30,.06)!important;
+  backdrop-filter:blur(18px);
+}
+.dock-player,
+.dock-player span,
+.dock-credits {
+  color:#55555e!important;
+}
+.dock-player button {
+  background:#f3f3f7!important;
+  color:#5148b8!important;
+  border:1px solid #e4e4eb!important;
+}
+.dock-player audio {
+  color-scheme:light;
+  accent-color:#6258cf!important;
+}
+.dock-action {
+  background:#6258cf!important;
+  color:#fff!important;
+  border:1px solid #6258cf!important;
+}

@@ -1,0 +1,33 @@
+/* ZAIDA Video Editor V2 — isolated, opt-in presentation layer */
+.video-v2-toggle{flex-shrink:0;border:1px solid #65528e;background:#211b31;color:#e0d5ff;border-radius:9px;padding:11px 14px;font:600 11px inherit;cursor:pointer}
+.video-v2-toggle:hover{border-color:#a88af4;background:#2a2240}
+.video-v2-steps{display:none}
+.video-editor-v2 .video-v2-steps{display:flex;gap:8px;align-items:center;overflow-x:auto;padding:10px;margin:0 0 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);position:sticky;top:8px;z-index:5}
+.video-editor-v2 .video-v2-steps button{flex:1;min-width:max-content;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--muted);padding:7px 10px;border-radius:8px;font:600 11px inherit;cursor:pointer}
+.video-editor-v2 .video-v2-steps button span{width:23px;height:23px;display:grid;place-items:center;border-radius:50%;background:#292b36;color:#c9cbd5;font-size:10px}
+.video-editor-v2 .video-v2-steps button.is-done{color:#e4d9ff;background:#211b31}
+.video-editor-v2 .video-v2-steps button.is-done span{background:#6e55a5;color:#fff}
+.video-editor-v2 .video-layout{grid-template-columns:minmax(0,1fr);gap:14px}
+.video-editor-v2 .video-form-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.55fr);column-gap:18px;align-items:end}
+.video-editor-v2 .video-form-panel>.section-head,.video-editor-v2 .video-form-panel>#videoTopic,.video-editor-v2 .video-form-panel>.field-label[for="videoTopic"],.video-editor-v2 .video-form-panel>.video-field-grid,.video-editor-v2 .video-form-panel>.field-label[for="videoAudience"],.video-editor-v2 .video-form-panel>#videoAudience,.video-editor-v2 .video-form-panel>.field-label[for="videoTone"],.video-editor-v2 .video-form-panel>#videoTone{grid-column:1}
+.video-editor-v2 .video-form-panel>.visual-style-card,.video-editor-v2 .video-form-panel>#generateStoryboard,.video-editor-v2 .video-form-panel>.privacy-note,.video-editor-v2 .video-form-panel>.video-status{grid-column:2}
+.video-editor-v2 .video-form-panel>.section-head{grid-column:1/-1}
+.video-editor-v2 .storyboard-panel{padding:22px}
+.video-editor-v2 .storyboard-panel,.video-editor-v2 .caption-editor-panel,.video-editor-v2 .video-render-panel{scroll-margin-top:82px}
+.video-editor-v2 .storyboard-image-strip{gap:10px}
+.video-editor-v2 .storyboard-image-thumb{flex-basis:94px;width:94px;height:132px}
+.video-editor-v2 .caption-editor-layout{grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr)}
+.video-editor-v2 .caption-preview-stage{max-height:480px}
+.video-editor-v2 .video-render-panel{border-color:#51416f}
+.video-editor-v2 .video-heading{align-items:center}
+.video-editor-v2 .video-heading .video-v2-toggle{margin-left:auto}
+@media(max-width:700px){
+ .video-v2-toggle{width:100%;margin-top:12px}
+ .video-editor-v2 .video-heading{align-items:stretch}
+ .video-editor-v2 .video-heading .video-v2-toggle{margin-left:0}
+ .video-editor-v2 .video-form-panel{display:block}
+ .video-editor-v2 .video-v2-steps{top:4px}
+ .video-editor-v2 .video-v2-steps button{padding:6px 8px;font-size:10px}
+ .video-editor-v2 .caption-editor-layout{grid-template-columns:1fr}
+ .video-editor-v2 .caption-preview-stage{aspect-ratio:9/16;max-height:390px;min-height:260px}
+}

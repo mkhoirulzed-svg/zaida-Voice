@@ -409,3 +409,12 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .studio-minimal-section-head #charCount{margin-right:auto}
 .studio-minimal-section-head .studio-settings-trigger{flex:none!important;min-height:34px!important;padding:0 11px!important;border-radius:10px!important;font-size:11px!important}
 .studio-minimal-section-head .studio-settings-trigger svg{width:15px!important;height:15px!important}
+
+/* Compact icon-only script actions. */
+.studio-icon-tools{display:flex!important;align-items:center!important;gap:9px!important}
+.studio-icon-button{width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;display:grid!important;place-items:center!important;border-radius:12px!important;background:#f5f4fa!important;border:1px solid #e9e7f3!important;color:#55536b!important}
+.studio-icon-button svg{width:19px!important;height:19px!important;display:block}
+.studio-icon-button:hover{background:#efedf9!important;color:#5148b8!important}
+.studio-ai-button{color:#6258cf!important;background:#f0effa!important;border-color:#e4e1f7!important}
+.studio-ai-button:hover{background:#e9e6fb!important;color:#5148b8!important}
+.studio-icon-button:focus-visible{outline:2px solid #8177e0!important;outline-offset:2px!important}

@@ -22,8 +22,9 @@
       </a><button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
       <section class="sidebar-credit"><div class="sidebar-credit-top"><span>Kredit</span><b id="sidebarCreditBalance">Masuk untuk melihat saldo</b></div><a href="/harga.html">Lihat paket kredit <span aria-hidden="true">→</span></a></section>
       <button class="new-project" id="newProject"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Proyek baru</button>
-      <div class="nav-label">PROYEK</div><button class="nav-item active" data-view="studio">Proyek saat ini</button>
-      <button class="nav-item" data-view="assistant">Chat AI khusus</button>
+      <div class="nav-label">WORKSPACE</div><button class="nav-item active" data-view="studio">Voice Studio</button>
+      <button class="nav-item" data-view="voices">Voices</button>
+      <button class="nav-item" data-view="assistant">AI Super Chat</button>
       <button class="nav-item" id="personaNav" data-view="persona" hidden>Persona Saya</button>
       <button class="nav-item" data-view="history">Riwayat</button>
       <button class="nav-item admin-nav" id="adminNav" data-view="admin" hidden>Dashboard admin</button>
@@ -75,6 +76,7 @@
           </section>
           <div class="step-actions"><button id="restartProject" hidden></button></div></div></section>
       </section>
+      <section class="page" id="voicesPage"><div class="history-heading"><h1>Voices</h1><p>Jelajahi koleksi suara ZAIDA, dengarkan pratinjau, lalu pilih suara untuk produksi.</p></div><div class="panel history-panel"><div class="empty-output"><b>Katalog suara sedang disiapkan</b><p>Di tahap berikutnya, katalog ini akan menampilkan suara yang tersedia di ZAIDA Voice.</p></div></div></section>
       <section class="page" id="personaPage"><div class="history-heading"><h1>Persona Saya</h1><p class="persona-intro">Atur karakter, minat, dan gaya komunikasi. ZAIDA akan menggunakan preferensi ini sebagai konteks saat membantu membuat naskah dan berdiskusi.</p></div>
         <div class="panel persona-panel">
           <label class="field-label" for="writerName">Nama persona / identitas kreator</label><input id="writerName" class="writer-input" maxlength="40" placeholder="Contoh: Kreator edukasi, pemilik bisnis, storyteller">

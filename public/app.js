@@ -97,7 +97,7 @@ async function sendAssistantMessage(){const input=$("assistantInput"),message=in
 $("sendAssistant").addEventListener("click",sendAssistantMessage);
 $("assistantInput").addEventListener("input",()=>{const el=$("assistantInput");el.style.height="auto";el.style.height=Math.min(el.scrollHeight,150)+"px";el.closest(".chat-compose").classList.toggle("has-text",Boolean(el.value.trim()));});
 $("assistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAssistantMessage();}});
-$("clearAssistant").addEventListener("click",()=>{assistantState.messages=[];assistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><b>ZAIDA Assistant</b><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
+$("clearAssistant").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();assistantState.messages=[];assistantState.draft="";$("assistantMessages").innerHTML='<div class="assistant-message ai-message"><p>Percakapan baru dimulai. Ceritakan ide konten yang ingin kamu buat.</p></div>';$("useAssistantScript").disabled=true;});
 $("useAssistantScript").addEventListener("click",()=>{if(!assistantState.draft)return;$("scriptText").value=assistantState.draft;updateCount();showView("studio");setStep(1);toast("Naskah digunakan.");});
 
 async function sendStandaloneAssistantMessage(){

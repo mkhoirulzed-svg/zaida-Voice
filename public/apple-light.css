@@ -563,3 +563,28 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   .studio-result-panel .subtitle-fields{grid-template-columns:1fr 1fr!important}
   .studio-result-panel .subtitle-fields .subtitle-copy{grid-column:1/-1}
 }
+
+
+/* Save action at the bottom of the studio settings sheet. */
+.studio-settings-save{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:12px!important;
+  margin-top:22px!important;
+  padding-top:18px!important;
+  border-top:1px solid #ededf1!important;
+}
+.studio-settings-save>span{
+  margin-right:auto!important;
+  color:#777780!important;
+  font-size:12px!important;
+}
+.studio-settings-save .primary-button{
+  min-height:44px!important;
+  padding:0 20px!important;
+  border-radius:14px!important;
+  font-size:13px!important;
+  font-weight:600!important;
+}
+.studio-settings-save .primary-button:disabled{opacity:.65!important}

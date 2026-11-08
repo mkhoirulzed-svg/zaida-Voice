@@ -418,3 +418,9 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .studio-ai-button{color:#6258cf!important;background:#f0effa!important;border-color:#e4e1f7!important}
 .studio-ai-button:hover{background:#e9e6fb!important;color:#5148b8!important}
 .studio-icon-button:focus-visible{outline:2px solid #8177e0!important;outline-offset:2px!important}
+
+/* Advanced voice controls stay visible in the script workspace. */
+.studio-advanced-fixed{display:block!important;margin-top:14px!important;padding:13px 14px 12px!important}
+.studio-advanced-fixed .studio-advanced-heading{display:block!important;min-height:0!important;margin:0 0 12px!important;padding:0!important;color:#34343b!important;font-size:12px!important;font-weight:700!important}
+.studio-advanced-fixed .studio-advanced-heading:after{display:none!important;content:none!important}
+.studio-advanced-fixed .range-field{display:block!important}

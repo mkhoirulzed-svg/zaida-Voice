@@ -384,3 +384,20 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   .studio-setting-row,.studio-setting-action,.studio-setting-duration-readout{gap:12px;padding:15px 0}
   .studio-setting-duration select{width:118px;min-width:118px}
 }
+
+/* Final Voice Studio decluttering pass. */
+.studio-minimal-section-head{justify-content:flex-end!important;min-height:20px!important;margin:0 0 8px!important;padding:0!important;border:0!important}
+.studio-minimal-section-head #charCount{font-size:10px;color:#92929b}
+.studio-voice-panel .studio-side-heading{display:none!important}
+.studio-voice-panel .studio-selected-voice{margin-top:0!important}
+.studio-voice-panel .studio-voice-status[hidden],
+.studio-voice-panel .voice-library-note[hidden],
+.studio-voice-panel #openVoicesCatalog[hidden],
+.studio-generate-actions[hidden],
+.studio-generate-actions #generateButton[hidden],
+.studio-result-panel .result-status[hidden],
+.studio-result-panel .export-audio[hidden]{display:none!important}
+.studio-result-panel .section-head,
+.studio-result-panel .result-player-hint{display:none!important}
+.studio-result-panel .result-player-wrap{margin-top:0!important}
+.studio-result-panel .result-player-wrap audio{width:100%}

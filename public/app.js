@@ -423,7 +423,7 @@ async function generate(){
   }catch(error){toast(error.message);}finally{setBusy(false);}
 }
 $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.trim()){toast("Masukkan naskah terlebih dahulu.");return;}setStep(2);});
-$("regenerateButton").addEventListener("click",()=>{if(!state.audioUrl){toast("Belum ada audio untuk dibuat ulang.");return;}setStep(2);toast("Silakan ubah naskah atau pilih suara lain, lalu buat audio kembali.");});
+
 $("resultAudio").addEventListener("play",()=>{if(!$("audioPlayer").paused)$("audioPlayer").pause();});
 $("audioPlayer").addEventListener("play",()=>{if(!$("resultAudio").paused)$("resultAudio").pause();});
 document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));

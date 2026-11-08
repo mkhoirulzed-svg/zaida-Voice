@@ -283,3 +283,24 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   color:#fff!important;
   border:1px solid #6258cf!important;
 }
+
+
+/* Light account controls in the mobile and desktop topbar. */
+.top-actions .auth-button {
+  background:#ffffff!important;
+  color:#29292e!important;
+  border:1px solid #e5e5eb!important;
+  border-radius:999px!important;
+  box-shadow:0 2px 7px rgba(20,20,30,.045)!important;
+}
+.top-actions .auth-button:hover {
+  background:#f6f6f9!important;
+  border-color:#d8d8e1!important;
+}
+.top-actions .credit-balance {
+  background:#f0eff8!important;
+  color:#5148b8!important;
+  border:1px solid #e2e0f2!important;
+  border-radius:12px!important;
+  font-weight:650!important;
+}

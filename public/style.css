@@ -467,3 +467,14 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .standalone-assistant .assistant-thinking-dots{letter-spacing:2px;animation:assistantThinkingPulse 1s infinite ease-in-out}
 @keyframes assistantThinkingPulse{50%{opacity:.35}}
 @media(max-width:760px){.standalone-assistant{padding:15px}.standalone-assistant .chat-messages{height:calc(100dvh - 330px);min-height:360px}.standalone-assistant .chat-compose textarea{min-height:42px}.standalone-assistant .script-export{align-items:flex-start}}
+
+
+/* AI Super Chat: familiar ZAIDA layout with its own subtle identity */
+.super-chat-panel{border-color:color-mix(in srgb,#8b78e8 24%,var(--line));background:linear-gradient(145deg,color-mix(in srgb,#8b78e8 4%,var(--surface)),var(--surface) 46%)}
+.super-chat-panel .super-chat-heading h2{font:700 15px Manrope;margin:0;color:var(--text)}
+.super-chat-panel .super-chat-heading p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.super-chat-panel .assistant-message.ai-message{border-color:color-mix(in srgb,#8b78e8 18%,var(--line))}
+.super-chat-panel .assistant-draft-editor:focus{outline:2px solid color-mix(in srgb,#8b78e8 35%,transparent);border-color:#8b78e8}
+.super-chat-panel .chat-compose .primary-button{background:#7564cf}
+.super-chat-panel .chat-compose .primary-button:hover{background:#6654bd}
+@media(prefers-color-scheme:dark){.super-chat-panel{background:linear-gradient(145deg,color-mix(in srgb,#8b78e8 9%,var(--surface)),var(--surface) 50%)}}

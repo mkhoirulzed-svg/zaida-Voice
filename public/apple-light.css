@@ -304,3 +304,27 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   border-radius:12px!important;
   font-weight:650!important;
 }
+
+
+/* Remove the legacy sticky action strip that can leave a floating horizontal band. */
+@media (max-width:760px) {
+  .step-actions,
+  .voice-actions {
+    position:static!important;
+    inset:auto!important;
+    bottom:auto!important;
+    top:auto!important;
+    background:transparent!important;
+    padding:0!important;
+    margin-top:16px!important;
+    box-shadow:none!important;
+    z-index:auto!important;
+  }
+  .step-actions:before,
+  .step-actions:after,
+  .voice-actions:before,
+  .voice-actions:after {
+    content:none!important;
+    display:none!important;
+  }
+}

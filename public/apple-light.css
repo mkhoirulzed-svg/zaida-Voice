@@ -401,3 +401,11 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .studio-result-panel .result-player-hint{display:none!important}
 .studio-result-panel .result-player-wrap{margin-top:0!important}
 .studio-result-panel .result-player-wrap audio{width:100%}
+
+/* Keep the Voice Studio title clean; settings now live in the script card. */
+.studio-maker-header #workflowCount{display:none!important}
+.studio-maker-header{margin-bottom:18px!important}
+.studio-minimal-section-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+.studio-minimal-section-head #charCount{margin-right:auto}
+.studio-minimal-section-head .studio-settings-trigger{flex:none!important;min-height:34px!important;padding:0 11px!important;border-radius:10px!important;font-size:11px!important}
+.studio-minimal-section-head .studio-settings-trigger svg{width:15px!important;height:15px!important}

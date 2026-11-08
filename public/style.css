@@ -478,3 +478,12 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .super-chat-panel .chat-compose .primary-button{background:#7564cf}
 .super-chat-panel .chat-compose .primary-button:hover{background:#6654bd}
 @media(prefers-color-scheme:dark){.super-chat-panel{background:linear-gradient(145deg,color-mix(in srgb,#8b78e8 9%,var(--surface)),var(--surface) 50%)}}
+
+
+/* AI Super Chat: keep a visible vertical chat scrollbar */
+.super-chat-panel .chat-messages{overflow-y:scroll;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#8b78e8 color-mix(in srgb,var(--line) 55%,transparent);padding-right:10px;scrollbar-gutter:stable}
+.super-chat-panel .chat-messages::-webkit-scrollbar{width:9px}
+.super-chat-panel .chat-messages::-webkit-scrollbar-track{background:color-mix(in srgb,var(--line) 55%,transparent);border-radius:12px}
+.super-chat-panel .chat-messages::-webkit-scrollbar-thumb{background:#8b78e8;border:2px solid transparent;background-clip:padding-box;border-radius:12px}
+.super-chat-panel .chat-messages::-webkit-scrollbar-thumb:hover{background:#7564cf;border:2px solid transparent;background-clip:padding-box}
+.super-chat-panel .section-head{min-height:28px}

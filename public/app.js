@@ -198,7 +198,7 @@ async function loadStudioSettings(){
     $("settingsWriterLength").value=$("writerLength").value;
     $("writerLength").dispatchEvent(new Event("input",{bubbles:true}));
     updateDownloadLink();
-    $("studioSettingsSaveStatus").textContent="Pengaturan akun dimuat";
+    $("studioSettingsSaveStatus").textContent="";
   }catch(error){$("studioSettingsSaveStatus").textContent="Pengaturan belum dapat dimuat";}
 }
 async function saveStudioSettings(){
@@ -224,7 +224,7 @@ async function saveStudioSettings(){
   }catch(error){
     $("studioSettingsSaveStatus").textContent="Gagal menyimpan";
     toast(error.message);
-  }finally{button.disabled=false;button.textContent="Simpan Pengaturan";}
+  }finally{button.disabled=false;button.textContent="Simpan";}
 }
 function closeStudioSettings(){$("studioSettingsOverlay").hidden=true;}
 $("openStudioSettings").addEventListener("click",()=>{$("settingsWriterLength").value=$("writerLength").value;$("studioSettingsOverlay").hidden=false;if(currentUser)loadStudioSettings();else $("studioSettingsSaveStatus").textContent="Masuk untuk menyimpan pengaturan ke akun";});

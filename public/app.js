@@ -187,8 +187,48 @@ function showView(requestedView){
   closeSidebar();
 }
 $("scriptText").addEventListener("input",updateCount);$("editScriptFromVoice").addEventListener("click",()=>{setStep(1);$("scriptText").focus();});$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.audioBlob=null;if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);state.downloadUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("includeMetadataTags").checked=false;$("settingDurationValue").textContent="Belum ada audio";$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("resultAudio").pause();$("resultAudio").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("openVoicesCatalog").addEventListener("click",e=>{e.preventDefault();showView("voices");});$("studioVoicePreview").addEventListener("click",()=>{const voice=state.voices.find(v=>v.voice_id===$("voiceSelect").value);if(!voice||!voice.preview_url){toast("Pratinjau tidak tersedia untuk suara ini.");return;}stopVoicePreview();const audio=new Audio(voice.preview_url);state.previewAudio=audio;audio.addEventListener("ended",()=>{if(state.previewAudio===audio)state.previewAudio=null;$("studioVoicePreview").textContent="▶";},{once:true});$("studioVoicePreview").textContent="…";audio.play().catch(()=>{if(state.previewAudio===audio)state.previewAudio=null;$("studioVoicePreview").textContent="▶";toast("Pratinjau tidak dapat diputar.");});});$("voiceSelect").addEventListener("change",()=>{$("studioVoicePreview").textContent="▶";updateDownloadLink();});$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>showView("persona"));
+async function loadStudioSettings(){
+  if(!currentUser)return;
+  try{
+    const result=await api("/api/settings",{authRequired:true});
+    const s=result.settings||{};
+    $("includeSubtitle").checked=s.includeSubtitle===true;
+    $("includeMetadataTags").checked=s.includeMetadataTags===true;
+    if(s.writerLength)$("writerLength").value=s.writerLength;
+    $("settingsWriterLength").value=$("writerLength").value;
+    $("writerLength").dispatchEvent(new Event("input",{bubbles:true}));
+    updateDownloadLink();
+    $("studioSettingsSaveStatus").textContent="Pengaturan akun dimuat";
+  }catch(error){$("studioSettingsSaveStatus").textContent="Pengaturan belum dapat dimuat";}
+}
+async function saveStudioSettings(){
+  if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menyimpan pengaturan.");return;}
+  const button=$("saveStudioSettings");
+  button.disabled=true;button.textContent="Menyimpan…";
+  $("studioSettingsSaveStatus").textContent="Menyimpan ke akun…";
+  const settings={
+    includeSubtitle:$("includeSubtitle").checked,
+    includeMetadataTags:$("includeMetadataTags").checked,
+    writerLength:$("settingsWriterLength").value
+  };
+  try{
+    const result=await api("/api/settings",{method:"PUT",authRequired:true,body:JSON.stringify({settings})});
+    $("includeSubtitle").checked=result.settings.includeSubtitle;
+    $("includeMetadataTags").checked=result.settings.includeMetadataTags;
+    $("writerLength").value=result.settings.writerLength;
+    $("settingsWriterLength").value=result.settings.writerLength;
+    $("writerLength").dispatchEvent(new Event("input",{bubbles:true}));
+    updateDownloadLink();
+    $("studioSettingsSaveStatus").textContent="Tersimpan di akun kamu";
+    toast("Pengaturan berhasil disimpan.");
+  }catch(error){
+    $("studioSettingsSaveStatus").textContent="Gagal menyimpan";
+    toast(error.message);
+  }finally{button.disabled=false;button.textContent="Simpan Pengaturan";}
+}
 function closeStudioSettings(){$("studioSettingsOverlay").hidden=true;}
-$("openStudioSettings").addEventListener("click",()=>{$("settingsWriterLength").value=$("writerLength").value;$("studioSettingsOverlay").hidden=false;});
+$("openStudioSettings").addEventListener("click",()=>{$("settingsWriterLength").value=$("writerLength").value;$("studioSettingsOverlay").hidden=false;if(currentUser)loadStudioSettings();else $("studioSettingsSaveStatus").textContent="Masuk untuk menyimpan pengaturan ke akun";});
+$("saveStudioSettings").addEventListener("click",saveStudioSettings);
 $("closeStudioSettings").addEventListener("click",closeStudioSettings);
 $("studioSettingsOverlay").addEventListener("click",e=>{if(e.target===$("studioSettingsOverlay"))closeStudioSettings();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("studioSettingsOverlay").hidden)closeStudioSettings();});
@@ -474,7 +514,7 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
+  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(loadPersonaProfile);loadStudioSettings();loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }

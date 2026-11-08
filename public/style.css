@@ -449,3 +449,21 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
   .top-actions .credit-balance{font-size:10px;padding:6px 7px}
   .top-actions .auth-button{max-width:39vw;padding:7px 8px}
 }
+
+
+/* AI Super Chat mirrors the Voice Studio script assistant */
+.standalone-assistant{max-width:100%;width:100%;min-height:0;display:flex;flex-direction:column;gap:0;padding:20px}
+.standalone-assistant .section-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.standalone-assistant .section-head h2{font:700 14px Manrope;margin:0}
+.standalone-assistant .chat-messages{height:clamp(420px,68vh,820px);min-height:420px;flex:1;overflow-y:auto;overscroll-behavior:contain}
+.standalone-assistant .chat-compose{flex:none;display:flex;align-items:flex-end;gap:10px;padding-top:14px}
+.standalone-assistant .chat-compose textarea{flex:1;min-height:42px;height:42px;max-height:150px;resize:none;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--surface);color:var(--text);font:inherit;line-height:1.45}
+.standalone-assistant .chat-compose .primary-button{width:42px;height:42px;min-width:42px;padding:0;display:grid;place-items:center;border-radius:12px;margin:0}
+.standalone-assistant .chat-compose .primary-button svg{width:20px;height:20px}
+.standalone-assistant .script-export{flex:none}
+.standalone-assistant .assistant-draft{max-width:100%;width:100%}
+.standalone-assistant .assistant-draft-editor{width:100%;min-height:170px;resize:vertical;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font:inherit;line-height:1.6}
+.standalone-assistant .assistant-thinking{display:flex;align-items:center;gap:8px}
+.standalone-assistant .assistant-thinking-dots{letter-spacing:2px;animation:assistantThinkingPulse 1s infinite ease-in-out}
+@keyframes assistantThinkingPulse{50%{opacity:.35}}
+@media(max-width:760px){.standalone-assistant{padding:15px}.standalone-assistant .chat-messages{height:calc(100dvh - 330px);min-height:360px}.standalone-assistant .chat-compose textarea{min-height:42px}.standalone-assistant .script-export{align-items:flex-start}}

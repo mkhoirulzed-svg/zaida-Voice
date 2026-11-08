@@ -487,3 +487,15 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .super-chat-panel .chat-messages::-webkit-scrollbar-thumb{background:#8b78e8;border:2px solid transparent;background-clip:padding-box;border-radius:12px}
 .super-chat-panel .chat-messages::-webkit-scrollbar-thumb:hover{background:#7564cf;border:2px solid transparent;background-clip:padding-box}
 .super-chat-panel .section-head{min-height:28px}
+
+
+/* Always-visible custom scrollbar for Android WebView and desktop */
+.super-chat-scroll-wrap{position:relative;display:flex;align-items:stretch;gap:5px;height:clamp(420px,68vh,820px);min-height:420px;flex:1;min-width:0}
+.super-chat-scroll-wrap .chat-messages{height:100%;min-height:0;flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-right:8px}
+.super-chat-scroll-wrap .chat-messages::-webkit-scrollbar{display:none;width:0;height:0}
+.super-chat-scroll-track{position:relative;flex:0 0 9px;width:9px;margin:4px 0 10px;border-radius:10px;background:color-mix(in srgb,var(--line) 72%,transparent);opacity:.8;touch-action:none;cursor:pointer}
+.super-chat-scroll-thumb{position:absolute;top:0;left:0;width:9px;min-height:30px;border-radius:10px;background:#8b78e8;box-shadow:0 0 0 1px color-mix(in srgb,#8b78e8 15%,transparent);cursor:grab;touch-action:none;transition:background .15s}
+.super-chat-scroll-thumb:hover,.super-chat-scroll-thumb.is-dragging{background:#6654bd}
+.super-chat-scroll-thumb.is-dragging{cursor:grabbing}
+.super-chat-scroll-track:not(.is-scrollable){visibility:hidden}
+@media(max-width:760px){.super-chat-scroll-wrap{height:calc(100dvh - 330px);min-height:360px}.super-chat-scroll-track{flex-basis:8px;width:8px}.super-chat-scroll-thumb{width:8px}}

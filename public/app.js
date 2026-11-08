@@ -93,7 +93,40 @@ function addAssistantMessage(role,content){
   }else p.textContent=content;
   $("assistantMessages").scrollTop=$("assistantMessages").scrollHeight;
 }
-async function sendAssistantMessage(){const input=$("assistantInput"),message=input.value.trim();if(!message||assistantState.busy)return;if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return;}await personaReady;if(message.length>3000){toast("Pesan maksimal 3.000 karakter.");return;}assistantState.messages.push({role:"user",content:message});addAssistantMessage("user",message);input.value="";assistantState.busy=true;$("sendAssistant").disabled=true;$("sendAssistant").textContent="Sedang berpikir…";try{const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:assistantState.messages.slice(-12)}),authRequired:true});if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining)}const answer=(result.reply||"").trim();if(!answer)throw new Error("AI tidak mengembalikan jawaban.");assistantState.messages.push({role:"assistant",content:answer});addAssistantMessage("assistant",answer);const providerLabel=result.provider==="kiosapi"?"Kiosapi":result.provider==="deepseek-direct"?"DeepSeek langsung":"Provider belum terdeteksi";const modelLabel=result.model?" · "+result.model:"";toast("Balasan diterima.");const draft=result.script?.trim();if(draft){assistantState.draft=draft;$("useAssistantScript").disabled=false;}}catch(error){assistantState.messages.pop();addAssistantMessage("assistant","Maaf, terjadi kendala: "+error.message);}finally{assistantState.busy=false;$("sendAssistant").disabled=false;$("sendAssistant").textContent="Kirim";input.focus();}}
+function addAssistantThinking(){
+  const row=document.createElement("div");row.className="assistant-message ai-message assistant-thinking";
+  const label=document.createElement("span");label.textContent="Sedang berpikir";
+  const dots=document.createElement("span");dots.className="assistant-thinking-dots";dots.setAttribute("aria-hidden","true");dots.textContent="•••";
+  row.append(label,dots);$("assistantMessages").append(row);$("assistantMessages").scrollTop=$("assistantMessages").scrollHeight;return row;
+}
+function addAssistantDraft(content){
+  const row=document.createElement("div");row.className="assistant-message ai-message assistant-draft";
+  const title=document.createElement("b");title.className="assistant-draft-title";title.textContent="Draf Naskah";
+  const note=document.createElement("span");note.className="assistant-draft-note";note.textContent="Kamu bisa mengedit naskah ini sebelum digunakan.";
+  const editor=document.createElement("textarea");editor.className="assistant-draft-editor";editor.rows=7;editor.value=content;editor.setAttribute("aria-label","Edit hasil naskah dari AI");
+  editor.addEventListener("input",()=>{assistantState.draft=editor.value;$("useAssistantScript").disabled=!editor.value.trim();});
+  row.append(title,note,editor);$("assistantMessages").append(row);$("assistantMessages").scrollTop=$("assistantMessages").scrollHeight;
+}
+async function sendAssistantMessage(){
+  const input=$("assistantInput"),message=input.value.trim();
+  if(!message||assistantState.busy)return;
+  if(!currentUser){openAuth();toast("Masuk terlebih dahulu untuk menggunakan AI.");return;}
+  await personaReady;
+  if(message.length>3000){toast("Pesan maksimal 3.000 karakter.");return;}
+  assistantState.messages.push({role:"user",content:message});addAssistantMessage("user",message);
+  input.value="";input.style.height="32px";input.closest(".chat-compose").classList.remove("has-text");
+  assistantState.busy=true;const sendButton=$("sendAssistant");sendButton.disabled=true;sendButton.classList.add("is-loading");sendButton.setAttribute("aria-label","AI sedang berpikir");
+  const thinking=addAssistantThinking();
+  try{
+    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:newRequestId(),profile:assistantProfile(),messages:assistantState.messages.slice(-12)}),authRequired:true});
+    if(result.creditsRemaining!==undefined){$("creditBalance").textContent="Kredit: "+result.creditsRemaining;$("sidebarCreditBalance").textContent=Number(result.creditsRemaining).toLocaleString("id-ID")+" kredit";$("dockCredits").textContent="Kredit: "+result.creditsRemaining;if(accountInfo)accountInfo.credits=Number(result.creditsRemaining);}
+    const answer=(result.reply||"").trim();if(!answer)throw new Error("AI tidak mengembalikan jawaban.");
+    assistantState.messages.push({role:"assistant",content:answer});addAssistantMessage("assistant",answer);
+    const draft=result.script?.trim();if(draft){assistantState.draft=draft;$("useAssistantScript").disabled=false;addAssistantDraft(draft);}
+    toast("Balasan diterima.");
+  }catch(error){assistantState.messages.pop();addAssistantMessage("assistant","Maaf, terjadi kendala: "+error.message);}
+  finally{thinking.remove();assistantState.busy=false;sendButton.disabled=false;sendButton.classList.remove("is-loading");sendButton.setAttribute("aria-label","Kirim pesan");input.focus();}
+}
 $("sendAssistant").addEventListener("click",sendAssistantMessage);
 $("assistantInput").addEventListener("input",()=>{const el=$("assistantInput");el.style.height="auto";el.style.height=Math.min(el.scrollHeight,150)+"px";el.closest(".chat-compose").classList.toggle("has-text",Boolean(el.value.trim()));});
 $("assistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAssistantMessage();}});

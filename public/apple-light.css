@@ -502,3 +502,64 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .subtitle-icon-button svg{width:18px!important;height:18px!important}
 .subtitle-icon-button:active{background:#eeecfa!important;transform:scale(.96)}
 .studio-result-panel #subtitleList{margin-top:0!important}
+
+
+/* Subtitle preview is opt-in and uses the same light surface as the studio. */
+.subtitle-preview-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:42px!important;
+  margin:14px 0 2px!important;
+  padding:0 18px!important;
+  border:1px solid #e7e7ed!important;
+  border-radius:14px!important;
+  background:#f7f7fa!important;
+  color:#5b52c4!important;
+  font-size:13px!important;
+  font-weight:600!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+}
+.subtitle-preview-toggle[hidden]{display:none!important}
+.subtitle-preview-toggle:active{background:#eeecfa!important}
+.studio-result-panel .subtitle-options{
+  margin-top:14px!important;
+  padding:16px!important;
+  border:1px solid #e8e8ed!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  color:#34343b!important;
+}
+.studio-result-panel .subtitle-row{
+  background:#fff!important;
+  border:1px solid #e8e8ed!important;
+  border-radius:13px!important;
+  box-shadow:0 1px 3px rgba(20,20,30,.035)!important;
+}
+.studio-result-panel .subtitle-number{color:#8a8a93!important}
+.studio-result-panel .subtitle-fields label{color:#777780!important;font-size:11px!important}
+.studio-result-panel .subtitle-fields input,
+.studio-result-panel .subtitle-fields textarea{
+  background:#fff!important;
+  color:#25252b!important;
+  border:1px solid #dedee5!important;
+  border-radius:10px!important;
+  font-size:13px!important;
+}
+.studio-result-panel .subtitle-fields input:focus,
+.studio-result-panel .subtitle-fields textarea:focus{
+  border-color:#8178d8!important;
+  outline:2px solid rgba(98,88,207,.12)!important;
+}
+.studio-result-panel .subtitle-options .empty-output{
+  background:#f8f8fb!important;
+  color:#777780!important;
+  border:1px dashed #dedee5!important;
+  border-radius:12px!important;
+}
+@media(max-width:600px){
+  .studio-result-panel .subtitle-options{padding:12px!important}
+  .studio-result-panel .subtitle-fields{grid-template-columns:1fr 1fr!important}
+  .studio-result-panel .subtitle-fields .subtitle-copy{grid-column:1/-1}
+}

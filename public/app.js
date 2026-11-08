@@ -264,7 +264,7 @@ function renderVoiceCollection({wrapId,searchId,genderId,paginationId,pageKey}){
   const pageSize=12,totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
   state[pageKey]=Math.min(state[pageKey],totalPages-1);
   const pageItems=filtered.slice(state[pageKey]*pageSize,(state[pageKey]+1)*pageSize);
-  if(!filtered.length){wrap.innerHTML='<div class="empty-output"><b>Suara tidak ditemukan</b><p>Coba kata pencarian atau ubah filter gender.</p></div>';$ (paginationId).innerHTML="";return;}
+  if(!filtered.length){wrap.innerHTML='<div class="empty-output"><b>Suara tidak ditemukan</b><p>Coba kata pencarian atau ubah filter gender.</p></div>';$(paginationId).innerHTML="";return;}
   pageItems.forEach(v=>wrap.append(makeVoiceCard(v)));
   const pager=$(paginationId);pager.innerHTML="";
   const info=document.createElement("span");info.textContent=filtered.length>12?("Halaman "+(state[pageKey]+1)+" dari "+totalPages+" · "+filtered.length+" suara"):(filtered.length+" suara");

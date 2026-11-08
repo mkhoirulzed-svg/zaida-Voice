@@ -14,11 +14,6 @@
   toggle.innerHTML = '<span aria-hidden="true">✦</span> Coba editor baru';
   heading.append(toggle);
 
-  const layout = page.querySelector(".video-layout");
-  const form = page.querySelector(".video-form-panel");
-  const board = page.querySelector(".storyboard-panel");
-  const caption = page.querySelector("#captionEditorPanel");
-  const render = page.querySelector("#videoRenderPanel");
   const sections = [
     { id: "videoTopic", label: "Konsep" },
     { id: "storyboardResult", label: "Storyboard" },
@@ -48,7 +43,8 @@
 
   function updateSteps() {
     const hasBoard = !document.getElementById("storyboardResult").hidden;
-    const hasPreview = Boolean(document.getElementById("videoPreviewPlayer").getAttribute("src"));
+    const player = document.getElementById("videoPreviewPlayer");
+    const hasPreview = Boolean(player.currentSrc || player.src);
     nav.querySelectorAll("button").forEach((button, index) => {
       const done = index === 0 ? Boolean(document.getElementById("videoTopic").value.trim()) :
         index === 1 ? hasBoard : index === 2 ? hasPreview : false;

@@ -499,3 +499,14 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .super-chat-scroll-thumb.is-dragging{cursor:grabbing}
 .super-chat-scroll-track:not(.is-scrollable){visibility:hidden}
 @media(max-width:760px){.super-chat-scroll-wrap{height:calc(100dvh - 330px);min-height:360px}.super-chat-scroll-track{flex-basis:8px;width:8px}.super-chat-scroll-thumb{width:8px}}
+
+
+/* Voices catalog: compact Play and Use actions */
+.voice-card-actions{display:flex;align-items:center;gap:6px;flex:none}
+.voice-preview,.voice-use{height:34px;min-width:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:#1b1e26;color:#c8c0ff;padding:0 9px;font-size:10px;font-weight:600}
+.voice-preview{width:36px;padding:0}
+.voice-preview svg{width:17px;height:17px}
+.voice-preview:disabled{opacity:.35;cursor:not-allowed}
+.voice-use{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--text)}
+.voice-use:hover,.voice-preview:hover:not(:disabled){border-color:var(--accent);filter:brightness(1.08)}
+@media(max-width:420px){.voice-card{gap:6px;padding:9px}.voice-card-actions{gap:4px}.voice-use{padding:0 7px}}

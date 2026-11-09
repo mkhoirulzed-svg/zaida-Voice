@@ -16,3 +16,68 @@ footer{border-top:1px solid #ffffff12;padding:25px 20px 32px;text-align:center;c
 .pricing{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:30px 0 22px}.pricing article{position:relative;display:flex;flex-direction:column;min-height:250px;padding:23px 21px 20px;background:linear-gradient(150deg,#1b1929,#11111b 75%);border:1px solid #353047;border-radius:16px;box-shadow:0 12px 35px #0002}.pricing article.featured{border-color:#a88ae9;background:linear-gradient(150deg,#302448,#171321 85%);box-shadow:0 0 0 1px #a88ae933,0 18px 45px #0004}.pricing h2{font-size:17px;margin:0 0 14px}.price{font:800 29px Manrope;letter-spacing:-1px;color:#fff;margin:0 0 5px}.pricing article>p:not(.price){font-weight:700;color:#c5b2ff;margin:0 0 9px}.pricing small{color:#9e98ae;line-height:1.6;font-size:11px}.tag{align-self:flex-start;background:#b69aff;color:#171020;padding:5px 9px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.5px;margin:-3px 0 13px}.package-action{display:block;text-align:center;text-decoration:none;margin-top:auto;padding:11px 12px;border-radius:9px;background:linear-gradient(100deg,#a88aef,#7955dc);color:#fff;font-size:11px;font-weight:800;box-shadow:0 6px 18px #7955dc30}.package-action:hover{filter:brightness(1.12);transform:translateY(-1px)}.price-note{font-size:11px;color:#888397;line-height:1.7;margin:16px 0 0}.price-info{padding:22px 24px;border:1px solid #302b43;background:#12121d;border-radius:14px}.price-info p{margin:7px 0;font-size:12px}
 @media(max-width:760px){.top{height:65px;padding:0 18px}.top nav{gap:13px}.top nav a{font-size:10px}main{padding:45px 0 55px}.pricing{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pricing article{padding:18px 15px;min-height:240px}.price{font-size:24px}.cards{grid-template-columns:1fr}.prose{padding:22px!important}}
 @media(max-width:430px){.pricing{grid-template-columns:1fr}.pricing article{min-height:210px}.lead{font-size:14px}}
+
+
+/* ZAIDA Voice information pages — light theme */
+body.info-light{
+  color-scheme:light;
+  --bg:#f7f8fc;
+  --panel:#ffffff;
+  --panel2:#f1f2f8;
+  --line:#e5e7ef;
+  --text:#202333;
+  --muted:#687086;
+  --purple:#7055c8;
+  --purple2:#7955dc;
+  --mint:#55b99b;
+  background:linear-gradient(180deg,#f0edff 0,#f8f9fc 310px,var(--bg) 620px);
+  color:var(--text);
+}
+body.info-light .top{border-bottom-color:#e5e3ef}
+body.info-light .brand{color:#242238}
+body.info-light .brand i{color:var(--purple)}
+body.info-light .top nav a,
+body.info-light footer a{color:#62677b}
+body.info-light .top nav a:hover,
+body.info-light footer a:hover{color:#5d43b5}
+body.info-light .eyebrow{color:#7155c7}
+body.info-light .eyebrow:before{background:var(--mint);box-shadow:0 0 9px #55b99b55}
+body.info-light .lead{color:#626a7d}
+body.info-light section p,
+body.info-light article p{color:#626a7d}
+body.info-light .cards article,
+body.info-light .contact,
+body.info-light main.prose{
+  background:#fff;
+  border-color:#e5e7ef;
+  box-shadow:0 10px 32px #2830520a;
+}
+body.info-light .prose p{color:#596176}
+body.info-light .updated{color:#858ba0!important}
+body.info-light .back{
+  border-color:#d9d0f4;
+  background:#f1edff;
+  color:#6249b5;
+}
+body.info-light footer{border-top-color:#e5e7ef;color:#858ba0}
+body.info-light footer span{color:#8a70d8}
+body.info-light .pricing article{
+  background:#fff;
+  border-color:#e5e7ef;
+  box-shadow:0 10px 28px #2830520b;
+}
+body.info-light .pricing article.featured{
+  border-color:#b9a9ed;
+  background:linear-gradient(150deg,#f4f0ff,#fff 85%);
+  box-shadow:0 0 0 1px #a88ae922,0 12px 32px #49358b12;
+}
+body.info-light .price{color:#252238}
+body.info-light .pricing article>p:not(.price){color:#7055c8}
+body.info-light .pricing small,
+body.info-light .price-note{color:#747b90}
+body.info-light .tag{background:#e9e1ff;color:#6246b1}
+body.info-light .package-action{color:#fff}
+body.info-light .price-info{border-color:#e5e7ef;background:#fff}
+@media(prefers-color-scheme:dark){
+  body.info-light{color-scheme:light;background:linear-gradient(180deg,#f0edff 0,#f8f9fc 310px,var(--bg) 620px);color:var(--text)}
+}

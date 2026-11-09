@@ -385,7 +385,6 @@ async function loadVoices(){
     $("voiceStatus").textContent=state.voices.length+" suara";
     $("voiceLibraryNote").textContent=(indonesianCount?indonesianCount+" suara berlabel Bahasa Indonesia diprioritaskan.":"Belum ada suara bawaan berlabel Bahasa Indonesia di katalog. Suara multilingual tetap bisa membaca bahasa Indonesia, tetapi aksennya bisa bervariasi.")+(privateCount?" Zed Clone pribadi tersedia untuk akun pemilik.":"");
     $("catalogVoiceCount").textContent=state.voices.length+" suara tersedia";
-    $("catalogVoiceNote").textContent=(indonesianCount?indonesianCount+" suara berlabel Bahasa Indonesia. ":"")+"Daftar ini mengikuti suara yang tersedia di akun ZAIDA Voice."+(privateCount?" Termasuk "+privateCount+" suara clone pribadi.":"");
     state.voices.sort((a,b)=>Number(isIndonesianVoice(b))-Number(isIndonesianVoice(a)));
     state.voices.forEach(v=>{const o=document.createElement("option");o.value=v.voice_id;o.textContent=v.name;select.append(o);});
     if(!state.voices.length)select.innerHTML='<option value="">Tidak ada suara tersedia</option>';
@@ -393,7 +392,7 @@ async function loadVoices(){
     renderVoiceCards();renderCatalogVoices();
   }catch(error){
     select.innerHTML='<option value="">Gagal memuat suara</option>';$("voiceStatus").textContent="Suara tidak dapat dimuat";$("voiceCards").textContent=error.message;$("voiceLibraryNote").textContent=error.message;
-    $("catalogVoiceCount").textContent="Katalog tidak tersedia";$("catalogVoiceNote").textContent=error.message;$("catalogVoiceCards").textContent=error.message;
+    $("catalogVoiceCount").textContent="Katalog tidak tersedia";$("catalogVoiceCards").textContent=error.message;
   }
 }
 function isIndonesianVoice(v){return /indonesian|bahasa indonesia|^ind$/i.test(String(v.language||""));}
@@ -409,11 +408,15 @@ function makeVoiceCard(v){
   const labels=[v.language||"Multilingual",v.accent].filter(Boolean).join(" · ");
   const kind=document.createElement("small");kind.textContent=v.private?"Zed Clone · Privat":isIndonesianVoice(v)?"Bahasa Indonesia"+(v.accent?" · "+v.accent:""):labels;
   choose.append(name,kind);choose.addEventListener("click",()=>{stopVoicePreview();$("voiceSelect").value=v.voice_id;$("voiceSelect").dispatchEvent(new Event("change"));});
-  const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.textContent="Pratinjau";
+  const actions=document.createElement("div");actions.className="voice-card-actions";
+  const preview=document.createElement("button");preview.type="button";preview.className="voice-preview";preview.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.8v12.4L18 12 8 5.8Z" fill="currentColor"/></svg>';
+  preview.setAttribute("aria-label","Putar pratinjau "+v.name);
   preview.disabled=!v.preview_url;
-  preview.title=v.preview_url?"Putar contoh suara":"Pratinjau tidak tersedia";
+  preview.title=v.preview_url?"Putar pratinjau":"Pratinjau tidak tersedia";
   preview.addEventListener("click",()=>{if(!v.preview_url){toast("Pratinjau tidak tersedia.");return;}stopVoicePreview();const audio=new Audio(v.preview_url);state.previewAudio=audio;audio.addEventListener("ended",()=>{if(state.previewAudio===audio)state.previewAudio=null;},{once:true});audio.play().catch(()=>{if(state.previewAudio===audio)state.previewAudio=null;toast("Pratinjau tidak dapat diputar.");});});
-  card.append(choose,preview);return card;
+  const use=document.createElement("button");use.type="button";use.className="voice-use";use.textContent="Gunakan";use.title="Gunakan suara ini di Voice Studio";
+  use.addEventListener("click",()=>{stopVoicePreview();$("voiceSelect").value=v.voice_id;$("voiceSelect").dispatchEvent(new Event("change"));showView("studio");});
+  actions.append(preview,use);card.append(choose,actions);return card;
 }
 function renderVoiceCollection({wrapId,searchId,genderId,paginationId,pageKey}){
   const wrap=$(wrapId);if(!wrap)return;

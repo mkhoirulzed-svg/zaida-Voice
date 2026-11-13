@@ -132,7 +132,8 @@
             <details class="video-advanced-settings video-generation-advanced">
               <summary>Pengaturan tambahan <span>Durasi, jumlah gambar & target</span></summary>
               <div class="video-field-grid">
-                <div><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>
+                <div><label class="field-label" for="videoDurationMode">DURASI VIDEO</label><select id="videoDurationMode"><option value="auto" selected>Otomatis mengikuti naskah / audio</option><option value="manual">Atur manual</option></select></div>
+                <div id="videoDurationManualField" hidden><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>
                 <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR</label><select id="videoSceneCount"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option></select></div>
               </div>
               <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">

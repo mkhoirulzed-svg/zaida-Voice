@@ -167,16 +167,30 @@
           </section>
         </div>
         <section class="panel video-audio-panel" id="videoAudioPanel">
-          <div class="section-head"><div><h2>03 · Audio & Narasi</h2><small>Buat narasi dengan ZAIDA Voice atau gunakan rekaman milikmu.</small></div><span class="video-engine">AUDIO STUDIO</span></div>
-          <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
-                    <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
-                    <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
-                    <button class="secondary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi dari storyboard</button>
-                    <audio id="videoNarrationPreview" controls hidden></audio>
-                    <small class="render-hint" id="videoNarrationStatus">Narasi dibuat dari gabungan teks semua adegan. Tarif tetap mengikuti ZAIDA Voice: 3 kredit per karakter.</small>
-                    <label class="field-label" for="videoNarrationAudio">ATAU GUNAKAN AUDIO SENDIRI</label>
-                    <input id="videoNarrationAudio" type="file" accept="audio/*">
-                    <small class="render-hint">Audio lokal maksimal 100 MB. Diproses langsung di browser, tidak diunggah ke server dan tidak memotong kredit. Audio ini menggantikan audio TTS.</small>
+          <div class="section-head"><div><h2>03 · Audio & Narasi</h2><small>Pilih cara menambahkan suara ke videomu.</small></div><span class="video-engine">AUDIO STUDIO</span></div>
+          <div class="audio-choice-card">
+            <div class="audio-choice-heading"><span class="audio-choice-number">1</span><div><b>Pilih suara ZAIDA Voice</b><small>Tentukan karakter suara untuk narasimu.</small></div></div>
+            <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA</label>
+            <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
+            <details class="video-advanced-settings">
+              <summary>Pengaturan lanjutan <span>Stabilitas & kemiripan</span></summary>
+              <div class="render-voice-settings">
+                <label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label>
+                <label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label>
+              </div>
+            </details>
+          </div>
+          <div class="audio-choice-card">
+            <div class="audio-choice-heading"><span class="audio-choice-number">2</span><div><b>Buat narasi</b><small>ZAIDA akan membacakan gabungan narasi dari semua adegan storyboard.</small></div></div>
+            <button class="primary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi</button>
+            <small class="render-hint" id="videoNarrationStatus">Tarif mengikuti ZAIDA Voice: 3 kredit per karakter. Pilih suara dan buat storyboard terlebih dahulu.</small>
+          </div>
+          <div class="audio-choice-card">
+            <div class="audio-choice-heading"><span class="audio-choice-number">3</span><div><b>Upload audio sendiri</b><small>Gunakan rekaman atau musik narasi milikmu.</small></div></div>
+            <label class="video-audio-upload" for="videoNarrationAudio"><span>Pilih file audio</span><small>MP3, WAV, atau format audio lain · Maks. 100 MB</small><input id="videoNarrationAudio" type="file" accept="audio/*"></label>
+            <small class="render-hint">Diproses langsung di browser, tidak diunggah ke server dan tidak memotong kredit. Audio ini menggantikan audio TTS.</small>
+          </div>
+          <audio id="videoNarrationPreview" controls hidden></audio>
         </section>
         <section class="panel caption-editor-panel" id="captionEditorPanel">
           <div class="section-head"><div><h2>04 · Editor Caption</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>

@@ -462,7 +462,7 @@ function makeVideoWordCues(text, alignment) {
   const ends = alignment?.character_end_times_seconds || [];
   if (starts.length !== chars.length || ends.length !== chars.length) return [];
   const words = [];
-  for (const match of text.matchAll(/\\S+/gu)) {
+  for (const match of text.matchAll(/\S+/gu)) {
     const startIndex = Array.from(text.slice(0, match.index)).length;
     const endIndex = startIndex + Array.from(match[0]).length - 1;
     const start = Number(starts[startIndex]);

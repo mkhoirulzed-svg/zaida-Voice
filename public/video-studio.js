@@ -491,7 +491,7 @@ async function startDualRender(isExport = false) {
   button.disabled = true;
   button.textContent = isExport ? "Mengekspor video final…" : "Membuat preview…";
   progressBar.style.width = "0%";
-  progressText.textContent = "Memuat FFmpeg.wasm…";
+  progressText.textContent = "Memuat mesin ekspor MP4…";
   setStatus(isExport ? "Mengekspor video final dengan pengaturan caption…" : "Membuat video preview tanpa menanam caption permanen…");
   try {
     const audioDuration = await getAudioDurationSeconds(audioFile);
@@ -509,7 +509,7 @@ async function startDualRender(isExport = false) {
           const percent = Math.round((info.progress || 0) * 100);
           progressBar.style.width = percent + "%";
           progressText.textContent = info.message || ("Merender " + (info.format || "video") + "… " + percent + "%");
-        } else if (info.phase === "log") progressText.textContent = "FFmpeg: " + (info.message || "Menjalankan proses…");
+        } else if (info.phase === "log") progressText.textContent = info.message || "Menjalankan proses ekspor…";
         else if (info.phase === "complete") { progressBar.style.width = "100%"; progressText.textContent = info.message; }
       }
     });

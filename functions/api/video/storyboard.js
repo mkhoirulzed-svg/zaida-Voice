@@ -108,7 +108,7 @@ function parseStoryboard(raw, script, units, duration, requestedCount) {
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
-  if (!env.KIOSAPI_API_KEY) return jsonError("KIOSAPI_API_KEY belum dikonfigurasi di Cloudflare.", 503);
+  if (!env.KIOSAPI_API_KEY && !env.DEEPSEEK_API_KEY) return jsonError("Konfigurasikan KIOSAPI_API_KEY atau DEEPSEEK_API_KEY di Cloudflare.", 503);
 
   let body;
   try { body = await request.json(); } catch { return jsonError("Format permintaan tidak valid.", 400); }
@@ -168,10 +168,12 @@ Kembalikan HANYA JSON valid:
       "video-storyboard:kiosapi",
       { requestId, provider: "kiosapi", model: primaryModel }
     );
-    // Coba model utama dan fallback secara berurutan agar kegagalan satu provider/model tidak menggagalkan seluruh storyboard.
-    const modelCandidates = [...new Set([primaryModel, fallbackModel])];
+    // Jalur 1-2: KiosAPI. Jalur 3: DeepSeek API langsung, independen dari KiosAPI.
+    const modelCandidates = env.KIOSAPI_API_KEY ? [...new Set([primaryModel, fallbackModel])] : [];
     let upstream = null;
     let data = null;
+    let providerName = "kiosapi";
+    let modelUsed = primaryModel;
     let lastProviderError = null;
     for (const modelCandidate of modelCandidates) {
       try {
@@ -188,6 +190,7 @@ Kembalikan HANYA JSON valid:
         if (candidateResponse.ok && candidateData.choices?.[0]?.message?.content) {
           upstream = candidateResponse;
           data = candidateData;
+          modelUsed = candidateResponse.headers.get("X-Kiosapi-Model-Used") || candidateData.model || modelCandidate;
           break;
         }
         lastProviderError = {
@@ -198,8 +201,37 @@ Kembalikan HANYA JSON valid:
         lastProviderError = { status: 502, message: providerError?.message || "Koneksi ke model gagal." };
       }
     }
+    if ((!upstream || !data) && env.DEEPSEEK_API_KEY) {
+      try {
+        const directResponse = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.DEEPSEEK_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "deepseek-flash",
+            messages: [{ role: "system", content: system }, { role: "user", content: userContent }],
+            thinking: { type: "disabled" },
+            response_format: { type: "json_object" },
+            temperature: 0.25, max_tokens: maxTokens, stream: false
+          })
+        });
+        const directData = await readJson(directResponse);
+        if (directResponse.ok && directData.choices?.[0]?.message?.content) {
+          upstream = directResponse;
+          data = directData;
+          providerName = "deepseek_direct";
+          modelUsed = directData.model || "deepseek-flash";
+        } else {
+          lastProviderError = {
+            status: directResponse.status || 502,
+            message: directData.error?.message || directData.message || "DeepSeek API langsung tidak merespons."
+          };
+        }
+      } catch (directError) {
+        lastProviderError = { status: 502, message: directError?.message || "Koneksi ke DeepSeek langsung gagal." };
+      }
+    }
     if (!upstream || !data) {
-      await releaseCredits(auth.user, env, reservation.reservationId, "kiosapi-storyboard-models-unavailable");
+      await releaseCredits(auth.user, env, reservation.reservationId, "storyboard-all-models-unavailable");
       settled = true;
       return jsonError(
         "Layanan AI storyboard sedang tidak tersedia. Model utama dan cadangan gagal dihubungi. Coba lagi beberapa saat.",
@@ -209,16 +241,22 @@ Kembalikan HANYA JSON valid:
 
     providerResponded = true;
     const raw = data.choices?.[0]?.message?.content?.trim();
-    const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
-    const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
-    const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
-    const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
-      ? Math.max(0, Number(reportedCost))
-      : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+    const headerCost = providerName === "kiosapi" ? upstream.headers.get("X-Kiosapi-Cost-IDR") : null;
+    const reportedCost = providerName === "kiosapi" ? (data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null)) : null;
+    const directInputRate = Math.max(0, Number(env.ZAIDA_DEEPSEEK_INPUT_MAX_IDR_PER_MILLION) || 6000);
+    const directOutputRate = Math.max(0, Number(env.ZAIDA_DEEPSEEK_OUTPUT_MAX_IDR_PER_MILLION) || 24000);
+    const directUsage = data.usage || {};
+    const directCostIdr = ((Number(directUsage.prompt_tokens ?? directUsage.input_tokens) || 0) * directInputRate +
+      (Number(directUsage.completion_tokens ?? directUsage.output_tokens) || 0) * directOutputRate) / 1000000;
+    const providerCostIdr = providerName === "deepseek_direct"
+      ? directCostIdr
+      : (reportedCost !== null && Number.isFinite(Number(reportedCost))
+        ? Math.max(0, Number(reportedCost))
+        : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env));
     const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
     const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
-      "video-storyboard:kiosapi:" + modelUsed, {
-        provider: "kiosapi", model: modelUsed, providerCostIdr: Math.ceil(providerCostIdr),
+      "video-storyboard:" + providerName + ":" + modelUsed, {
+        provider: providerName, model: modelUsed, providerCostIdr: Math.ceil(providerCostIdr),
         inputTokens: billing.inputTokens, outputTokens: billing.outputTokens, requestId
       });
     settled = true;
@@ -227,7 +265,7 @@ Kembalikan HANYA JSON valid:
     return Response.json({
       ...storyboard, durationSeconds: duration, requestedSceneCount: storyboard.scenes.length,
       segmentation: "semantic", format: "9:16+16:9", resolution: "720p", outputFormats: ["9:16", "16:9"], outputResolutions: ["720x1280", "1280x720"], visualStyle: "mixed2",
-      provider: "kiosapi", model: modelUsed,
+      provider: providerName, model: modelUsed,
       creditsCharged: charged.charged, creditsRemaining: charged.remaining
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

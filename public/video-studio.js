@@ -604,6 +604,26 @@ async function generateVideoNarration() {
     generatedNarrationBlob=new Blob([bytes],{type:"audio/mpeg"});
     generatedSubtitleText=makeVideoSrt(text,data.alignment);
     generatedWordCues=makeVideoWordCues(text,data.alignment);
+    // Sinkronkan durasi tiap adegan memakai timestamp kata dari TTS, bukan estimasi 5 detik.
+    if (generatedWordCues.length) {
+      let wordCursor = 0;
+      const audioDuration = await getMediaDurationSeconds(generatedNarrationBlob);
+      currentStoryboard.scenes.forEach((scene, index) => {
+        const wordCount = scene.narration.trim().split(/\\s+/u).filter(Boolean).length;
+        const firstCue = generatedWordCues[wordCursor];
+        const nextCue = generatedWordCues[wordCursor + wordCount];
+        const lastCue = generatedWordCues[Math.min(generatedWordCues.length - 1, wordCursor + wordCount - 1)];
+        if (firstCue && lastCue) {
+          const start = firstCue.start;
+          const end = nextCue ? nextCue.start : (audioDuration || lastCue.end);
+          scene.start_seconds = Number(start.toFixed(2));
+          scene.end_seconds = Number(Math.max(start + 0.5, end).toFixed(2));
+          scene.estimated_seconds = Math.max(1, Number((scene.end_seconds - scene.start_seconds).toFixed(2)));
+        }
+        wordCursor += wordCount;
+      });
+      saveDraft();
+    }
     const audioUrl=URL.createObjectURL(generatedNarrationBlob);
     const player=$("videoNarrationPreview");
     if(player.dataset.objectUrl)URL.revokeObjectURL(player.dataset.objectUrl);

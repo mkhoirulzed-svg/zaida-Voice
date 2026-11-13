@@ -16,6 +16,22 @@ let generatedSubtitleText = "";
 let videoVoicesLoadedFor = null;
 let videoDraftRestoredFor = null;
 
+const VIDEO_VISUAL_STYLES={
+  stickman:{label:"Stickman",prompt:"Use a clean minimalist stickman illustration style: simple expressive line-drawn human characters, clear poses, uncluttered backgrounds, consistent character design, restrained color palette. Not photorealistic."},
+  "2d":{label:"Ilustrasi 2D",prompt:"Use polished 2D flat vector illustration, clean shapes, crisp outlines, balanced colors, simple readable composition, consistent illustrated characters. Not photorealistic or 3D."},
+  "3d":{label:"Animasi 3D",prompt:"Use high-quality stylized 3D animated film visuals, appealing dimensional characters, soft global illumination, detailed but friendly materials, expressive poses, consistent character design."},
+  anime:{label:"Anime",prompt:"Use high-quality Japanese anime illustration style, expressive character design, refined line art, cinematic anime lighting, rich but controlled colors, consistent characters."},
+  realistic:{label:"Realistis",prompt:"Use natural photorealistic photography, believable real-world people and environments, accurate anatomy, realistic textures, natural lighting, documentary photography quality."},
+  cinematic:{label:"Cinematic",prompt:"Use cinematic photorealistic film stills, dramatic but natural lighting, thoughtful camera composition, atmospheric depth, realistic textures, professional color grading."},
+  watercolor:{label:"Watercolor",prompt:"Use delicate watercolor painting, visible paper texture, soft pigment washes, graceful brush edges, gentle layered colors, cohesive illustrated scenes."},
+  comic:{label:"Komik",prompt:"Use polished graphic novel comic-book illustration, confident ink outlines, dynamic framing, controlled halftone texture, expressive poses, coherent panel-like composition."}
+};
+function updateVisualStyleDescription(){
+  const style=VIDEO_VISUAL_STYLES[$("videoVisualStyle").value]||VIDEO_VISUAL_STYLES.cinematic;
+  const box=$("visualStyleDescription");
+  box.querySelector("b").textContent=style.label;
+  box.querySelector("small").textContent=style.prompt;
+}
 function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
   $("videoStatus").style.color = isError ? "#f0a3a3" : "#c6b8f5";
@@ -81,6 +97,7 @@ function renderGeneratedImage(scene, previewArea) {
   previewArea.append(figure);
 }
 async function generateSceneImage(scene, button, imageArea) {
+  const selectedStyle=VIDEO_VISUAL_STYLES[$("videoVisualStyle").value]||VIDEO_VISUAL_STYLES.cinematic;
   if (!auth.currentUser) { setStatus("Masuk ke akun ZAIDA Voice untuk membuat gambar.", true); return; }
   if (scene.imageBusy) return;
   if (scene.generatedImage && !confirm("Buat ulang gambar adegan ini? Gambar baru akan dikenakan biaya lagi.")) return;
@@ -91,7 +108,7 @@ async function generateSceneImage(scene, button, imageArea) {
   try {
     const result = await api("/api/video/image", {
       method: "POST",
-      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, prompt: scene.visual_prompt })
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, prompt: selectedStyle.prompt + "\\n\\nScene direction: " + scene.visual_prompt })
     });
     scene.generatedImage = {
       b64: result.image.b64,
@@ -632,6 +649,8 @@ $("toggleStoryboardEditor").addEventListener("click",()=>{
 ["captionFontSize","captionTextColor","captionOutlineColor","captionOutlineWidth","captionBackgroundOpacity"].forEach(id=>$(id).addEventListener("input",updateCaptionPreview));
 $("captionPreset").addEventListener("change",applyCaptionPreset);
 applyCaptionPreset();
+$("videoVisualStyle").addEventListener("change",updateVisualStyleDescription);
+updateVisualStyleDescription();
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);

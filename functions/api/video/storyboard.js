@@ -14,7 +14,7 @@ async function readJson(response) {
 // Memecah naskah pada batas kalimat/paragraf, sambil mempertahankan teks sumber.
 function extractSentenceUnits(script) {
   const units = [];
-  const pattern = /[^.!?。！？\\n]+[.!?。！？]?|\\n+/gu;
+  const pattern = /[^.!?。！？\n]+[.!?。！？]?|\n+/gu;
   for (const match of script.matchAll(pattern)) {
     if (match[0].trim()) units.push({ start: match.index, end: match.index + match[0].length, text: match[0] });
   }
@@ -26,7 +26,7 @@ function fallbackGroups(units, requestedCount, duration) {
   const count = Math.max(1, Math.min(units.length, target));
   const groups = [];
   let cursor = 0;
-  const totalWords = units.reduce((sum, unit) => sum + (unit.text.trim().split(/\\s+/u).filter(Boolean).length || 0), 0) || 1;
+  const totalWords = units.reduce((sum, unit) => sum + (unit.text.trim().split(/\s+/u).filter(Boolean).length || 0), 0) || 1;
   let accumulated = 0;
   for (let i = 0; i < count; i++) {
     const remainingGroups = count - i;
@@ -35,7 +35,7 @@ function fallbackGroups(units, requestedCount, duration) {
     let end = cursor;
     let words = 0;
     while (end < units.length && (end === cursor || words < targetWords)) {
-      words += units[end].text.trim().split(/\\s+/u).filter(Boolean).length;
+      words += units[end].text.trim().split(/\s+/u).filter(Boolean).length;
       end++;
     }
     if (remainingUnits <= remainingGroups) end = cursor + 1;
@@ -63,7 +63,7 @@ function normalizeGroups(rawScenes, units, requestedCount, duration) {
   return groups;
 }
 function fallbackVisual(narration, index) {
-  const excerpt = narration.trim().replace(/\\s+/gu, " ").slice(0, 180);
+  const excerpt = narration.trim().replace(/\s+/gu, " ").slice(0, 180);
   return {
     title: "Adegan " + (index + 1),
     visual_description: "Visual pendukung untuk inti narasi: " + excerpt,
@@ -75,16 +75,16 @@ function fallbackVisual(narration, index) {
 function parseStoryboard(raw, script, units, duration, requestedCount) {
   let parsed = {};
   try {
-    const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\\s*/i, "").replace(/\\s*\x60{3}$/i, "");
+    const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
     parsed = JSON.parse(cleaned);
   } catch {}
   const groups = normalizeGroups(parsed.scenes, units, requestedCount, duration);
-  const totalWords = script.trim().split(/\\s+/u).filter(Boolean).length || 1;
+  const totalWords = script.trim().split(/\s+/u).filter(Boolean).length || 1;
   const scenes = groups.map((group, index) => {
     const narration = script.slice(units[group.start].start, units[group.end - 1].end);
     const ai = group.metadata || {};
     const fallback = fallbackVisual(narration, index);
-    const words = narration.trim().split(/\\s+/u).filter(Boolean).length;
+    const words = narration.trim().split(/\s+/u).filter(Boolean).length;
     return {
       scene_number: index + 1,
       title: String(ai.title || fallback.title).slice(0, 90),
@@ -119,7 +119,7 @@ export async function onRequestPost({ request, env }) {
   if (script.length > 30000) return jsonError("Naskah maksimal 30.000 karakter.", 400);
 
   const units = extractSentenceUnits(script);
-  const words = script.trim().split(/\\s+/u).filter(Boolean).length;
+  const words = script.trim().split(/\s+/u).filter(Boolean).length;
   const duration = Number.isFinite(Number(body.duration)) && Number(body.duration) > 0
     ? Math.max(15, Math.min(900, Number(body.duration)))
     : Math.max(15, Math.round(words / 2.2));
@@ -143,7 +143,7 @@ Gaya visual Mixed2: pilih footage/fotografi realistis, ilustrasi, 3D, atau cinem
 Setiap visual_prompt harus mandiri, rinci, aman untuk crop 9:16 dan 16:9 dengan subjek di tengah, tanpa tulisan, logo, atau watermark. on_screen_text maksimal 8 kata.
 Kembalikan HANYA JSON valid:
 {"title":"...","hook":"...","closing":"...","scenes":[{"scene_number":1,"sentence_start":1,"sentence_end":2,"title":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"","transition":"cut"}]}`;
-  const userContent = "Susun storyboard dari daftar kalimat berikut. Pertahankan urutan dan cakupan seluruh kalimat:\\n" +
+  const userContent = "Susun storyboard dari daftar kalimat berikut. Pertahankan urutan dan cakupan seluruh kalimat:\n" +
     JSON.stringify(units.map((unit, index) => ({ sentence_number: index + 1, text: unit.text })));
   const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
   const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";

@@ -202,18 +202,29 @@
               <button class="caption-preview-play" id="captionPreviewPlay" type="button" aria-label="Putar video" hidden>▶</button>
             </div>
             <div class="caption-controls">
-              <label class="field-label" for="captionPreset">PRESET CAPTION</label>
-              <select id="captionPreset"><option value="classic">Classic · putih outline</option><option value="capcut" selected>Social · kotak lembut</option><option value="cinematic">Cinematic · elegan</option><option value="karaoke">Highlight · kuning</option></select>
-              <div class="caption-control-grid">
-                <label>Font <select id="captionFont"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Verdana">Verdana</option></select></label>
-                <label>Ukuran <input id="captionFontSize" type="range" min="18" max="52" value="28"><output id="captionFontSizeValue">28 px</output></label>
-                <label>Warna teks <input id="captionTextColor" type="color" value="#ffffff"></label>
-                <label>Warna outline <input id="captionOutlineColor" type="color" value="#000000"></label>
-                <label>Ketebalan outline <input id="captionOutlineWidth" type="range" min="0" max="6" value="2"></label>
-                <label>Background <select id="captionBackground"><option value="soft">Kotak lembut</option><option value="none">Tanpa background</option><option value="solid">Kotak solid</option></select></label>
-                <label>Transparansi <input id="captionBackgroundOpacity" type="range" min="0" max="100" value="76"></label>
-                <label>Posisi <select id="captionPosition"><option value="bottom">Bawah</option><option value="middle">Tengah</option><option value="top">Atas</option></select></label>
+              <div class="caption-quick-control">
+                <label class="field-label" for="captionPreset">PILIH GAYA CAPTION</label>
+                <select id="captionPreset">
+                  <option value="classic">Classic · putih dengan outline</option>
+                  <option value="capcut" selected>Social · kotak lembut</option>
+                  <option value="cinematic">Cinematic · elegan</option>
+                  <option value="karaoke">Highlight · kuning</option>
+                </select>
+                <p class="caption-quick-hint">Pilih preset untuk langsung menerapkan tampilan caption. Kamu bisa melihat hasilnya di preview.</p>
               </div>
+              <details class="caption-advanced-settings">
+                <summary><span><b>Pengaturan lanjutan</b><small>Font, ukuran, warna, posisi, dan background</small></span></summary>
+                <div class="caption-control-grid">
+                  <label>Font <select id="captionFont"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Verdana">Verdana</option></select></label>
+                  <label>Ukuran <input id="captionFontSize" type="range" min="18" max="52" value="28"><output id="captionFontSizeValue">28 px</output></label>
+                  <label>Warna teks <input id="captionTextColor" type="color" value="#ffffff"></label>
+                  <label>Warna outline <input id="captionOutlineColor" type="color" value="#000000"></label>
+                  <label>Ketebalan outline <input id="captionOutlineWidth" type="range" min="0" max="6" value="2"></label>
+                  <label>Background <select id="captionBackground"><option value="soft">Kotak lembut</option><option value="none">Tanpa background</option><option value="solid">Kotak solid</option></select></label>
+                  <label>Transparansi <input id="captionBackgroundOpacity" type="range" min="0" max="100" value="76"></label>
+                  <label>Posisi <select id="captionPosition"><option value="bottom">Bawah</option><option value="middle">Tengah</option><option value="top">Atas</option></select></label>
+                </div>
+              </details>
             </div>
           </div>
         </section>

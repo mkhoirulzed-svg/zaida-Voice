@@ -175,3 +175,30 @@
 .caption-preview-empty small{font-size:10px;line-height:1.5;max-width:220px}
 .caption-export-button{width:100%;margin-top:10px;min-height:44px}
 #videoRenderDownloads{margin-top:12px}
+
+/* Video Studio phase 1 — script-first input and embedded writing assistant */
+.video-studio-page .video-form-panel{background:var(--panel,#fff);color:var(--text,#202124)}
+.video-studio-page .video-form-panel textarea,.video-studio-page .video-form-panel input,.video-studio-page .video-form-panel select{background:var(--surface,#fff);color:var(--text,#202124);border-color:var(--line,#e5e7eb)}
+.video-studio-page .video-form-panel #videoTopic{min-height:220px;font:14px/1.7 inherit;resize:vertical}
+.video-input-note{display:block;margin:-8px 0 16px;color:var(--muted);font-size:11px}
+.video-script-assistant{border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:12px;margin:0 0 18px;background:var(--surface,#fff)}
+.video-script-assistant>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none}
+.video-script-assistant>summary::-webkit-details-marker{display:none}
+.video-script-assistant>summary b,.video-script-assistant>summary small{display:block}
+.video-script-assistant>summary b{font-size:12px}.video-script-assistant>summary small{font-size:10px;color:var(--muted);margin-top:4px}
+.video-assistant-open{font-size:10px;color:var(--accent,#7656c9)}
+.video-assistant-messages{max-height:190px;overflow:auto;margin:13px 0;display:grid;gap:8px}
+.video-assistant-messages p{margin:0;padding:9px 11px;border-radius:9px;background:var(--surface-2,#f4f4f7);font-size:11px;line-height:1.6;white-space:pre-wrap}
+.video-assistant-messages .video-assistant-user{background:var(--accent-soft,#f0ebff)}
+.video-assistant-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.video-assistant-compose textarea,.video-assistant-result textarea{min-height:54px;margin:0!important;font:12px/1.5 inherit!important}
+.video-assistant-compose button,.video-assistant-result button{border:0;border-radius:8px;padding:10px 13px;background:var(--accent,#7656c9);color:white;cursor:pointer}
+.video-assistant-result{margin-top:14px}.video-assistant-result textarea{width:100%;min-height:150px;margin:7px 0!important}
+.video-assistant-result button{background:transparent;color:var(--accent,#7656c9);border:1px solid var(--line,#ddd)}
+@media(max-width:760px){.video-studio-page .video-form-panel #videoTopic{min-height:190px}}
+
+/* Visual style selector */
+.video-visual-style-select{display:block;width:100%;margin:8px 0 10px;padding:12px;border:1px solid var(--line,#e5e7eb);border-radius:9px;background:var(--surface,#fff);color:var(--text,#202124);font:inherit;font-size:12px}
+.video-studio-page .visual-style-card{background:var(--surface-2,#f7f6fa);border:1px solid var(--line,#e5e7eb);margin:0 0 17px}
+.video-studio-page .visual-style-card b{font-size:11px}
+.video-studio-page .visual-style-card small{font-size:10px;line-height:1.55;color:var(--muted)}

@@ -119,11 +119,12 @@
         <div class="video-layout">
           <section class="panel video-form-panel">
             <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
-            <label class="field-label" for="videoTopic">TOPIK ATAU IDE VIDEO</label>
-            <textarea id="videoTopic" maxlength="500" rows="4" placeholder="Contoh: 5 kebiasaan sederhana untuk menjaga kesehatan ginjal…"></textarea>
+            <label class="field-label" for="videoTopic">NASKAH VIDEO DARI CHATGPT</label>
+            <textarea id="videoTopic" maxlength="30000" rows="8" placeholder="Tempel naskah lengkap dari ChatGPT di sini. ZAIDA akan membaginya menjadi adegan tanpa mengubah atau meringkas narasi."></textarea>
+            <p class="privacy-note">Naskah akan dipertahankan persis seperti aslinya. AI hanya membantu menyusun arahan visual setiap adegan.</p>
             <div class="video-field-grid">
-              <div><label class="field-label" for="videoDuration">DURASI TARGET</label><select id="videoDuration"><option value="60" selected>1 menit</option><option value="90">1,5 menit</option><option value="120">2 menit</option><option value="180">3 menit</option></select></div>
-              <div><label class="field-label" for="videoSceneCount">JUMLAH ADEGAN</label><select id="videoSceneCount"><option value="6">6 adegan</option><option value="8" selected>8 adegan</option><option value="10">10 adegan</option><option value="12">12 adegan</option><option value="15">15 adegan</option></select></div>
+              <div><label class="field-label" for="videoDuration">DURASI VIDEO</label><select id="videoDuration"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="30">30 detik</option><option value="60">1 menit</option><option value="90">1,5 menit</option><option value="120">2 menit</option><option value="180">3 menit</option><option value="300">5 menit</option><option value="600">10 menit</option></select></div>
+              <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR / ADEGAN</label><select id="videoSceneCount"><option value="auto" selected>Otomatis sesuai naskah</option><option value="4">4 gambar</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option><option value="20">20 gambar</option><option value="25">25 gambar</option><option value="30">30 gambar</option></select></div>
             </div>
             <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
             <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>
@@ -134,7 +135,7 @@
           </section>
           <section class="panel storyboard-panel">
             <div class="section-head"><h2>02 · Storyboard</h2><span id="sceneCountLabel">Belum ada adegan</span></div>
-            <div id="storyboardEmpty" class="storyboard-empty"><div class="storyboard-empty-icon">▧</div><b>Ide kamu dimulai di sini</b><p>Isi topik, lalu buat storyboard. Hasilnya bisa kamu edit sebelum masuk tahap visual.</p></div>
+            <div id="storyboardEmpty" class="storyboard-empty"><div class="storyboard-empty-icon">▧</div><b>Ide kamu dimulai di sini</b><p>Tempel naskah lengkap, lalu buat storyboard. Hasilnya bisa kamu edit sebelum masuk tahap visual.</p></div>
             <div id="storyboardResult" hidden>
               <div class="storyboard-quick-summary"><b id="storyboardQuickTitle"></b><span id="storyboardQuickMeta"></span></div>
               <div class="storyboard-image-strip" id="storyboardImageStrip" aria-label="Gambar hasil storyboard"></div>

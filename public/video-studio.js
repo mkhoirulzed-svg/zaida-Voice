@@ -358,6 +358,14 @@ function getCaptionStyle() {
     position: $("captionPosition").value
   };
 }
+function updateCaptionPreviewAspectRatio() {
+  const stage = $("captionPreviewStage");
+  if (!stage) return;
+  const format = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
+  const isLandscape = format === "16:9";
+  stage.style.aspectRatio = isLandscape ? "16 / 9" : "9 / 16";
+  stage.style.width = isLandscape ? "100%" : "min(100%, 320px)";
+}
 function updateCaptionPreview() {
   const style = getCaptionStyle();
   const preview = $("captionPreviewText");
@@ -730,7 +738,11 @@ $("copyStoryboard").addEventListener("click", copyStoryboard);
 $("renderDualVideo").addEventListener("click", () => startDualRender(false));
 $("exportFinalVideo").addEventListener("click", () => startDualRender(true));
 $("videoIncludeSubtitles").addEventListener("change", syncCaptionPreview);
-document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => input.addEventListener("change", updateRenderAvailability));
+document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => input.addEventListener("change", () => {
+  updateRenderAvailability();
+  updateCaptionPreviewAspectRatio();
+}));
+updateCaptionPreviewAspectRatio();
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
 $("videoNarrationAudio").addEventListener("change", () => {
   const file = $("videoNarrationAudio").files?.[0];

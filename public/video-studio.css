@@ -115,7 +115,7 @@
 .caption-editor-panel .section-head h2{font-size:14px;margin:0}
 .caption-editor-panel .section-head small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
 .caption-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,1fr);gap:18px;align-items:center}
-.caption-preview-stage{aspect-ratio:9/16;max-height:390px;min-height:240px;background:linear-gradient(145deg,#20263a,#10131d);border:1px solid var(--line);border-radius:12px;display:flex;align-items:flex-end;justify-content:center;padding:12px;overflow:hidden;position:relative}
+.caption-preview-stage{width:min(100%,320px);height:auto;aspect-ratio:9/16;max-height:none;min-height:0;justify-self:center;background:linear-gradient(145deg,#20263a,#10131d);border:1px solid var(--line);border-radius:12px;display:flex;align-items:flex-end;justify-content:center;padding:12px;overflow:hidden;position:relative}
 .caption-preview-stage:before{content:"PREVIEW VIDEO";position:absolute;top:12px;left:12px;font-size:8px;letter-spacing:1px;color:#8c91a5}
 .caption-preview-stage[data-position="top"]{align-items:flex-start}
 .caption-preview-stage[data-position="middle"]{align-items:center}
@@ -128,7 +128,7 @@
 .caption-control-grid input[type=range]{width:100%;accent-color:#a88af4}
 .caption-control-grid output{font-size:10px;color:#c6b8f5}
 @media(max-width:760px){.caption-editor-panel{padding:15px}.caption-editor-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.caption-preview-stage{min-height:220px;max-height:300px}.caption-control-grid{grid-template-columns:1fr}}
-@media(max-width:480px){.caption-editor-layout{grid-template-columns:1fr}.caption-preview-stage{aspect-ratio:16/9;max-height:220px;min-height:150px}.caption-control-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.caption-editor-layout{grid-template-columns:1fr}.caption-preview-stage{width:min(100%,320px);height:auto;max-height:none;min-height:0}.caption-control-grid{grid-template-columns:1fr 1fr}}
 
 
 /* Streamlined storyboard image rail */

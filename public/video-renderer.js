@@ -100,8 +100,8 @@ export async function renderVideo({ scenes, audioFile, audioDuration = null, sub
   if (!ctx) throw new Error("Browser tidak dapat membuat kanvas video.");
 
   const images = await Promise.all(scenes.map(imageFromScene));
-  const durations = scenes.map(scene => Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)));
-  const sceneTotal = durations.reduce((a, b) => a + b, 0);
+  const baseDurations = scenes.map(scene => Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)));
+  const sceneTotal = baseDurations.reduce((a, b) => a + b, 0);
   let audioContext = null, audioBuffer = null, output = null, videoSource = null, audioSource = null;
   try {
     if (audioFile) {
@@ -110,6 +110,7 @@ export async function renderVideo({ scenes, audioFile, audioDuration = null, sub
     }
     const totalDuration = audioBuffer?.duration || (Number(audioDuration) > 0 ? Number(audioDuration) : sceneTotal);
     if (!Number.isFinite(totalDuration) || totalDuration <= 0) throw new Error("Durasi video tidak valid.");
+    const durations = baseDurations.map(value => value / sceneTotal * totalDuration);
     const cues = burnCaptions ? parseSrtCues(subtitleText).filter(c => c.start < totalDuration) : [];
     output = new mb.Output({ format: new mb.Mp4OutputFormat({ fastStart: "in-memory" }), target: new mb.BufferTarget() });
     videoSource = new mb.CanvasSource(canvas, { codec: "avc", quality: new mb.Quality("high") });

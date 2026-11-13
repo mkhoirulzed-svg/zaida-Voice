@@ -129,7 +129,7 @@ export async function renderVideo({ scenes, audioFile, audioDuration = null, sub
   if (!ctx) throw new Error("Browser tidak dapat membuat kanvas video.");
 
   const images = await Promise.all(scenes.map(imageFromScene));
-  const baseDurations = scenes.map(scene => Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)));
+  const baseDurations = scenes.map(scene => Math.max(0.8, Math.min(40, Number(scene.estimated_seconds) || 6)));
   const sceneTotal = baseDurations.reduce((a, b) => a + b, 0);
   let audioContext = null, audioBuffer = null, output = null, videoSource = null, audioSource = null;
   try {

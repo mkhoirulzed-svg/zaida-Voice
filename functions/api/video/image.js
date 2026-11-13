@@ -25,7 +25,7 @@ export async function onRequestPost({ request, env }) {
 
   const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : null;
   const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 1800) : "";
-  const sceneNumber = Math.max(1, Math.min(8, Number(body.sceneNumber) || 1));
+  const sceneNumber = Math.max(1, Math.min(30, Number(body.sceneNumber) || 1));
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);
   if (prompt.length < 20) return jsonError("Prompt gambar terlalu singkat. Periksa arahan visual adegan.", 400);
 

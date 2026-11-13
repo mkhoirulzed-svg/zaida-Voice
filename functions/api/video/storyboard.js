@@ -145,8 +145,16 @@ Kembalikan HANYA JSON valid:
 {"title":"...","hook":"...","closing":"...","scenes":[{"scene_number":1,"sentence_start":1,"sentence_end":2,"title":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"","transition":"cut"}]}`;
   const userContent = "Susun storyboard dari daftar kalimat berikut. Pertahankan urutan dan cakupan seluruh kalimat:\n" +
     JSON.stringify(units.map((unit, index) => ({ sentence_number: index + 1, text: unit.text })));
-  const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
-  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";
+  // Default: Gemini Flash Lite (free tier); fallback: GPT-4o mini (low-cost).
+  // Migrate legacy Cloudflare vars so retired/outage-prone models are not retried.
+  const legacyModelMap = {
+    "openai/o4-mini": "google/gemini-2.5-flash",
+    "deepseek/deepseek-v4-flash": "openai/gpt-4o-mini"
+  };
+  const configuredPrimary = String(env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "").trim();
+  const configuredFallback = String(env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "").trim();
+  const primaryModel = legacyModelMap[configuredPrimary] || configuredPrimary || "google/gemini-2.5-flash";
+  const fallbackModel = legacyModelMap[configuredFallback] || configuredFallback || "openai/gpt-4o-mini";
   const maxTokens = Math.min(12000, Math.max(6500, units.length * 260));
   let reservation = null, settled = false, providerResponded = false;
 

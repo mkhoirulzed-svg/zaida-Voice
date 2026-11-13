@@ -10,7 +10,7 @@
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/video-studio.css">
-  <link rel="stylesheet" href="/video-editor-v2.css">
+
   <link rel="stylesheet" href="/apple-light.css">
 </head>
 <body class="in-studio">
@@ -173,8 +173,8 @@
           </div>
         </section>
         <section class="panel video-render-panel" id="videoRenderPanel">
-          <div class="section-head"><h2>04 · Render video</h2><span class="video-engine">FFMPEG.WASM</span></div>
-          <p class="render-intro">Pilih satu format dan render MP4 langsung dengan FFmpeg. Gambar AI bersifat opsional; video dasar dapat dibuat langsung dari storyboard. Narasi audio juga opsional.</p>
+          <div class="section-head"><h2>04 · Render video</h2><span class="video-engine">TIMELINE · WEBCodecs</span></div>
+          <p class="render-intro">Susun adegan, buat narasi dengan ZAIDA Voice, atur subtitle, lalu ekspor MP4 langsung dari timeline. Proses render berjalan di browser menggunakan WebCodecs.</p>
           <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
           <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
           <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
@@ -195,7 +195,7 @@
             <p id="videoRenderProgressText" role="status" aria-live="polite">Menyiapkan render…</p>
           </div>
           <div class="render-downloads" id="videoRenderDownloads" hidden></div>
-          <p class="render-warning">Render berjalan di perangkat kamu, bukan di server ZAIDA. Proses 1–3 menit bisa berat di HP dan membutuhkan ruang memori. Jangan tutup tab sampai selesai. Tahap ini belum menyimpan MP4 ke cloud.</p>
+          <p class="render-warning">MP4 dirender langsung dari timeline pada 30 FPS. Perangkat harus mendukung WebCodecs; video panjang membutuhkan memori cukup. Jangan tutup tab sampai ekspor selesai. File belum disimpan ke cloud.</p>
         </section>
       </section>
             <div class="bottom-dock"><div class="dock-player"><audio id="audioPlayer" controls preload="metadata"></audio><span id="dockTrack">Belum ada audio</span></div><span class="dock-credits" id="dockCredits">Kredit: —</span><button class="dock-action" id="dockAction">Lanjut</button></div>
@@ -233,5 +233,5 @@
       <p class="auth-message" id="authMessage" role="status"></p>
     </section>
   </div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script><script type="module" src="/video-studio.js"></script><script type="module" src="/video-editor-v2.js"></script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script><script type="module" src="/video-studio.js"></script>
 </body></html>

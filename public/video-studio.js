@@ -609,7 +609,7 @@ async function generateVideoNarration() {
       let wordCursor = 0;
       const audioDuration = await getMediaDurationSeconds(generatedNarrationBlob);
       currentStoryboard.scenes.forEach((scene, index) => {
-        const wordCount = scene.narration.trim().split(/\\s+/u).filter(Boolean).length;
+        const wordCount = scene.narration.trim().split(/\s+/u).filter(Boolean).length;
         const firstCue = generatedWordCues[wordCursor];
         const nextCue = generatedWordCues[wordCursor + wordCount];
         const lastCue = generatedWordCues[Math.min(generatedWordCues.length - 1, wordCursor + wordCount - 1)];

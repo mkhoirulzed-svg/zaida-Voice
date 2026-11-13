@@ -142,7 +142,7 @@ function updateRenderAvailability() {
   const selected = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const summary = $("videoRenderSummary");
   const hasAudio = Boolean($("videoNarrationAudio")?.files?.[0] || generatedNarrationBlob);
-  if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan · " + (hasAudio ? "audio narasi siap" : "audio belum dipilih") + " · format " + selected + " · " + (ready ? "Siap membuat preview." : "Masuk untuk mulai render.")) : "Belum siap · Buat storyboard minimal 2 adegan."
+  if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan · " + (hasAudio ? "audio narasi siap" : "audio belum dipilih") + " · format " + selected + " · " + (ready ? "Siap membuat preview." : "Masuk untuk mulai render.")) : "Belum siap · Buat storyboard minimal 2 adegan.";
   if (!button.disabled) button.innerHTML = "<span>▶</span> Buat Preview Video <b>→</b>";
 }
 function setActiveScene(index, scrollIntoView = false) {

@@ -14,7 +14,7 @@ async function readJson(response) {
 // Membagi teks berdasarkan jumlah kata. Setiap potongan adalah substring asli,
 // sehingga penggabungan seluruh narration selalu sama persis dengan naskah sumber.
 function splitScriptExactly(script, requestedCount) {
-  const words = [...script.matchAll(/\\S+/gu)];
+  const words = [...script.matchAll(/\S+/gu)];
   const count = Math.max(1, Math.min(30, requestedCount));
   const boundaries = [0];
   for (let i = 1; i < count; i++) {
@@ -30,7 +30,7 @@ function splitScriptExactly(script, requestedCount) {
   return chunks;
 }
 function fallbackVisual(segment, index) {
-  const excerpt = segment.trim().replace(/\\s+/gu, " ").slice(0, 180);
+  const excerpt = segment.trim().replace(/\s+/gu, " ").slice(0, 180);
   return {
     scene_number: index + 1,
     title: "Adegan " + (index + 1),
@@ -41,7 +41,7 @@ function fallbackVisual(segment, index) {
   };
 }
 function parseStoryboard(raw, segments, duration) {
-  const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\\s*/i, "").replace(/\\s*\x60{3}$/i, "");
+  const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
   const parsed = JSON.parse(cleaned);
   if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.scenes)) throw new Error("Format storyboard dari AI tidak valid.");
   const byNumber = new Map();
@@ -49,11 +49,11 @@ function parseStoryboard(raw, segments, duration) {
     const n = Number(scene.scene_number);
     if (Number.isInteger(n) && n >= 1 && n <= segments.length && !byNumber.has(n)) byNumber.set(n, scene);
   }
-  const totalWords = segments.reduce((sum, part) => sum + (part.match(/\\S+/gu) || []).length, 0) || 1;
+  const totalWords = segments.reduce((sum, part) => sum + (part.match(/\S+/gu) || []).length, 0) || 1;
   const scenes = segments.map((narration, index) => {
     const ai = byNumber.get(index + 1) || {};
     const fallback = fallbackVisual(narration, index);
-    const words = (narration.match(/\\S+/gu) || []).length;
+    const words = (narration.match(/\S+/gu) || []).length;
     const seconds = Math.max(2, Math.round(duration * words / totalWords));
     return {
       scene_number: index + 1,
@@ -89,7 +89,7 @@ export async function onRequestPost({ request, env }) {
   if (script.trim().length < 20) return jsonError("Naskah minimal 20 karakter.", 400);
   if (script.length > 30000) return jsonError("Naskah maksimal 30.000 karakter.", 400);
 
-  const words = script.trim().split(/\\s+/u).length;
+  const words = script.trim().split(/\s+/u).length;
   const duration = body.duration === "auto" || !Number.isFinite(Number(body.duration))
     ? Math.max(15, Math.round(words / 2.2))
     : Math.max(15, Math.min(900, Number(body.duration)));
@@ -110,7 +110,7 @@ Setiap visual_prompt harus mandiri, rinci, aman untuk crop 9:16 dan 16:9 dengan 
 Kembalikan HANYA JSON valid:
 {"title":"...","hook":"...","closing":"...","scenes":[{"scene_number":1,"title":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"","transition":"cut"}]}
 Jangan sertakan properti narration karena narasi akan ditambahkan server.`;
-  const userContent = "Buat arahan visual untuk segmen naskah berikut. Setiap segmen harus mendapat satu adegan dengan nomor yang sama. Jangan mengubah teksnya:\\n" +
+  const userContent = "Buat arahan visual untuk segmen naskah berikut. Setiap segmen harus mendapat satu adegan dengan nomor yang sama. Jangan mengubah teksnya:\n" +
     JSON.stringify(segments.map((text, index) => ({ scene_number: index + 1, narration: text })));
   const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
   const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";

@@ -46,8 +46,23 @@ function drawCover(ctx, image, width, height, progress, shot) {
   ctx.restore();
 }
 
-function drawCaption(ctx, text, width, height, style = {}) {
+function drawCaption(ctx, text, width, height, style = {}, time = 0, cue = null) {
   if (!text) return;
+  const animation = style.animation || "static";
+  const wordCues = Array.isArray(style.wordCues) ? style.wordCues.filter(word => !cue || (word.start >= cue.start && word.end <= cue.end)) : [];
+  if (animation === "typewriter" && cue && wordCues.length) {
+    const visible = wordCues.filter(word => word.start <= time);
+    const active = wordCues.find(word => time >= word.start && time <= word.end);
+    text = visible.map(word => word.text).join(" ");
+    if (active) {
+      const ratio = Math.max(0, Math.min(1, (time - active.start) / (active.end - active.start)));
+      const count = Math.max(1, Math.ceil(active.text.length * ratio));
+      text = visible.slice(0, -1).map(word => word.text).concat(active.text.slice(0, count)).join(" ");
+    }
+  } else if (animation === "word" && cue && wordCues.length) {
+    const active = wordCues.find(word => time >= word.start && time <= word.end);
+    text = active?.text || "";
+  }
   const preset = style.preset || "capcut";
   const fontSize = Math.max(18, Math.min(52, Number(style.fontSize) || 28)) * (width / 720);
   const font = String(style.font || (preset === "cinematic" ? "Georgia" : "Arial")).replace(/['"]/g, "");
@@ -81,6 +96,19 @@ function drawCaption(ctx, text, width, height, style = {}) {
   lines.forEach((value, i) => {
     if (outlineWidth) ctx.strokeText(value, width / 2, firstY + i * lineHeight, maxWidth);
     ctx.fillText(value, width / 2, firstY + i * lineHeight, maxWidth);
+    if (animation === "karaoke" && cue && wordCues.length) {
+      const active = wordCues.find(word => time >= word.start && time <= word.end);
+      if (active && value.includes(active.text)) {
+        const before = value.slice(0, value.indexOf(active.text));
+        const activeWidth = ctx.measureText(active.text).width;
+        const beforeWidth = ctx.measureText(before).width;
+        const lineWidth = ctx.measureText(value).width;
+        const x = (width - lineWidth) / 2 + beforeWidth;
+        ctx.save(); ctx.fillStyle = "#ffe45e";
+        ctx.fillText(active.text, x + activeWidth / 2, firstY + i * lineHeight);
+        ctx.restore();
+      }
+    }
   });
   ctx.restore();
 }
@@ -141,7 +169,7 @@ export async function renderVideo({ scenes, audioFile, audioDuration = null, sub
         ctx.fillText(scene.title || ("Adegan " + (sceneIndex + 1)), width / 2, height / 2, width * .82);
       }
       const cue = cues.find(item => time >= item.start && time <= item.end);
-      if (cue) drawCaption(ctx, cue.text, width, height, captionStyle);
+      if (cue) drawCaption(ctx, cue.text, width, height, captionStyle, time, cue);
       await videoSource.add(time, Math.min(1 / fps, totalDuration - time));
       if (frame % 30 === 0 || frame === totalFrames - 1) {
         const progress = (frame + 1) / totalFrames;

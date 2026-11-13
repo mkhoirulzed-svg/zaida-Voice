@@ -28,10 +28,16 @@ const VIDEO_VISUAL_STYLES={
   comic:{label:"Komik",prompt:"Use polished graphic novel comic-book illustration, confident ink outlines, dynamic framing, controlled halftone texture, expressive poses, coherent panel-like composition."}
 };
 function updateVisualStyleDescription(){
-  const style=VIDEO_VISUAL_STYLES[$("videoVisualStyle").value]||VIDEO_VISUAL_STYLES.cinematic;
+  const selected = $("videoVisualStyle").value;
+  const style=VIDEO_VISUAL_STYLES[selected]||VIDEO_VISUAL_STYLES.cinematic;
   const box=$("visualStyleDescription");
   box.querySelector("b").textContent=style.label;
   box.querySelector("small").textContent=style.prompt;
+  $("visualStyleGrid")?.querySelectorAll("[data-visual-style]").forEach(card => {
+    const active = card.dataset.visualStyle === selected;
+    card.classList.toggle("is-selected", active);
+    card.setAttribute("aria-pressed", String(active));
+  });
 }
 function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
@@ -812,6 +818,12 @@ $("captionPreset").addEventListener("change",applyCaptionPreset);
 $("captionAnimation").addEventListener("change",syncCaptionPreview);
 applyCaptionPreset();
 $("videoVisualStyle").addEventListener("change",updateVisualStyleDescription);
+$("visualStyleGrid")?.addEventListener("click", event => {
+  const card = event.target.closest("[data-visual-style]");
+  if (!card) return;
+  $("videoVisualStyle").value = card.dataset.visualStyle;
+  updateVisualStyleDescription();
+});
 updateVisualStyleDescription();
 $("videoDurationMode")?.addEventListener("change", syncVideoDurationMode);
 syncVideoDurationMode();

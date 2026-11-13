@@ -140,16 +140,19 @@
               <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>
             </details>
             <label class="field-label" for="videoVisualStyle">GAYA VISUAL GAMBAR</label>
-            <select id="videoVisualStyle" class="video-visual-style-select">
-              <option value="stickman">Stickman · karakter garis sederhana</option>
-              <option value="2d">Ilustrasi 2D · flat / vector</option>
-              <option value="3d">Animasi 3D · karakter kartun</option>
-              <option value="anime">Anime · ilustrasi Jepang</option>
-              <option value="realistic">Realistis · fotografi natural</option>
-              <option value="cinematic" selected>Cinematic · realistis dramatis</option>
-              <option value="watercolor">Watercolor · lukisan cat air</option>
-              <option value="comic">Komik · graphic novel</option>
+            <select id="videoVisualStyle" class="video-visual-style-select" aria-label="Gaya visual gambar">
+              <option value="stickman">Stickman</option><option value="2d">Ilustrasi 2D</option><option value="3d">Animasi 3D</option><option value="anime">Anime</option><option value="realistic">Realistis</option><option value="cinematic" selected>Cinematic</option><option value="watercolor">Watercolor</option><option value="comic">Komik</option>
             </select>
+            <div class="visual-style-grid" id="visualStyleGrid" aria-label="Contoh gaya visual">
+              <button type="button" class="visual-style-option" data-visual-style="cinematic" aria-pressed="true"><span class="visual-style-art art-cinematic"><i></i><b></b></span><strong>Cinematic</strong><small>Film dramatis</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="realistic" aria-pressed="false"><span class="visual-style-art art-realistic"><i></i><b></b></span><strong>Realistis</strong><small>Seperti foto</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="3d" aria-pressed="false"><span class="visual-style-art art-3d"><i></i><b></b></span><strong>Animasi 3D</strong><small>Karakter kartun</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="2d" aria-pressed="false"><span class="visual-style-art art-2d"><i></i><b></b></span><strong>Ilustrasi 2D</strong><small>Flat dan vector</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="anime" aria-pressed="false"><span class="visual-style-art art-anime"><i></i><b></b></span><strong>Anime</strong><small>Gaya Jepang</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="watercolor" aria-pressed="false"><span class="visual-style-art art-watercolor"><i></i><b></b></span><strong>Watercolor</strong><small>Lukisan cat air</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="comic" aria-pressed="false"><span class="visual-style-art art-comic"><i></i><b></b></span><strong>Komik</strong><small>Graphic novel</small></button>
+              <button type="button" class="visual-style-option" data-visual-style="stickman" aria-pressed="false"><span class="visual-style-art art-stickman"><i></i><b></b></span><strong>Stickman</strong><small>Karakter garis</small></button>
+            </div>
             <div class="visual-style-card" id="visualStyleDescription"><div><b>Cinematic</b><small>Visual realistis dengan pencahayaan dramatis dan komposisi seperti film.</small></div><span>VISUAL</span></div>
             <div class="video-format-settings">
               <label class="field-label">FORMAT VIDEO</label>

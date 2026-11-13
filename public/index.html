@@ -135,7 +135,18 @@
             </div>
             <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
             <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>
-            <div class="visual-style-card"><div><b>Gaya visual · Mixed2</b><small>Campuran realistis, ilustrasi, 3D, dan cinematic sesuai kebutuhan adegan.</small></div><span> MIXED2 </span></div>
+            <label class="field-label" for="videoVisualStyle">GAYA VISUAL GAMBAR</label>
+            <select id="videoVisualStyle" class="video-visual-style-select">
+              <option value="stickman">Stickman · karakter garis sederhana</option>
+              <option value="2d">Ilustrasi 2D · flat / vector</option>
+              <option value="3d">Animasi 3D · karakter kartun</option>
+              <option value="anime">Anime · ilustrasi Jepang</option>
+              <option value="realistic">Realistis · fotografi natural</option>
+              <option value="cinematic" selected>Cinematic · realistis dramatis</option>
+              <option value="watercolor">Watercolor · lukisan cat air</option>
+              <option value="comic">Komik · graphic novel</option>
+            </select>
+            <div class="visual-style-card" id="visualStyleDescription"><div><b>Cinematic</b><small>Visual realistis dengan pencahayaan dramatis dan komposisi seperti film.</small></div><span>VISUAL</span></div>
             <button class="generate-button" id="generateStoryboard"><span>✧</span> Buat storyboard <b>→</b></button>
             <p class="privacy-note">Storyboard dan gambar dibuat melalui Kiosapi. GPT Image 2.5 Flare: Rp500 per gambar; kredit ZAIDA dipotong sesuai biaya provider dan markup akun.</p>
             <div class="video-status" id="videoStatus" role="status" aria-live="polite"></div>

@@ -188,19 +188,22 @@ function renderStoryboard(data) {
   updateRenderAvailability();
 }
 async function generateStoryboard() {
-  const topic = $("videoTopic").value.trim();
-  if (topic.length < 8) { setStatus("Masukkan ide video minimal 8 karakter.", true); $("videoTopic").focus(); return; }
+  const script = $("videoTopic").value;
+  if (script.trim().length < 20) { setStatus("Tempel naskah lengkap minimal 20 karakter.", true); $("videoTopic").focus(); return; }
+  if (script.length > 30000) { setStatus("Naskah terlalu panjang. Batas maksimal 30.000 karakter.", true); $("videoTopic").focus(); return; }
   const button = $("generateStoryboard");
   button.disabled = true;
-  button.innerHTML = "<span>✧</span> Menyusun storyboard…";
-  setStatus("Menghubungi Kiosapi dan menyusun adegan…");
+  button.innerHTML = "<span>✧</span> Membaca naskah & menyusun adegan…";
+  setStatus("Membagi naskah menjadi adegan dan menyiapkan arahan visual…");
   try {
+    const durationValue = $("videoDuration").value;
+    const sceneCountValue = $("videoSceneCount").value;
     const result = await api("/api/video/storyboard", {
       method: "POST",
       body: JSON.stringify({
-        requestId: requestId(), topic,
-        duration: Number($("videoDuration").value),
-        sceneCount: Number($("videoSceneCount").value),
+        requestId: requestId(), script,
+        duration: durationValue === "auto" ? "auto" : Number(durationValue),
+        sceneCount: sceneCountValue === "auto" ? "auto" : Number(sceneCountValue),
         audience: $("videoAudience").value.trim(),
         tone: $("videoTone").value,
         language: "id"

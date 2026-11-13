@@ -166,8 +166,20 @@
             </div>
           </section>
         </div>
+        <section class="panel video-audio-panel" id="videoAudioPanel">
+          <div class="section-head"><div><h2>03 · Audio & Narasi</h2><small>Buat narasi dengan ZAIDA Voice atau gunakan rekaman milikmu.</small></div><span class="video-engine">AUDIO STUDIO</span></div>
+          <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
+                    <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
+                    <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
+                    <button class="secondary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi dari storyboard</button>
+                    <audio id="videoNarrationPreview" controls hidden></audio>
+                    <small class="render-hint" id="videoNarrationStatus">Narasi dibuat dari gabungan teks semua adegan. Tarif tetap mengikuti ZAIDA Voice: 3 kredit per karakter.</small>
+                    <label class="field-label" for="videoNarrationAudio">ATAU GUNAKAN AUDIO SENDIRI</label>
+                    <input id="videoNarrationAudio" type="file" accept="audio/*">
+                    <small class="render-hint">Audio file lokal akan menggantikan audio hasil TTS.</small>
+        </section>
         <section class="panel caption-editor-panel" id="captionEditorPanel">
-          <div class="section-head"><div><h2>03 · Editor Caption</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>
+          <div class="section-head"><div><h2>04 · Editor Caption</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>
           <div class="caption-editor-layout">
             <div class="caption-preview-stage" id="captionPreviewStage">
               <video id="videoPreviewPlayer" playsinline preload="metadata" hidden></video>
@@ -192,17 +204,8 @@
           </div>
         </section>
         <section class="panel video-render-panel" id="videoRenderPanel">
-          <div class="section-head"><h2>04 · Render video</h2><span class="video-engine">TIMELINE · WEBCodecs</span></div>
+          <div class="section-head"><h2>05 · Render video</h2><span class="video-engine">TIMELINE · WEBCodecs</span></div>
           <p class="render-intro">Susun adegan, buat narasi dengan ZAIDA Voice, atur subtitle, lalu ekspor MP4 langsung dari timeline. Proses render berjalan di browser menggunakan WebCodecs.</p>
-          <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA ZAIDA</label>
-          <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
-          <div class="render-voice-settings"><label>Stabilitas <input id="videoVoiceStability" type="range" min="0" max="100" value="50"></label><label>Kemiripan <input id="videoVoiceSimilarity" type="range" min="0" max="100" value="75"></label></div>
-          <button class="secondary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi dari storyboard</button>
-          <audio id="videoNarrationPreview" controls hidden></audio>
-          <small class="render-hint" id="videoNarrationStatus">Narasi dibuat dari gabungan teks semua adegan. Tarif tetap mengikuti ZAIDA Voice: 3 kredit per karakter.</small>
-          <label class="field-label" for="videoNarrationAudio">ATAU GUNAKAN AUDIO SENDIRI</label>
-          <input id="videoNarrationAudio" type="file" accept="audio/*">
-          <small class="render-hint">Audio file lokal akan menggantikan audio hasil TTS.</small>
           <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Caption permanen (menyatu ke video)</b><small>Aktif: teks selalu terlihat di video. Nonaktif: subtitle tersedia sebagai track CC yang bisa dinyalakan atau dimatikan.</small></span></label>
           <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
           <fieldset class="video-format-picker"><legend>PILIH FORMAT VIDEO</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, YouTube Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>

@@ -202,3 +202,14 @@
 .video-studio-page .visual-style-card{background:var(--surface-2,#f7f6fa);border:1px solid var(--line,#e5e7eb);margin:0 0 17px}
 .video-studio-page .visual-style-card b{font-size:11px}
 .video-studio-page .visual-style-card small{font-size:10px;line-height:1.55;color:var(--muted)}
+
+/* Dedicated audio and narration panel */
+.video-audio-panel{margin-top:17px;padding:21px}
+.video-audio-panel .render-voice-settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.video-audio-panel .render-voice-settings label{font-size:10px;color:var(--muted);display:grid;gap:7px}
+.video-audio-panel .render-voice-settings input{width:100%;accent-color:#a88af4}
+.video-audio-panel #generateVideoNarration{width:100%;margin:5px 0 12px}
+.video-audio-panel #videoNarrationPreview{width:100%;height:40px;margin:7px 0}
+.video-audio-panel input[type=file]{display:block;width:100%;margin:8px 0;border:1px solid var(--line);background:#101218;color:var(--text);border-radius:8px;padding:10px;font-size:11px}
+@media(max-width:760px){.video-audio-panel{padding:15px}}
+@media(max-width:420px){.video-audio-panel .render-voice-settings{grid-template-columns:1fr}}

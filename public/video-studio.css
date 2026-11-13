@@ -219,3 +219,28 @@
 .scene-image-upload{display:block;width:100%;max-width:100%;font-size:11px;color:var(--text);border:1px dashed var(--line);border-radius:8px;padding:9px;background:var(--surface,#fff)}
 .scene-image-upload::file-selector-button{border:0;border-radius:6px;padding:7px 10px;margin-right:8px;background:var(--accent-soft,#f0ebff);color:var(--accent,#7656c9);font-weight:600}
 .video-audio-panel #videoNarrationAudio{background:var(--surface,#fff);color:var(--text,#202124)}
+
+
+/* Stage 1: compact, single-open scene accordion for mobile-first storyboard editing */
+.video-studio-page .scene-list{gap:9px}
+.video-studio-page .scene-card{padding:0;overflow:hidden;border-radius:12px;background:var(--surface,#fff);border-color:var(--line,#e5e7eb)}
+.video-studio-page .scene-card.is-open{border-color:var(--accent,#7656c9);box-shadow:0 0 0 2px var(--accent-soft,#f0ebff)}
+.video-studio-page .scene-card-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:68px;padding:12px 14px;border:0;background:transparent;color:var(--text,#202124);text-align:left;font:inherit;cursor:pointer}
+.video-studio-page .scene-card-toggle:focus-visible{outline:2px solid var(--accent,#7656c9);outline-offset:-3px}
+.video-studio-page .scene-card-toggle-main{display:grid;gap:4px;min-width:0}
+.video-studio-page .scene-card-toggle-main b{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.video-studio-page .scene-card-toggle-meta{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.video-studio-page .scene-edit-label{font-size:10px;color:var(--accent,#7656c9);font-weight:700}
+.video-studio-page .scene-chevron{font-size:19px;line-height:1;color:var(--muted);transition:transform .18s}
+.video-studio-page .scene-card.is-open .scene-chevron{transform:rotate(180deg)}
+.video-studio-page .scene-card-body{padding:2px 14px 14px;border-top:1px solid var(--line,#e5e7eb)}
+.video-studio-page .scene-card-body[hidden]{display:none}
+.video-studio-page .storyboard-image-thumb.is-active{outline:2px solid var(--accent,#7656c9);outline-offset:2px}
+.video-studio-page .storyboard-image-thumb{flex-basis:68px;width:68px;height:98px}
+.video-studio-page .storyboard-image-thumb:focus-visible{outline:2px solid var(--accent,#7656c9);outline-offset:2px}
+@media(max-width:520px){
+ .video-studio-page .scene-card-toggle{min-height:64px;padding:11px 12px}
+ .video-studio-page .scene-card-toggle-meta{gap:7px}
+ .video-studio-page .scene-card-body{padding:2px 12px 12px}
+ .video-studio-page .storyboard-image-thumb{flex-basis:64px;width:64px;height:92px}
+}

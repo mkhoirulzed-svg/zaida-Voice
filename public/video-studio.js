@@ -335,7 +335,7 @@ async function generateStoryboard() {
     }
   }
   const requestedScenes = $("videoSceneCount").value;
-  const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationSeconds / 8))) : Number(requestedScenes);
+  const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationSeconds / 5))) : Number(requestedScenes);
   const button = $("generateStoryboard");
   button.disabled = true;
   button.innerHTML = "<span>✧</span> Menyusun storyboard…";

@@ -145,7 +145,7 @@ Kembalikan HANYA JSON valid:
 {"title":"...","hook":"...","closing":"...","scenes":[{"scene_number":1,"sentence_start":1,"sentence_end":2,"title":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"","transition":"cut"}]}`;
   const userContent = "Susun storyboard dari daftar kalimat berikut. Pertahankan urutan dan cakupan seluruh kalimat:\n" +
     JSON.stringify(units.map((unit, index) => ({ sentence_number: index + 1, text: unit.text })));
-  // Default: Gemini Flash Lite (free tier); fallback: GPT-4o mini (low-cost).
+  // Default: Gemini Flash Lite; fallback: Gemini Flash; final independent fallback: direct DeepSeek API.
   // Migrate legacy Cloudflare vars so retired/outage-prone models are not retried.
   const configuredPrimary = String(env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "").trim();
   const configuredFallback = String(env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "").trim();
@@ -165,8 +165,8 @@ Kembalikan HANYA JSON valid:
     reservation = await reserveCredits(
       auth.user, env,
       estimateKiosapiReservation(script.length + system.length + userContent.length, maxTokens, env),
-      "video-storyboard:kiosapi",
-      { requestId, provider: "kiosapi", model: primaryModel }
+      "video-storyboard:ai",
+      { requestId, provider: "multi-provider", model: primaryModel }
     );
     // Jalur 1-2: KiosAPI. Jalur 3: DeepSeek API langsung, independen dari KiosAPI.
     const modelCandidates = env.KIOSAPI_API_KEY ? [...new Set([primaryModel, fallbackModel])] : [];

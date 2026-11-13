@@ -189,7 +189,11 @@ function renderStoryboard(data) {
 }
 async function generateStoryboard() {
   const topic = $("videoTopic").value.trim();
-  if (topic.length < 8) { setStatus("Masukkan ide video minimal 8 karakter.", true); $("videoTopic").focus(); return; }
+  if (topic.length < 20) { setStatus("Masukkan naskah minimal 20 karakter agar storyboard dapat disusun.", true); $("videoTopic").focus(); return; }
+  const durationMinutes = Number($("videoDuration").value);
+  if (!Number.isFinite(durationMinutes) || durationMinutes < 0.5 || durationMinutes > 10) { setStatus("Durasi harus antara 0,5 sampai 10 menit.", true); $("videoDuration").focus(); return; }
+  const requestedScenes = $("videoSceneCount").value;
+  const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationMinutes * 60 / 8))) : Number(requestedScenes);
   const button = $("generateStoryboard");
   button.disabled = true;
   button.innerHTML = "<span>✧</span> Menyusun storyboard…";
@@ -199,8 +203,8 @@ async function generateStoryboard() {
       method: "POST",
       body: JSON.stringify({
         requestId: requestId(), topic,
-        duration: Number($("videoDuration").value),
-        sceneCount: Number($("videoSceneCount").value),
+        duration: Math.round(durationMinutes * 60),
+        sceneCount,
         audience: $("videoAudience").value.trim(),
         tone: $("videoTone").value,
         language: "id"
@@ -587,6 +591,38 @@ function restoreDraft() {
     }
   } catch {}
 }
+
+const videoAssistantMessages=[];
+let videoAssistantBusy=false;
+function addVideoAssistantMessage(role, content){
+  const row=document.createElement("p");
+  row.className=role==="assistant"?"video-assistant-reply":"video-assistant-user";
+  row.textContent=(role==="assistant"?"ZAIDA: ":"Kamu: ")+content;
+  $("videoAssistantMessages").append(row);
+  $("videoAssistantMessages").scrollTop=$("videoAssistantMessages").scrollHeight;
+}
+async function sendVideoAssistantMessage(){
+  const input=$("videoAssistantInput"), message=input.value.trim();
+  if(!message||videoAssistantBusy)return;
+  if(!auth.currentUser){setStatus("Masuk terlebih dahulu untuk menggunakan Asisten AI.",true);return;}
+  if(message.length>3000)return;
+  videoAssistantMessages.push({role:"user",content:message});
+  addVideoAssistantMessage("user",message); input.value="";
+  videoAssistantBusy=true; $("videoAssistantSend").disabled=true; $("videoAssistantSend").textContent="…";
+  try{
+    const result=await api("/api/assistant",{method:"POST",body:JSON.stringify({requestId:requestId(),profile:{style:"santai dan akrab",emotion:"natural dan netral",audience:$("videoAudience").value.trim(),length:"sesuai durasi video"},messages:videoAssistantMessages.slice(-12),mode:"script-assistant"})});
+    const reply=(result.reply||"").trim();
+    if(!reply)throw new Error("AI tidak mengembalikan jawaban.");
+    videoAssistantMessages.push({role:"assistant",content:reply});addVideoAssistantMessage("assistant",reply);
+    if(result.script?.trim()){ $("videoAssistantDraft").value=result.script.trim(); $("videoAssistantResult").hidden=false; }
+    if(result.creditsRemaining!==undefined)syncCredits(result.creditsRemaining);
+  }catch(error){videoAssistantMessages.pop();addVideoAssistantMessage("assistant","Maaf, ada kendala: "+error.message);}
+  finally{videoAssistantBusy=false;$("videoAssistantSend").disabled=false;$("videoAssistantSend").textContent="Kirim";}
+}
+$("videoAssistantSend").addEventListener("click",sendVideoAssistantMessage);
+$("videoAssistantInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendVideoAssistantMessage();}});
+$("videoAssistantUse").addEventListener("click",()=>{const draft=$("videoAssistantDraft").value.trim();if(!draft)return;$("videoTopic").value=draft;setStatus("Naskah dari Asisten AI sudah dimasukkan. Kamu bisa mengeditnya sebelum membuat storyboard.");$("videoTopic").focus();});
+
 $("toggleStoryboardEditor").addEventListener("click",()=>{
   const editor=$("storyboardEditor");editor.hidden=!editor.hidden;
   $("toggleStoryboardEditor").setAttribute("aria-expanded",String(!editor.hidden));

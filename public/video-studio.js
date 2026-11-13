@@ -328,7 +328,6 @@ async function generateStoryboard() {
       setStatus("Durasi otomatis diperkirakan dari panjang naskah · sekitar " + Math.ceil(durationSeconds / 60) + " menit.");
     }
   }
-  const durationMinutes = durationSeconds / 60;
   const requestedScenes = $("videoSceneCount").value;
   const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationSeconds / 8))) : Number(requestedScenes);
   const button = $("generateStoryboard");

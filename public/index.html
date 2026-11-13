@@ -120,11 +120,18 @@
         <div class="video-layout">
           <section class="panel video-form-panel">
             <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
-            <label class="field-label" for="videoTopic">TOPIK ATAU IDE VIDEO</label>
-            <textarea id="videoTopic" maxlength="500" rows="4" placeholder="Contoh: 5 kebiasaan sederhana untuk menjaga kesehatan ginjal…"></textarea>
+            <label class="field-label" for="videoTopic">NASKAH VIDEO</label>
+            <textarea id="videoTopic" maxlength="5000" rows="10" placeholder="Tempel atau tulis naskah lengkap di sini…"></textarea>
+            <small class="video-input-note">Tulis naskah sendiri atau minta bantuan Asisten AI di bawah.</small>
+            <details class="video-script-assistant">
+              <summary><span><b>✧ Asisten AI Naskah</b><small>Bantu susun, kembangkan, atau perbaiki naskah</small></span><span class="video-assistant-open">Buka</span></summary>
+              <div class="video-assistant-messages" id="videoAssistantMessages"><p>Halo! Ceritakan ide video atau minta aku membantu menyusun naskah.</p></div>
+              <div class="video-assistant-compose"><textarea id="videoAssistantInput" rows="2" maxlength="3000" placeholder="Contoh: Buat naskah edukasi 2 menit tentang…"></textarea><button type="button" id="videoAssistantSend">Kirim</button></div>
+              <div class="video-assistant-result" id="videoAssistantResult" hidden><label class="field-label" for="videoAssistantDraft">DRAF NASKAH</label><textarea id="videoAssistantDraft" rows="8"></textarea><button type="button" class="secondary-button" id="videoAssistantUse">Gunakan naskah ini</button></div>
+            </details>
             <div class="video-field-grid">
-              <div><label class="field-label" for="videoDuration">DURASI TARGET</label><select id="videoDuration"><option value="60" selected>1 menit</option><option value="90">1,5 menit</option><option value="120">2 menit</option><option value="180">3 menit</option></select></div>
-              <div><label class="field-label" for="videoSceneCount">JUMLAH ADEGAN</label><select id="videoSceneCount"><option value="6">6 adegan</option><option value="8" selected>8 adegan</option><option value="10">10 adegan</option><option value="12">12 adegan</option><option value="15">15 adegan</option></select></div>
+              <div><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>
+              <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR</label><select id="videoSceneCount"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option></select></div>
             </div>
             <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
             <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>

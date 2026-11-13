@@ -121,7 +121,7 @@
           <section class="panel video-form-panel">
             <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
             <label class="field-label" for="videoTopic">NASKAH VIDEO</label>
-            <textarea id="videoTopic" maxlength="5000" rows="10" placeholder="Tempel atau tulis naskah lengkap di sini…"></textarea>
+            <textarea id="videoTopic" maxlength="30000" rows="10" placeholder="Tempel atau tulis naskah lengkap di sini…"></textarea>
             <small class="video-input-note">Tulis naskah sendiri atau minta bantuan Asisten AI di bawah.</small>
             <details class="video-script-assistant">
               <summary><span><b>✧ Asisten AI Naskah</b><small>Bantu susun, kembangkan, atau perbaiki naskah</small></span><span class="video-assistant-open">Buka</span></summary>
@@ -134,7 +134,7 @@
               <div class="video-field-grid">
                 <div><label class="field-label" for="videoDurationMode">DURASI VIDEO</label><select id="videoDurationMode"><option value="auto" selected>Otomatis mengikuti naskah / audio</option><option value="manual">Atur manual</option></select></div>
                 <div id="videoDurationManualField" hidden><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>
-                <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR</label><select id="videoSceneCount"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option></select></div>
+                <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR</label><select id="videoSceneCount"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="4">4 gambar</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option><option value="20">20 gambar</option><option value="25">25 gambar</option><option value="30">30 gambar</option></select></div>
               </div>
               <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
               <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>

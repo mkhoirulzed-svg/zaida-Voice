@@ -143,12 +143,28 @@ function updateRenderAvailability() {
   if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan siap · gambar AI opsional · " + (ready ? "Siap render format " + selected + "." : "Masuk untuk mulai render.")) : "Belum siap render · Buat storyboard terlebih dahulu.";
   if (!button.disabled) button.innerHTML = "<span>▶</span> Buat Preview Video <b>→</b>";
 }
+function setActiveScene(index, scrollIntoView = false) {
+  const cards = Array.from($("sceneList").children);
+  cards.forEach((card, cardIndex) => {
+    const body = card.querySelector(".scene-card-body");
+    const toggle = card.querySelector(".scene-card-toggle");
+    const active = cardIndex === index;
+    body.hidden = !active;
+    toggle.setAttribute("aria-expanded", String(active));
+    card.classList.toggle("is-open", active);
+    const thumb = $("storyboardImageStrip")?.querySelector('[data-scene-index="' + cardIndex + '"]');
+    thumb?.classList.toggle("is-active", active);
+  });
+  if (scrollIntoView && index >= 0) {
+    cards[index]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
 function renderStoryboard(data) {
   currentStoryboard = data;
   $("storyboardEmpty").hidden = true;
   $("storyboardResult").hidden = false;
   $("storyboardQuickTitle").textContent = data.title;
-  $("storyboardQuickMeta").textContent = data.scenes.length + " adegan · gambar dibuat otomatis";
+  $("storyboardQuickMeta").textContent = data.scenes.length + " adegan · pilih adegan untuk mengedit";
   $("storyboardEditor").hidden = true;
   $("toggleStoryboardEditor").setAttribute("aria-expanded", "false");
   $("toggleStoryboardEditor").textContent = "✎ Edit storyboard, teks & gambar";
@@ -161,28 +177,54 @@ function renderStoryboard(data) {
   data.scenes.forEach((scene, index) => {
     const card = document.createElement("article");
     card.className = "scene-card";
-    const head = document.createElement("div");
-    head.className = "scene-card-head";
-    const left = document.createElement("div");
+
+    const head = document.createElement("button");
+    head.type = "button";
+    head.className = "scene-card-toggle";
+    head.setAttribute("aria-expanded", "false");
+    head.setAttribute("aria-controls", "scene-editor-" + index);
+    const left = document.createElement("span");
+    left.className = "scene-card-toggle-main";
     const number = document.createElement("span");
     number.className = "scene-number";
     number.textContent = "ADEGAN " + String(index + 1).padStart(2, "0");
     const title = document.createElement("b");
-    title.textContent = scene.title;
+    title.textContent = scene.title || ("Adegan " + (index + 1));
     left.append(number, title);
+    const right = document.createElement("span");
+    right.className = "scene-card-toggle-meta";
     const duration = document.createElement("span");
     duration.className = "scene-duration";
-    duration.textContent = scene.estimated_seconds + " detik";
-    head.append(left, duration);
+    duration.textContent = (Number(scene.estimated_seconds) || 0) + " detik";
+    const editLabel = document.createElement("span");
+    editLabel.className = "scene-edit-label";
+    editLabel.textContent = "Edit";
+    const chevron = document.createElement("span");
+    chevron.className = "scene-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.textContent = "⌄";
+    right.append(duration, editLabel, chevron);
+    head.append(left, right);
+    head.addEventListener("click", () => {
+      const willOpen = head.getAttribute("aria-expanded") !== "true";
+      setActiveScene(willOpen ? index : -1);
+    });
+
+    const editor = document.createElement("div");
+    editor.className = "scene-card-body";
+    editor.id = "scene-editor-" + index;
+    editor.hidden = true;
+
     const narration = createField("NARASI", scene.narration, "scene-narration", value => { scene.narration = value; saveDraft(); });
     const description = createField("ARAHAN VISUAL", scene.visual_description, "", value => { scene.visual_description = value; saveDraft(); });
     const prompt = createField("PROMPT VISUAL", scene.visual_prompt, "scene-prompt", value => { scene.visual_prompt = value; saveDraft(); });
     const screenText = createField("TEKS DI LAYAR", scene.on_screen_text, "", value => { scene.on_screen_text = value; saveDraft(); });
+
     const imageArea = document.createElement("div");
     imageArea.className = "scene-image-area";
     const imageNote = document.createElement("small");
     imageNote.className = "scene-image-note";
-    imageNote.textContent = "Gambar AI opsional · penggunaan gambar sendiri tidak memotong kredit";
+    imageNote.textContent = "Gambar AI opsional · gambar sendiri tidak memotong kredit";
     const uploadLabel = document.createElement("label");
     uploadLabel.className = "scene-upload-label";
     uploadLabel.textContent = "UPLOAD GAMBAR SENDIRI";
@@ -191,6 +233,8 @@ function renderStoryboard(data) {
     uploadInput.accept = "image/*";
     uploadInput.className = "scene-image-upload";
     uploadInput.setAttribute("aria-label", "Upload gambar sendiri untuk adegan " + scene.scene_number);
+    const previewArea = document.createElement("div");
+    previewArea.className = "scene-image-preview-area";
     uploadInput.addEventListener("change", () => {
       const file = uploadInput.files?.[0];
       if (!file) return;
@@ -207,8 +251,7 @@ function renderStoryboard(data) {
       reader.onerror = () => setStatus("Gambar tidak dapat dibaca. Coba file lain.", true);
       reader.readAsDataURL(file);
     });
-    const previewArea = document.createElement("div");
-    previewArea.className = "scene-image-preview-area";
+
     const imageButton = document.createElement("button");
     imageButton.type = "button";
     imageButton.className = "secondary-button scene-image-button";
@@ -217,14 +260,16 @@ function renderStoryboard(data) {
     renderGeneratedImage(scene, previewArea);
     uploadLabel.append(uploadInput);
     imageArea.append(imageNote, uploadLabel, previewArea, imageButton);
+
     const meta = document.createElement("div");
     meta.className = "scene-meta";
     const transition = document.createElement("span");
-    transition.textContent = "Transisi: " + scene.transition;
+    transition.textContent = "Transisi: " + (scene.transition || "otomatis");
     const style = document.createElement("span");
-    style.textContent = "Mixed2 visual";
+    style.textContent = "Visual ZAIDA";
     meta.append(transition, style);
-    card.append(head, narration, description, prompt, screenText, imageArea, meta);
+    editor.append(narration, description, prompt, screenText, imageArea, meta);
+    card.append(head, editor);
     list.append(card);
   });
   saveDraft();
@@ -349,11 +394,12 @@ function updateStoryboardImageStrip() {
     if(scene.uploadedImageDataUrl||scene.generatedImage){const img=document.createElement("img");img.alt="Gambar adegan "+(index+1);img.src=scene.uploadedImageDataUrl||("data:"+scene.generatedImage.mime+";base64,"+scene.generatedImage.b64);item.append(img);}
     else {const placeholder=document.createElement("span");placeholder.textContent="✧";item.append(placeholder);}
     const label=document.createElement("small");label.textContent=String(index+1).padStart(2,"0");item.append(label);
+    item.dataset.sceneIndex = String(index);
     item.addEventListener("click",()=>{
       $("storyboardEditor").hidden=false;
       $("toggleStoryboardEditor").setAttribute("aria-expanded","true");
       $("toggleStoryboardEditor").textContent="Tutup editor storyboard";
-      $("sceneList").children[index]?.scrollIntoView({behavior:"smooth",block:"center"});
+      setActiveScene(index, true);
     });
     strip.append(item);
   });

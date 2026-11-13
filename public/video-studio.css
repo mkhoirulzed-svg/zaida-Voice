@@ -296,3 +296,6 @@
 .caption-advanced-settings .caption-control-grid input[type=color]{width:100%;height:34px;border:1px solid var(--line,#e5e7eb);border-radius:8px;background:var(--surface,#fff);padding:3px}
 .caption-advanced-settings .caption-control-grid output{font-size:10px;color:var(--muted,#777)}
 @media(max-width:480px){.caption-controls{gap:10px}.caption-advanced-settings .caption-control-grid{grid-template-columns:1fr 1fr}}
+
+.caption-animation-control select{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line,#e5e7eb);border-radius:9px;background:var(--surface,#fff);color:var(--text,#202124);font-size:12px}
+#captionPreviewText[data-active-word]{text-decoration:underline;text-decoration-color:#ffe45e;text-decoration-thickness:3px;text-underline-offset:4px}

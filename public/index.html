@@ -116,7 +116,7 @@
           <div class="panel admin-credit-panel"><div class="panel-heading"><div><div><h2>Tambah kredit pengguna</h2></div></div></div><form id="adminCreditForm" class="admin-credit-form"><label>Email pengguna<input id="adminCreditEmail" type="email" placeholder="nama@email.com" required></label><label>Jumlah kredit<input id="adminCreditAmount" type="number" min="1" max="1000000" step="1" value="10000" required></label><button class="generate-button" id="adminCreditSubmit" type="submit">Tambahkan kredit</button></form></div><div class="admin-provider-grid" id="adminProviders"></div>
           <section class="panel admin-transactions"><div class="panel-heading"><div><h2>Transaksi terbaru</h2></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b></div></div></section></section>
 <section class="page video-page" id="videoStudioPage">
-        <div class="video-heading"><div><div class="eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Auto Video <em>Studio.</em></h1><p>Buat konsep video dari HP, untuk format vertikal dan horizontal.</p></div><div class="format-chip"><b>720P</b><span>PILIH FORMAT SAAT RENDER</span></div></div>
+        <div class="video-heading"><div><div class="eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Auto Video <em>Studio.</em></h1><p>Buat konsep video dari HP, untuk format vertikal dan horizontal.</p></div><div class="format-chip"><b>720P</b><span>FORMAT VIDEO</span></div></div>
         <div class="video-layout">
           <section class="panel video-form-panel">
             <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
@@ -129,12 +129,15 @@
               <div class="video-assistant-compose"><textarea id="videoAssistantInput" rows="2" maxlength="3000" placeholder="Contoh: Buat naskah edukasi 2 menit tentang…"></textarea><button type="button" id="videoAssistantSend">Kirim</button></div>
               <div class="video-assistant-result" id="videoAssistantResult" hidden><label class="field-label" for="videoAssistantDraft">DRAF NASKAH</label><textarea id="videoAssistantDraft" rows="8"></textarea><button type="button" class="secondary-button" id="videoAssistantUse">Gunakan naskah ini</button></div>
             </details>
-            <div class="video-field-grid">
-              <div><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>
-              <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR</label><select id="videoSceneCount"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option></select></div>
-            </div>
-            <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
-            <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>
+            <details class="video-advanced-settings video-generation-advanced">
+              <summary>Pengaturan tambahan <span>Durasi, jumlah gambar & target</span></summary>
+              <div class="video-field-grid">
+                <div><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>
+                <div><label class="field-label" for="videoSceneCount">JUMLAH GAMBAR</label><select id="videoSceneCount"><option value="auto" selected>Otomatis mengikuti naskah</option><option value="6">6 gambar</option><option value="8">8 gambar</option><option value="10">10 gambar</option><option value="12">12 gambar</option><option value="15">15 gambar</option></select></div>
+              </div>
+              <label class="field-label" for="videoAudience">TARGET PENONTON</label><input id="videoAudience" maxlength="160" value="Penonton umum" placeholder="Contoh: remaja, orang tua, tenaga kesehatan">
+              <label class="field-label" for="videoTone">GAYA PENYAMPAIAN</label><select id="videoTone"><option>edukatif dan menarik</option><option>santai dan akrab</option><option>dramatis dan bercerita</option><option>profesional dan informatif</option><option>inspiratif dan emosional</option></select>
+            </details>
             <label class="field-label" for="videoVisualStyle">GAYA VISUAL GAMBAR</label>
             <select id="videoVisualStyle" class="video-visual-style-select">
               <option value="stickman">Stickman · karakter garis sederhana</option>
@@ -147,6 +150,10 @@
               <option value="comic">Komik · graphic novel</option>
             </select>
             <div class="visual-style-card" id="visualStyleDescription"><div><b>Cinematic</b><small>Visual realistis dengan pencahayaan dramatis dan komposisi seperti film.</small></div><span>VISUAL</span></div>
+            <div class="video-format-settings">
+              <label class="field-label">FORMAT VIDEO</label>
+              <fieldset class="video-format-picker"><legend class="sr-only">Pilih format video</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
+            </div>
             <button class="generate-button" id="generateStoryboard"><span>✧</span> Buat storyboard <b>→</b></button>
             <p class="privacy-note">Storyboard dan gambar dibuat melalui Kiosapi. GPT Image 2.5 Flare: Rp500 per gambar; kredit ZAIDA dipotong sesuai biaya provider dan markup akun.</p>
             <div class="video-status" id="videoStatus" role="status" aria-live="polite"></div>
@@ -212,6 +219,8 @@
                 </select>
                 <p class="caption-quick-hint">Pilih preset untuk langsung menerapkan tampilan caption. Kamu bisa melihat hasilnya di preview.</p>
               </div>
+              <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam caption ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
+              <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
               <div class="caption-quick-control caption-animation-control">
                 <label class="field-label" for="captionAnimation">GAYA ANIMASI</label>
                 <select id="captionAnimation">
@@ -239,16 +248,9 @@
           </div>
         </section>
         <section class="panel video-render-panel" id="videoRenderPanel">
-          <div class="section-head"><h2>05 · Render video</h2><span class="video-engine">TIMELINE · WEBCodecs</span></div>
-          <p class="render-intro">Ikuti tiga langkah sederhana untuk menghasilkan video MP4.</p>
-          <div class="render-step-heading"><span>1</span><div><b>Format video</b><small>Pilih ukuran sesuai platform tujuan.</small></div></div>
-          <fieldset class="video-format-picker"><legend class="sr-only">Pilih format video</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
-          <div class="render-step-heading"><span>2</span><div><b>Pengaturan caption</b><small>Tentukan apakah caption menyatu permanen dengan video.</small></div></div>
-          <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam caption ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
-          <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
-          <div class="render-step-heading"><span>3</span><div><b>Preview dan ekspor</b><small>Periksa hasilnya sebelum membuat file final.</small></div></div>
+          <div class="section-head"><h2>05 · Render video</h2><span class="video-engine">MP4 · 30 FPS</span></div>
           <div class="render-summary" id="videoRenderSummary">Belum siap · Buat storyboard minimal 2 adegan.</div>
-          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Buat Preview Video <b>→</b></button>
+          <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Render Video <b>→</b></button>
           <button class="primary-button caption-export-button" id="exportFinalVideo" type="button" hidden>Ekspor MP4 Final</button>
                     <div class="render-progress" id="videoRenderProgress" hidden>
             <div class="render-progress-track"><span id="videoRenderProgressBar"></span></div>

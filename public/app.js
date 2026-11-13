@@ -467,6 +467,20 @@ function wrapSubtitle(text,max=42){
   }
   return lines.join("\n");
 }
+function prepareSubtitleSource(text,alignment){
+  const sourceChars=Array.from(text),starts=alignment?.character_start_times_seconds||[],ends=alignment?.character_end_times_seconds||[];
+  const aligned=starts.length===sourceChars.length&&ends.length===sourceChars.length;
+  const cleanChars=[],cleanStarts=[],cleanEnds=[];
+  let inTag=false;
+  for(let i=0;i<sourceChars.length;i++){
+    const char=sourceChars[i];
+    if(char==="["){inTag=true;continue;}
+    if(inTag){if(char==="]")inTag=false;continue;}
+    cleanChars.push(char);
+    if(aligned){cleanStarts.push(starts[i]);cleanEnds.push(ends[i]);}
+  }
+  return {text:cleanChars.join(""),alignment:aligned?{character_start_times_seconds:cleanStarts,character_end_times_seconds:cleanEnds}:null};
+}
 function buildSubtitles(text,alignment,duration){
   const chars=Array.from(text),starts=alignment?.character_start_times_seconds||[],ends=alignment?.character_end_times_seconds||[];
   const aligned=starts.length===chars.length&&ends.length===chars.length;
@@ -569,7 +583,7 @@ async function generate(){
     state.alignment=alignment;state.sourceText=text;
     $("resultTitle").textContent="Narasi "+new Date().toLocaleString("id-ID");$("dockTrack").textContent=$("resultTitle").textContent;
     const duration=await new Promise(resolve=>{const p=$("audioPlayer");if(p.readyState>=1&&Number.isFinite(p.duration)){resolve(p.duration);return;}const done=()=>resolve(Number.isFinite(p.duration)?p.duration:Math.max(1,text.length/12));p.addEventListener("loadedmetadata",done,{once:true});p.addEventListener("error",done,{once:true});});
-    state.subtitles=buildSubtitles(text,state.alignment,duration);
+    const cleanSource=prepareSubtitleSource(text,state.alignment);state.subtitles=buildSubtitles(cleanSource.text,cleanSource.alignment,duration);
     
     $("resultDetails").textContent="MP3 · "+formatAudioDuration(duration)+" · "+text.length+" karakter";
     $("subtitlePreviewToggle").hidden=!$("includeSubtitle").checked;$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");renderSubtitles();
@@ -586,7 +600,7 @@ $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.fiel
 $("includeSubtitle").addEventListener("change",()=>{if(state.audioUrl){$("subtitlePreviewToggle").hidden=!$("includeSubtitle").checked;if(!$("includeSubtitle").checked){$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");}else renderSubtitles();}});
 $("subtitlePreviewToggle").addEventListener("click",()=>{const opening=$("subtitleOptions").hidden;$("subtitleOptions").hidden=!opening;$("subtitlePreviewToggle").textContent=opening?"Tutup Preview":"Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded",String(opening));if(opening)renderSubtitles();});
 $("downloadSrt").addEventListener("click",downloadSubtitle);
-$("regenerateSrt").addEventListener("click",()=>{state.subtitles=buildSubtitles(state.sourceText,state.alignment,$("audioPlayer").duration||Math.max(1,state.sourceText.length/12));renderSubtitles();toast("Subtitle dibuat ulang.");});
+$("regenerateSrt").addEventListener("click",()=>{const cleanSource=prepareSubtitleSource(state.sourceText,state.alignment);state.subtitles=buildSubtitles(cleanSource.text,cleanSource.alignment,$("audioPlayer").duration||Math.max(1,cleanSource.text.length/12));renderSubtitles();toast("Subtitle dibuat ulang.");});
 $("dockAction").addEventListener("click",()=>generate());
 $("restartProject").addEventListener("click",()=>{$("newProject").click();});
 

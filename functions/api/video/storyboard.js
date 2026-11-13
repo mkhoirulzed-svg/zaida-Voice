@@ -147,14 +147,15 @@ Kembalikan HANYA JSON valid:
     JSON.stringify(units.map((unit, index) => ({ sentence_number: index + 1, text: unit.text })));
   // Default: Gemini Flash Lite (free tier); fallback: GPT-4o mini (low-cost).
   // Migrate legacy Cloudflare vars so retired/outage-prone models are not retried.
-  const legacyModelMap = {
-    "openai/o4-mini": "google/gemini-2.5-flash",
-    "deepseek/deepseek-v4-flash": "openai/gpt-4o-mini"
-  };
   const configuredPrimary = String(env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "").trim();
   const configuredFallback = String(env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "").trim();
-  const primaryModel = legacyModelMap[configuredPrimary] || configuredPrimary || "google/gemini-2.5-flash";
-  const fallbackModel = legacyModelMap[configuredFallback] || configuredFallback || "openai/gpt-4o-mini";
+  const resolveConfiguredModel = (configured, replacement) => {
+    if (!configured) return "";
+    if (configured === "openai/o4-mini" || configured.startsWith("deepseek/")) return replacement;
+    return configured;
+  };
+  const primaryModel = resolveConfiguredModel(configuredPrimary, "google/gemini-2.5-flash") || "google/gemini-2.5-flash";
+  const fallbackModel = resolveConfiguredModel(configuredFallback, "openai/gpt-4o-mini") || "openai/gpt-4o-mini";
   const maxTokens = Math.min(12000, Math.max(6500, units.length * 260));
   let reservation = null, settled = false, providerResponded = false;
 

@@ -141,7 +141,8 @@ function updateRenderAvailability() {
   button.disabled = !ready;
   const selected = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const summary = $("videoRenderSummary");
-  if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan siap · gambar AI opsional · " + (ready ? "Siap render format " + selected + "." : "Masuk untuk mulai render.")) : "Belum siap render · Buat storyboard terlebih dahulu.";
+  const hasAudio = Boolean($("videoNarrationAudio")?.files?.[0] || generatedNarrationBlob);
+  if (summary) summary.textContent = scenes.length ? (scenes.length + " adegan · " + (hasAudio ? "audio narasi siap" : "audio belum dipilih") + " · format " + selected + " · " + (ready ? "Siap membuat preview." : "Masuk untuk mulai render.")) : "Belum siap · Buat storyboard minimal 2 adegan.";
   if (!button.disabled) button.innerHTML = "<span>▶</span> Buat Preview Video <b>→</b>";
 }
 function setActiveScene(index, scrollIntoView = false) {
@@ -664,7 +665,7 @@ async function startDualRender(isExport = false) {
       previewCaptionCues=parsePreviewSrt(generatedSubtitleText);
       $("exportFinalVideo").hidden=false;
       $("exportFinalVideo").disabled=false;
-      $("exportFinalVideo").textContent="Export Video Final";
+      $("exportFinalVideo").textContent="Ekspor MP4 Final";
       player.onloadedmetadata=()=>syncCaptionPreview();
       player.ontimeupdate=syncCaptionPreview;
       player.onseeked=syncCaptionPreview;
@@ -707,7 +708,7 @@ async function startDualRender(isExport = false) {
     console.error("[ZAIDA Video Studio] Render gagal:", error);
   } finally {
     button.disabled = false;
-    if (isExport) button.textContent="Export Video Final";
+    if (isExport) button.textContent="Ekspor MP4 Final";
     else button.innerHTML="<span>▶</span> Buat Preview Video <b>→</b>";
     progress.hidden = true;
     updateRenderAvailability();
@@ -776,6 +777,10 @@ $("videoIncludeSubtitles").addEventListener("change", syncCaptionPreview);
 document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => input.addEventListener("change", () => {
   updateRenderAvailability();
   updateCaptionPreviewAspectRatio();
+  if (previewVideoUrl) {
+    $("exportFinalVideo").hidden = true;
+    setStatus("Format video berubah. Buat preview baru sebelum ekspor final.");
+  }
 }));
 updateCaptionPreviewAspectRatio();
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);

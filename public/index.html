@@ -152,7 +152,10 @@
             <div class="visual-style-card" id="visualStyleDescription"><div><b>Cinematic</b><small>Visual realistis dengan pencahayaan dramatis dan komposisi seperti film.</small></div><span>VISUAL</span></div>
             <div class="video-format-settings">
               <label class="field-label">FORMAT VIDEO</label>
-              <fieldset class="video-format-picker"><legend class="sr-only">Pilih format video</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
+              <fieldset class="video-format-picker video-format-compact"><legend class="sr-only">Pilih format video</legend>
+                <label class="video-format-choice"><input type="radio" name="videoOutputFormat" value="9:16" checked><span class="video-format-card"><i class="video-format-icon video-format-portrait" aria-hidden="true"></i><b>Vertikal</b><small>9:16</small></span></label>
+                <label class="video-format-choice"><input type="radio" name="videoOutputFormat" value="16:9"><span class="video-format-card"><i class="video-format-icon video-format-landscape" aria-hidden="true"></i><b>Horizontal</b><small>16:9</small></span></label>
+              </fieldset>
             </div>
             <button class="generate-button" id="generateStoryboard"><span>✧</span> Buat storyboard <b>→</b></button>
             <p class="privacy-note">Storyboard dan gambar dibuat melalui Kiosapi. GPT Image 2.5 Flare: Rp500 per gambar; kredit ZAIDA dipotong sesuai biaya provider dan markup akun.</p>

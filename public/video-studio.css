@@ -315,3 +315,19 @@
 .video-render-panel .render-warning{margin:2px 0 0}
 .video-render-panel .render-downloads{margin-top:3px}
 @media(max-width:480px){.video-render-panel{gap:10px}.render-step-heading{margin-top:3px}}
+
+/* Compact visual aspect-ratio picker */
+.video-format-settings{margin:14px 0 4px}
+.video-format-settings>.field-label{margin-bottom:8px}
+.video-format-picker.video-format-compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;padding:0;border:0;min-width:0}
+.video-format-compact .video-format-choice{display:block;min-width:0;cursor:pointer}
+.video-format-compact .video-format-choice>input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.video-format-compact .video-format-card{min-height:96px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px solid var(--line,#e5e7eb);border-radius:12px;background:var(--surface,#fff);color:var(--text,#202124);text-align:center;transition:border-color .15s,background .15s,box-shadow .15s}
+.video-format-compact .video-format-card b{font-size:11px;line-height:1.2}
+.video-format-compact .video-format-card small{font-size:10px;color:var(--muted,#777)}
+.video-format-icon{display:block;width:27px;height:38px;border:2px solid currentColor;border-radius:5px;position:relative;color:var(--muted,#777);background:var(--surface-2,#f7f6fa)}
+.video-format-icon:after{content:"";position:absolute;left:4px;right:4px;bottom:4px;height:2px;border-radius:2px;background:currentColor;opacity:.45}
+.video-format-icon.video-format-landscape{width:42px;height:27px;margin:5px 0 6px}
+.video-format-compact .video-format-choice>input:checked+.video-format-card{border-color:var(--accent,#7656c9);background:var(--accent-soft,#f3efff);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#7656c9) 12%,transparent)}
+.video-format-compact .video-format-choice>input:checked+.video-format-card .video-format-icon{color:var(--accent,#7656c9)}
+.video-format-compact .video-format-choice>input:focus-visible+.video-format-card{outline:2px solid var(--accent,#7656c9);outline-offset:3px}

@@ -278,13 +278,58 @@ function renderStoryboard(data) {
   updateStoryboardImageStrip();
   updateRenderAvailability();
 }
+async function getMediaDurationSeconds(blob) {
+  if (!blob) return 0;
+  const url = URL.createObjectURL(blob);
+  try {
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audio.src = url;
+    await new Promise((resolve, reject) => {
+      audio.onloadedmetadata = resolve;
+      audio.onerror = () => reject(new Error("Durasi audio tidak dapat dibaca."));
+    });
+    return Number.isFinite(audio.duration) ? audio.duration : 0;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+function estimateScriptDurationSeconds(text) {
+  const words = String(text || "").trim().split(/\\s+/).filter(Boolean).length;
+  return Math.max(30, Math.min(600, Math.round(words / 130 * 60)));
+}
+function syncVideoDurationMode() {
+  const automatic = $("videoDurationMode")?.value !== "manual";
+  const field = $("videoDurationManualField");
+  if (field) field.hidden = automatic;
+}
 async function generateStoryboard() {
   const topic = $("videoTopic").value.trim();
   if (topic.length < 20) { setStatus("Masukkan naskah minimal 20 karakter agar storyboard dapat disusun.", true); $("videoTopic").focus(); return; }
-  const durationMinutes = Number($("videoDuration").value);
-  if (!Number.isFinite(durationMinutes) || durationMinutes < 0.5 || durationMinutes > 10) { setStatus("Durasi harus antara 0,5 sampai 10 menit.", true); $("videoDuration").focus(); return; }
+  const durationMode = $("videoDurationMode")?.value || "auto";
+  let durationSeconds;
+  if (durationMode === "manual") {
+    const durationMinutes = Number($("videoDuration").value);
+    if (!Number.isFinite(durationMinutes) || durationMinutes < 0.5 || durationMinutes > 10) { setStatus("Durasi harus antara 0,5 sampai 10 menit.", true); $("videoDuration").focus(); return; }
+    durationSeconds = Math.round(durationMinutes * 60);
+  } else {
+    const audioBlob = $("videoNarrationAudio")?.files?.[0] || generatedNarrationBlob || null;
+    if (audioBlob) {
+      try {
+        durationSeconds = Math.round(await getMediaDurationSeconds(audioBlob));
+        if (!durationSeconds) throw new Error("Durasi audio kosong.");
+        setStatus("Durasi otomatis mengikuti audio · " + Math.floor(durationSeconds / 60) + ":" + String(durationSeconds % 60).padStart(2, "0") + ".");
+      } catch (error) {
+        setStatus("Audio belum bisa dibaca, durasi dihitung dari naskah.");
+        durationSeconds = estimateScriptDurationSeconds(topic);
+      }
+    } else {
+      durationSeconds = estimateScriptDurationSeconds(topic);
+      setStatus("Durasi otomatis diperkirakan dari panjang naskah · sekitar " + Math.ceil(durationSeconds / 60) + " menit.");
+    }
+  }
   const requestedScenes = $("videoSceneCount").value;
-  const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationMinutes * 60 / 8))) : Number(requestedScenes);
+  const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationSeconds / 8))) : Number(requestedScenes);
   const button = $("generateStoryboard");
   button.disabled = true;
   button.innerHTML = "<span>✧</span> Menyusun storyboard…";
@@ -294,7 +339,7 @@ async function generateStoryboard() {
       method: "POST",
       body: JSON.stringify({
         requestId: requestId(), topic,
-        duration: Math.round(durationMinutes * 60),
+        duration: durationSeconds,
         sceneCount,
         audience: $("videoAudience").value.trim(),
         tone: $("videoTone").value,
@@ -768,6 +813,8 @@ $("captionAnimation").addEventListener("change",syncCaptionPreview);
 applyCaptionPreset();
 $("videoVisualStyle").addEventListener("change",updateVisualStyleDescription);
 updateVisualStyleDescription();
+$("videoDurationMode")?.addEventListener("change", syncVideoDurationMode);
+syncVideoDurationMode();
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);

@@ -18,12 +18,13 @@ function parseSrtCues(srt) {
 }
 
 function imageFromScene(scene, index) {
-  if (!scene.generatedImage?.b64) return Promise.resolve(null);
+  const source = scene.uploadedImageDataUrl || (scene.generatedImage?.b64 ? "data:" + (scene.generatedImage.mime || "image/png") + ";base64," + scene.generatedImage.b64 : "");
+  if (!source) return Promise.resolve(null);
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Gambar adegan " + (index + 1) + " gagal dimuat."));
-    image.src = "data:" + (scene.generatedImage.mime || "image/png") + ";base64," + scene.generatedImage.b64;
+    image.src = source;
   });
 }
 

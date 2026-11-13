@@ -61,7 +61,7 @@ function buildPayload() {
     title: currentStoryboard.title, hook: currentStoryboard.hook, summary: currentStoryboard.summary,
     closing: currentStoryboard.closing, format: currentStoryboard.format, outputFormats: currentStoryboard.outputFormats || ["9:16", "16:9"],
     resolution: currentStoryboard.resolution, outputResolutions: currentStoryboard.outputResolutions || ["720x1280", "1280x720"], visualStyle: currentStoryboard.visualStyle,
-    scenes: currentStoryboard.scenes.map(({ generatedImage, imageBusy, ...scene }) => scene)
+    scenes: currentStoryboard.scenes.map(({ generatedImage, uploadedImageDataUrl, imageBusy, ...scene }) => scene)
   };
 }
 function saveDraft() {
@@ -81,14 +81,16 @@ function createField(labelText, value, className, onInput) {
 }
 function renderGeneratedImage(scene, previewArea) {
   previewArea.replaceChildren();
-  if (!scene.generatedImage) return;
+  const source = scene.uploadedImageDataUrl || (scene.generatedImage ? "data:" + scene.generatedImage.mime + ";base64," + scene.generatedImage.b64 : "");
+  if (!source) return;
+  const isUploaded = Boolean(scene.uploadedImageDataUrl);
   const figure = document.createElement("figure");
   figure.className = "scene-image-preview";
   const image = document.createElement("img");
   image.alt = "Hasil gambar adegan " + scene.scene_number;
-  image.src = "data:" + scene.generatedImage.mime + ";base64," + scene.generatedImage.b64;
+  image.src = source;
   const caption = document.createElement("figcaption");
-  caption.textContent = "Gambar siap · " + Number(scene.generatedImage.cost).toLocaleString("id-ID") + " kredit";
+  caption.textContent = isUploaded ? "Gambar milikmu · tanpa biaya kredit" : "Gambar AI · " + Number(scene.generatedImage.cost).toLocaleString("id-ID") + " kredit";
   const download = document.createElement("a");
   download.href = image.src;
   download.download = "zaida-adegan-" + scene.scene_number + ".png";
@@ -180,7 +182,31 @@ function renderStoryboard(data) {
     imageArea.className = "scene-image-area";
     const imageNote = document.createElement("small");
     imageNote.className = "scene-image-note";
-    imageNote.textContent = "GPT Image 2.5 Flare · portrait · Rp500/gambar";
+    imageNote.textContent = "Gambar AI opsional · penggunaan gambar sendiri tidak memotong kredit";
+    const uploadLabel = document.createElement("label");
+    uploadLabel.className = "scene-upload-label";
+    uploadLabel.textContent = "UPLOAD GAMBAR SENDIRI";
+    const uploadInput = document.createElement("input");
+    uploadInput.type = "file";
+    uploadInput.accept = "image/*";
+    uploadInput.className = "scene-image-upload";
+    uploadInput.setAttribute("aria-label", "Upload gambar sendiri untuk adegan " + scene.scene_number);
+    uploadInput.addEventListener("change", () => {
+      const file = uploadInput.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) { setStatus("Pilih file gambar yang valid.", true); uploadInput.value = ""; return; }
+      if (file.size > 12 * 1024 * 1024) { setStatus("Ukuran gambar maksimal 12 MB.", true); uploadInput.value = ""; return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        scene.uploadedImageDataUrl = String(reader.result || "");
+        renderGeneratedImage(scene, previewArea);
+        updateStoryboardImageStrip();
+        updateRenderAvailability();
+        setStatus("Gambar sendiri untuk adegan " + scene.scene_number + " berhasil dipilih. Tidak ada kredit yang dipotong.");
+      };
+      reader.onerror = () => setStatus("Gambar tidak dapat dibaca. Coba file lain.", true);
+      reader.readAsDataURL(file);
+    });
     const previewArea = document.createElement("div");
     previewArea.className = "scene-image-preview-area";
     const imageButton = document.createElement("button");
@@ -189,7 +215,8 @@ function renderStoryboard(data) {
     imageButton.textContent = scene.generatedImage ? "Buat ulang gambar" : "Buat gambar adegan";
     imageButton.addEventListener("click", () => generateSceneImage(scene, imageButton, previewArea));
     renderGeneratedImage(scene, previewArea);
-    imageArea.append(imageNote, previewArea, imageButton);
+    uploadLabel.append(uploadInput);
+    imageArea.append(imageNote, uploadLabel, previewArea, imageButton);
     const meta = document.createElement("div");
     meta.className = "scene-meta";
     const transition = document.createElement("span");
@@ -317,9 +344,9 @@ function updateStoryboardImageStrip() {
   currentStoryboard.scenes.forEach((scene,index)=>{
     const item=document.createElement("button");
     item.type="button";
-    item.className="storyboard-image-thumb "+(scene.generatedImage?"is-ready":"is-pending");
+    item.className="storyboard-image-thumb "+((scene.uploadedImageDataUrl||scene.generatedImage)?"is-ready":"is-pending");
     item.title="Edit adegan "+(index+1);
-    if(scene.generatedImage){const img=document.createElement("img");img.alt="Gambar adegan "+(index+1);img.src="data:"+scene.generatedImage.mime+";base64,"+scene.generatedImage.b64;item.append(img);}
+    if(scene.uploadedImageDataUrl||scene.generatedImage){const img=document.createElement("img");img.alt="Gambar adegan "+(index+1);img.src=scene.uploadedImageDataUrl||("data:"+scene.generatedImage.mime+";base64,"+scene.generatedImage.b64);item.append(img);}
     else {const placeholder=document.createElement("span");placeholder.textContent="✧";item.append(placeholder);}
     const label=document.createElement("small");label.textContent=String(index+1).padStart(2,"0");item.append(label);
     item.addEventListener("click",()=>{
@@ -659,6 +686,27 @@ $("exportFinalVideo").addEventListener("click", () => startDualRender(true));
 $("videoIncludeSubtitles").addEventListener("change", syncCaptionPreview);
 document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => input.addEventListener("change", updateRenderAvailability));
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
+$("videoNarrationAudio").addEventListener("change", () => {
+  const file = $("videoNarrationAudio").files?.[0];
+  const player = $("videoNarrationPreview");
+  if (!file) {
+    if (player.dataset.objectUrl) URL.revokeObjectURL(player.dataset.objectUrl);
+    delete player.dataset.objectUrl;
+    if (generatedNarrationBlob) {
+      const url = URL.createObjectURL(generatedNarrationBlob);
+      player.dataset.objectUrl = url; player.src = url; player.hidden = false;
+    } else { player.removeAttribute("src"); player.hidden = true; }
+    $("videoNarrationStatus").textContent = "Audio lokal dilepas. Pilih audio lain atau buat narasi dengan ZAIDA Voice.";
+    return;
+  }
+  if (!file.type.startsWith("audio/")) { setStatus("Pilih file audio yang valid.", true); $("videoNarrationAudio").value = ""; return; }
+  if (file.size > 100 * 1024 * 1024) { setStatus("Ukuran audio maksimal 100 MB.", true); $("videoNarrationAudio").value = ""; return; }
+  if (player.dataset.objectUrl) URL.revokeObjectURL(player.dataset.objectUrl);
+  const url = URL.createObjectURL(file);
+  player.dataset.objectUrl = url; player.src = url; player.hidden = false;
+  $("videoNarrationStatus").textContent = "Audio milikmu siap digunakan · tanpa biaya kredit. Durasi audio akan menentukan durasi video.";
+  setStatus("Audio sendiri berhasil dipilih. Tidak ada kredit yang dipotong.");
+});
 // Pakai Firebase Auth dan sesi yang sama dengan dashboard utama.
 async function refreshVideoAccount() {
   if (!auth.currentUser) return;

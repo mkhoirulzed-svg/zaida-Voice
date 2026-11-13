@@ -365,3 +365,5 @@
 .visual-style-option[data-visual-style="3d"] .visual-style-image img{object-position:center 20%}
 .visual-style-option[data-visual-style="stickman"] .visual-style-image img{object-position:center 42%;background:#fff}
 @media(max-width:380px){.visual-style-art.visual-style-image{height:74px}}
+
+.visual-style-image:before,.visual-style-image:after{display:none!important}

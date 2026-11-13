@@ -240,14 +240,17 @@
         </section>
         <section class="panel video-render-panel" id="videoRenderPanel">
           <div class="section-head"><h2>05 · Render video</h2><span class="video-engine">TIMELINE · WEBCodecs</span></div>
-          <p class="render-intro">Susun adegan, buat narasi dengan ZAIDA Voice, atur subtitle, lalu ekspor MP4 langsung dari timeline. Proses render berjalan di browser menggunakan WebCodecs.</p>
-          <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Caption permanen (menyatu ke video)</b><small>Aktif: teks selalu terlihat di video. Nonaktif: subtitle tersedia sebagai track CC yang bisa dinyalakan atau dimatikan.</small></span></label>
+          <p class="render-intro">Ikuti tiga langkah sederhana untuk menghasilkan video MP4.</p>
+          <div class="render-step-heading"><span>1</span><div><b>Format video</b><small>Pilih ukuran sesuai platform tujuan.</small></div></div>
+          <fieldset class="video-format-picker"><legend class="sr-only">Pilih format video</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
+          <div class="render-step-heading"><span>2</span><div><b>Pengaturan caption</b><small>Tentukan apakah caption menyatu permanen dengan video.</small></div></div>
+          <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam caption ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
           <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
-          <fieldset class="video-format-picker"><legend>PILIH FORMAT VIDEO</legend><label><input type="radio" name="videoOutputFormat" value="9:16" checked><span><b>Vertikal · 9:16</b><small>TikTok, Reels, YouTube Shorts</small></span></label><label><input type="radio" name="videoOutputFormat" value="16:9"><span><b>Horizontal · 16:9</b><small>YouTube dan layar lebar</small></span></label></fieldset>
-          <div class="render-summary" id="videoRenderSummary">Belum siap render · Buat storyboard terlebih dahulu.</div>
+          <div class="render-step-heading"><span>3</span><div><b>Preview dan ekspor</b><small>Periksa hasilnya sebelum membuat file final.</small></div></div>
+          <div class="render-summary" id="videoRenderSummary">Belum siap · Buat storyboard minimal 2 adegan.</div>
           <button class="generate-button" id="renderDualVideo" disabled><span>▶</span> Buat Preview Video <b>→</b></button>
-          <button class="primary-button caption-export-button" id="exportFinalVideo" type="button" hidden>Export Video Final</button>
-          <div class="render-progress" id="videoRenderProgress" hidden>
+          <button class="primary-button caption-export-button" id="exportFinalVideo" type="button" hidden>Ekspor MP4 Final</button>
+                    <div class="render-progress" id="videoRenderProgress" hidden>
             <div class="render-progress-track"><span id="videoRenderProgressBar"></span></div>
             <p id="videoRenderProgressText" role="status" aria-live="polite">Menyiapkan render…</p>
           </div>

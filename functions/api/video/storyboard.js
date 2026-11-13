@@ -10,25 +10,60 @@ async function readJson(response) {
   try { return JSON.parse(raw); }
   catch { return { error: { message: raw.slice(0, 400) || response.statusText } }; }
 }
-function parseJsonOutput(raw) {
-  const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
-  const parsed = JSON.parse(cleaned);
-  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.scenes)) throw new Error("Format storyboard dari AI tidak valid.");
-  const scenes = parsed.scenes.slice(0, 15).map((scene, index) => ({
-    scene_number: index + 1,
-    title: String(scene.title || "Adegan " + (index + 1)).slice(0, 90),
-    narration: String(scene.narration || "").slice(0, 1200),
-    visual_description: String(scene.visual_description || "").slice(0, 500),
-    visual_prompt: String(scene.visual_prompt || "").slice(0, 1200),
-    on_screen_text: String(scene.on_screen_text || "").slice(0, 140),
-    estimated_seconds: Math.max(2, Math.min(40, Number(scene.estimated_seconds) || 6)),
-    transition: String(scene.transition || "cut").slice(0, 40)
-  }));
-  if (scenes.length < 2 || scenes.some(s => !s.narration || !s.visual_prompt)) throw new Error("Storyboard belum memiliki detail adegan yang cukup.");
+
+// Potongan narration selalu diambil dari substring naskah sumber.
+function splitScriptExactly(script, requestedCount) {
+  const words = [...script.matchAll(/\\S+/gu)];
+  const count = Math.max(1, Math.min(requestedCount, words.length));
+  const boundaries = [0];
+  for (let i = 1; i < count; i++) {
+    const wordIndex = Math.ceil(words.length * i / count);
+    boundaries.push(words[wordIndex].index);
+  }
+  boundaries.push(script.length);
+  return Array.from({ length: count }, (_, i) => script.slice(boundaries[i], boundaries[i + 1]));
+}
+function fallbackVisual(narration, index) {
+  const excerpt = narration.trim().replace(/\\s+/gu, " ").slice(0, 180);
+  return {
+    title: "Adegan " + (index + 1),
+    visual_description: "Visual pendukung untuk inti narasi: " + excerpt,
+    visual_prompt: "Create a cinematic, realistic editorial visual illustrating: " + excerpt + ". Clear central subject, composition safe for vertical 9:16 and horizontal 16:9 crop, natural lighting, detailed environment, no text, no logo, no watermark.",
+    on_screen_text: "",
+    transition: "cut"
+  };
+}
+function parseStoryboard(raw, segments, duration) {
+  let parsed = {};
+  try {
+    const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
+    parsed = JSON.parse(cleaned);
+  } catch {}
+  const byNumber = new Map();
+  for (const scene of Array.isArray(parsed.scenes) ? parsed.scenes : []) {
+    const n = Number(scene.scene_number);
+    if (Number.isInteger(n) && n >= 1 && n <= segments.length && !byNumber.has(n)) byNumber.set(n, scene);
+  }
+  const totalWords = segments.reduce((sum, part) => sum + (part.match(/\\S+/gu) || []).length, 0) || 1;
+  const scenes = segments.map((narration, index) => {
+    const ai = byNumber.get(index + 1) || {};
+    const fallback = fallbackVisual(narration, index);
+    const words = (narration.match(/\\S+/gu) || []).length;
+    return {
+      scene_number: index + 1,
+      title: String(ai.title || fallback.title).slice(0, 90),
+      narration,
+      visual_description: String(ai.visual_description || fallback.visual_description).slice(0, 500),
+      visual_prompt: String(ai.visual_prompt || fallback.visual_prompt).slice(0, 1800),
+      on_screen_text: String(ai.on_screen_text || "").slice(0, 140),
+      estimated_seconds: Math.max(2, Math.round(duration * words / totalWords)),
+      transition: String(ai.transition || "cut").slice(0, 40)
+    };
+  });
   return {
     title: String(parsed.title || "Proyek video baru").slice(0, 120),
     hook: String(parsed.hook || "").slice(0, 300),
-    summary: String(parsed.summary || "").slice(0, 600),
+    summary: "Storyboard visual dibuat dari naskah sumber. Narasi dipertahankan persis tanpa diringkas atau ditulis ulang.",
     closing: String(parsed.closing || "").slice(0, 300),
     scenes
   };
@@ -42,39 +77,42 @@ export async function onRequestPost({ request, env }) {
   let body;
   try { body = await request.json(); } catch { return jsonError("Format permintaan tidak valid.", 400); }
   const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : null;
-  const topic = typeof body.topic === "string" ? body.topic.trim().slice(0, 500) : "";
+  const script = typeof body.script === "string" ? body.script : (typeof body.topic === "string" ? body.topic : "");
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);
-  if (topic.length < 8) return jsonError("Topik video minimal 8 karakter.", 400);
+  if (script.trim().length < 20) return jsonError("Naskah video minimal 20 karakter.", 400);
+  if (script.length > 30000) return jsonError("Naskah maksimal 30.000 karakter.", 400);
 
-  const duration = [60, 90, 120, 180].includes(Number(body.duration)) ? Number(body.duration) : 60;
-  const sceneCount = Math.max(6, Math.min(15, Number(body.sceneCount) || 8));
+  const words = script.trim().split(/\\s+/u).length;
+  const duration = Number.isFinite(Number(body.duration)) && Number(body.duration) > 0
+    ? Math.max(15, Math.min(900, Number(body.duration)))
+    : Math.max(15, Math.round(words / 2.2));
+  const requestedCount = Math.max(3, Math.min(30, Math.round(Number(body.sceneCount) || Math.ceil(duration / 8)));
+  const segments = splitScriptExactly(script, requestedCount);
+  const sceneCount = segments.length;
   const audience = typeof body.audience === "string" ? body.audience.trim().slice(0, 160) : "penonton umum";
   const tone = typeof body.tone === "string" ? body.tone.trim().slice(0, 100) : "edukatif dan menarik";
   const language = body.language === "en" ? "English" : "Bahasa Indonesia";
-  const visualStyle = "mixed2";
-  const system = `Kamu adalah sutradara kreatif dan penulis storyboard video berdurasi 1 sampai 3 menit. Buat storyboard yang bisa langsung dipakai dalam produksi video vertikal. Bahasa keluaran: ${language}.
-Ketentuan:
-- Output akhir akan dibuat dalam dua format: 9:16 portrait 720x1280 dan 16:9 landscape 1280x720. Visual harus aman untuk crop kedua format, subjek utama di tengah dengan ruang kosong di sekeliling.
-- Gaya visual wajib mixed2: perpaduan footage/fotografi realistis, ilustrasi, 3D, dan cinematic; pilih jenis visual yang paling mendukung isi tiap adegan dan variasikan secara wajar.
-- Durasi total sekitar ${duration} detik dengan tepat ${sceneCount} adegan.
-- Target audiens: ${audience}. Nuansa: ${tone}.
-- Awali dengan hook kuat dalam 1-3 detik pertama; alur harus jelas, tidak repetitif, dan punya penutup.
-- Narasi harus alami untuk dibacakan, faktual, tidak menambah klaim medis/ilmiah yang tidak didukung. Jika topik berisiko, gunakan bahasa hati-hati.
-- visual_prompt harus berupa prompt visual mandiri dan rinci, tanpa teks tertulis di gambar, tanpa logo/watermark. Deskripsikan subjek, komposisi aman untuk portrait dan landscape dengan subjek terpusat, pencahayaan, mood, dan jenis visual.
-- on_screen_text singkat, maksimal 8 kata.
-Kembalikan HANYA JSON valid dengan struktur:
-{"title":"...","hook":"...","summary":"...","closing":"...","scenes":[{"title":"...","narration":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"...","estimated_seconds":6,"transition":"cut"}]}
-Jangan gunakan markdown fence atau penjelasan di luar JSON.`;
+  const system = `Kamu adalah sutradara visual profesional. Tugasmu HANYA merancang arahan visual untuk setiap segmen naskah.
+Jangan menulis ulang, meringkas, mengoreksi, atau mengubah narasi. Narasi asli akan dipasang oleh server.
+Bahasa metadata: ${language}. Buat tepat ${sceneCount} arahan visual bernomor 1 sampai ${sceneCount}; satu adegan untuk setiap segmen dengan nomor yang sama.
+Durasi total sekitar ${duration} detik. Audiens: ${audience}. Nuansa: ${tone}.
+Gaya Mixed2: variasikan footage/fotografi realistis, ilustrasi, 3D, dan cinematic sesuai isi segmen.
+Setiap visual_prompt harus mandiri, rinci, aman untuk crop 9:16 dan 16:9 dengan subjek di tengah, tanpa tulisan, logo, atau watermark. on_screen_text maksimal 8 kata.
+Kembalikan HANYA JSON valid:
+{"title":"...","hook":"...","closing":"...","scenes":[{"scene_number":1,"title":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"","transition":"cut"}]}
+Jangan sertakan narration.`;
+  const userContent = "Buat satu arahan visual untuk setiap segmen berikut. Jangan gabungkan atau hilangkan segmen:\\n" +
+    JSON.stringify(segments.map((narration, index) => ({ scene_number: index + 1, narration })));
   const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
   const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";
-  const maxTokens = 6500;
+  const maxTokens = Math.min(12000, Math.max(6500, sceneCount * 350));
   let reservation = null, settled = false, providerResponded = false;
 
   try {
     await getOrCreateAccount(auth.user, env);
     reservation = await reserveCredits(
       auth.user, env,
-      estimateKiosapiReservation(topic.length + system.length, maxTokens, env),
+      estimateKiosapiReservation(script.length + system.length + userContent.length, maxTokens, env),
       "video-storyboard:kiosapi",
       { requestId, provider: "kiosapi", model: primaryModel }
     );
@@ -83,8 +121,8 @@ Jangan gunakan markdown fence atau penjelasan di luar JSON.`;
       headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
         models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
-        messages: [{ role: "system", content: system }, { role: "user", content: "Buat storyboard untuk topik berikut:\\n" + topic }],
-        temperature: 0.75, max_tokens: maxTokens, stream: false
+        messages: [{ role: "system", content: system }, { role: "user", content: userContent }],
+        temperature: 0.45, max_tokens: maxTokens, stream: false
       })
     });
     const data = await readJson(upstream);
@@ -110,13 +148,10 @@ Jangan gunakan markdown fence atau penjelasan di luar JSON.`;
       });
     settled = true;
 
-    let storyboard;
-    try { storyboard = parseJsonOutput(raw); }
-    catch (error) {
-      return Response.json({ error: error.message + " Provider sudah merespons; biaya pemrosesan tercatat.", creditsCharged: charged.charged, creditsRemaining: charged.remaining }, { status: 502 });
-    }
+    const storyboard = parseStoryboard(raw, segments, duration);
     return Response.json({
-      ...storyboard, format: "9:16+16:9", resolution: "720p", outputFormats: ["9:16", "16:9"], outputResolutions: ["720x1280", "1280x720"], visualStyle,
+      ...storyboard, durationSeconds: duration, requestedSceneCount: sceneCount,
+      format: "9:16+16:9", resolution: "720p", outputFormats: ["9:16", "16:9"], outputResolutions: ["720x1280", "1280x720"], visualStyle: "mixed2",
       provider: "kiosapi", model: modelUsed,
       creditsCharged: charged.charged, creditsRemaining: charged.remaining
     }, { headers: { "Cache-Control": "no-store" } });

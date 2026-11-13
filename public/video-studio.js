@@ -335,7 +335,8 @@ async function generateStoryboard() {
     }
   }
   const requestedScenes = $("videoSceneCount").value;
-  const sceneCount = requestedScenes === "auto" ? Math.max(3, Math.min(30, Math.ceil(durationSeconds / 5))) : Number(requestedScenes);
+  // Mode otomatis menyerahkan pemenggalan adegan ke analisis makna AI, bukan interval detik tetap.
+  const sceneCount = requestedScenes === "auto" ? null : Number(requestedScenes);
   const button = $("generateStoryboard");
   button.disabled = true;
   button.innerHTML = "<span>✧</span> Menyusun storyboard…";

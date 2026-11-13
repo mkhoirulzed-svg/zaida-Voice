@@ -11,6 +11,7 @@ let storageKey = null;
 let renderedVideoUrls = [];
 let previewVideoUrl = null;
 let previewCaptionCues = [];
+let generatedWordCues = [];
 let generatedNarrationBlob = null;
 let generatedSubtitleText = "";
 let videoVoicesLoadedFor = null;
@@ -348,6 +349,7 @@ async function generateAllSceneImages() {
 function getCaptionStyle() {
   return {
     preset: $("captionPreset").value,
+    animation: $("captionAnimation").value,
     font: $("captionFont").value,
     fontSize: Number($("captionFontSize").value),
     textColor: $("captionTextColor").value,
@@ -454,6 +456,21 @@ function videoSrtTime(seconds) {
   const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),r=ms%1000;
   return [h,m,s].map(v=>String(v).padStart(2,"0")).join(":")+","+String(r).padStart(3,"0");
 }
+function makeVideoWordCues(text, alignment) {
+  const chars = Array.from(text);
+  const starts = alignment?.character_start_times_seconds || [];
+  const ends = alignment?.character_end_times_seconds || [];
+  if (starts.length !== chars.length || ends.length !== chars.length) return [];
+  const words = [];
+  for (const match of text.matchAll(/\\S+/gu)) {
+    const startIndex = Array.from(text.slice(0, match.index)).length;
+    const endIndex = startIndex + Array.from(match[0]).length - 1;
+    const start = Number(starts[startIndex]);
+    const end = Number(ends[endIndex]);
+    if (Number.isFinite(start) && Number.isFinite(end) && end > start) words.push({ text: match[0], start, end });
+  }
+  return words;
+}
 function makeVideoSrt(text, alignment) {
   const chars = Array.from(text);
   const starts = alignment?.character_start_times_seconds || [];
@@ -533,6 +550,7 @@ async function generateVideoNarration() {
     for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
     generatedNarrationBlob=new Blob([bytes],{type:"audio/mpeg"});
     generatedSubtitleText=makeVideoSrt(text,data.alignment);
+    generatedWordCues=makeVideoWordCues(text,data.alignment);
     const audioUrl=URL.createObjectURL(generatedNarrationBlob);
     const player=$("videoNarrationPreview");
     if(player.dataset.objectUrl)URL.revokeObjectURL(player.dataset.objectUrl);
@@ -568,8 +586,24 @@ function syncCaptionPreview() {
   const video=$("videoPreviewPlayer"), text=$("captionPreviewText");
   if(!video || video.hidden) return;
   const cue=previewCaptionCues.find(item=>video.currentTime>=item.start&&video.currentTime<=item.end);
-  text.textContent=$("videoIncludeSubtitles").checked && cue ? cue.text : "";
-  text.hidden=!text.textContent;
+  const enabled = $("videoIncludeSubtitles").checked && cue;
+  const animation = $("captionAnimation")?.value || "static";
+  const words = enabled ? generatedWordCues.filter(word => video.currentTime >= word.start && video.currentTime <= word.end) : [];
+  if (!enabled) text.textContent = "";
+  else if (animation === "typewriter" && words.length) {
+    const cueWords = generatedWordCues.filter(word => word.start >= cue.start && word.end <= cue.end);
+    const visible = cueWords.filter(word => word.start <= video.currentTime);
+    const active = words[0];
+    const ratio = Math.max(0, Math.min(1, (video.currentTime - active.start) / (active.end - active.start)));
+    const count = Math.max(1, Math.ceil(active.text.length * ratio));
+    text.textContent = visible.slice(0, -1).map(word => word.text).concat(active.text.slice(0, count)).join(" ");
+  } else if (animation === "word") text.textContent = words[0]?.text || "";
+  else {
+    text.textContent = cue ? cue.text : "";
+    if (animation === "karaoke" && words[0]) text.dataset.activeWord = words[0].text;
+    else delete text.dataset.activeWord;
+  }
+  text.hidden = !text.textContent;
 }
 async function startDualRender(isExport = false) {
   if (!currentStoryboard) return;
@@ -604,7 +638,7 @@ async function startDualRender(isExport = false) {
       audioDuration,
       subtitleText: isExport ? selectedSubtitleText : "",
       burnCaptions: isExport ? burnCaptions : false,
-      captionStyle: getCaptionStyle(),
+      captionStyle: { ...getCaptionStyle(), wordCues: generatedWordCues },
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {
@@ -729,6 +763,7 @@ $("toggleStoryboardEditor").addEventListener("click",()=>{
 ["captionFont","captionBackground","captionPosition"].forEach(id=>$(id).addEventListener("change",updateCaptionPreview));
 ["captionFontSize","captionTextColor","captionOutlineColor","captionOutlineWidth","captionBackgroundOpacity"].forEach(id=>$(id).addEventListener("input",updateCaptionPreview));
 $("captionPreset").addEventListener("change",applyCaptionPreset);
+$("captionAnimation").addEventListener("change",syncCaptionPreview);
 applyCaptionPreset();
 $("videoVisualStyle").addEventListener("change",updateVisualStyleDescription);
 updateVisualStyleDescription();

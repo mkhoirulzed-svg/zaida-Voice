@@ -597,7 +597,7 @@ function syncCaptionPreview() {
     const ratio = Math.max(0, Math.min(1, (video.currentTime - active.start) / (active.end - active.start)));
     const count = Math.max(1, Math.ceil(active.text.length * ratio));
     text.textContent = visible.slice(0, -1).map(word => word.text).concat(active.text.slice(0, count)).join(" ");
-  } else if (animation === "word") text.textContent = words[0]?.text || "";
+  } else if (animation === "word" && generatedWordCues.length) text.textContent = words[0]?.text || "";
   else {
     text.textContent = cue ? cue.text : "";
     if (animation === "karaoke" && words[0]) text.dataset.activeWord = words[0].text;

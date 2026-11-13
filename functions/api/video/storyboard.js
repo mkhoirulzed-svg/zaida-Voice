@@ -158,20 +158,43 @@ Kembalikan HANYA JSON valid:
       "video-storyboard:kiosapi",
       { requestId, provider: "kiosapi", model: primaryModel }
     );
-    const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
-        messages: [{ role: "system", content: system }, { role: "user", content: userContent }],
-        temperature: 0.35, max_tokens: maxTokens, stream: false
-      })
-    });
-    const data = await readJson(upstream);
-    if (!upstream.ok) {
-      await releaseCredits(auth.user, env, reservation.reservationId, "kiosapi-storyboard-http-" + upstream.status);
+    // Coba model utama dan fallback secara berurutan agar kegagalan satu provider/model tidak menggagalkan seluruh storyboard.
+    const modelCandidates = [...new Set([primaryModel, fallbackModel])];
+    let upstream = null;
+    let data = null;
+    let lastProviderError = null;
+    for (const modelCandidate of modelCandidates) {
+      try {
+        const candidateResponse = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            models: [modelCandidate],
+            messages: [{ role: "system", content: system }, { role: "user", content: userContent }],
+            temperature: 0.35, max_tokens: maxTokens, stream: false
+          })
+        });
+        const candidateData = await readJson(candidateResponse);
+        if (candidateResponse.ok && candidateData.choices?.[0]?.message?.content) {
+          upstream = candidateResponse;
+          data = candidateData;
+          break;
+        }
+        lastProviderError = {
+          status: candidateResponse.status || 502,
+          message: candidateData.error?.message || candidateData.message || "Model " + modelCandidate + " tidak merespons."
+        };
+      } catch (providerError) {
+        lastProviderError = { status: 502, message: providerError?.message || "Koneksi ke model gagal." };
+      }
+    }
+    if (!upstream || !data) {
+      await releaseCredits(auth.user, env, reservation.reservationId, "kiosapi-storyboard-models-unavailable");
       settled = true;
-      return jsonError(data.error?.message || data.message || "Kiosapi gagal membuat storyboard.", upstream.status);
+      return jsonError(
+        "Layanan AI storyboard sedang tidak tersedia. Model utama dan cadangan gagal dihubungi. Coba lagi beberapa saat.",
+        lastProviderError?.status || 502
+      );
     }
 
     providerResponded = true;

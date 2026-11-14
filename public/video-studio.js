@@ -134,7 +134,7 @@ function buildPayload() {
     title: currentStoryboard.title, hook: currentStoryboard.hook, summary: currentStoryboard.summary,
     closing: currentStoryboard.closing, format: currentStoryboard.format, outputFormats: currentStoryboard.outputFormats || ["9:16", "16:9"],
     resolution: currentStoryboard.resolution, outputResolutions: currentStoryboard.outputResolutions || ["720x1280", "1280x720"], visualStyle: currentStoryboard.visualStyle,
-    scenes: currentStoryboard.scenes.map(({ generatedImage, uploadedImageDataUrl, imageBusy, ...scene }) => scene)
+    scenes: currentStoryboard.scenes.map(({ generatedImage, uploadedImageDataUrl, imageBusy, ...scene }) => ({ ...scene, generatedImage: generatedImage ? { assetId: generatedImage.assetId || "", mime: generatedImage.mime || "image/png", cost: Number(generatedImage.cost) || 0 } : null }))
   };
 }
 function syncStoryboardJson() {
@@ -251,8 +251,10 @@ async function generateSceneImage(scene, button, imageArea) {
     scene.generatedImage = {
       b64: result.image.b64,
       mime: result.image.mime,
-      cost: result.creditsCharged
+      cost: result.creditsCharged,
+      assetId: result.image.assetId || ""
     };
+    saveDraft();
     renderGeneratedImage(scene, imageArea);
     updateStoryboardImageStrip();
     updateRenderAvailability();
@@ -924,6 +926,24 @@ async function startDualRender(isExport = false) {
     updateRenderAvailability();
   }
 }
+async function hydrateVideoProject(payload) {
+  if (!payload || !Array.isArray(payload.scenes)) return payload;
+  const token = await auth.currentUser.getIdToken();
+  await Promise.all(payload.scenes.map(async scene => {
+    const assetId = scene.generatedImage?.assetId;
+    if (!assetId) return;
+    try {
+      const response = await fetch("/api/video/assets/" + encodeURIComponent(assetId), { headers: { Authorization: "Bearer " + token } });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      scene.generatedImage.b64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(",")[1] || ""); reader.onerror = reject; reader.readAsDataURL(blob);
+      });
+    } catch (error) { console.warn("Gagal memulihkan gambar adegan", scene.scene_number, error); }
+  }));
+  return payload;
+}
+
 async function restoreDraft() {
   if (!storageKey || !currentUser) return;
   let localDraft = null;
@@ -933,7 +953,7 @@ async function restoreDraft() {
     if (activeVideoProjectId) {
       const remote = await api("/api/video/projects/" + encodeURIComponent(activeVideoProjectId));
       if (remote.project?.payload?.scenes?.length) {
-        renderStoryboard(remote.project.payload);
+        renderStoryboard(await hydrateVideoProject(remote.project.payload));
         setStatus("Proyek dipulihkan dari penyimpanan cloud.");
         return;
       }
@@ -943,7 +963,7 @@ async function restoreDraft() {
     if (latest?.payload?.scenes?.length) {
       activeVideoProjectId = latest.id;
       if (projectIdKey) localStorage.setItem(projectIdKey, activeVideoProjectId);
-      renderStoryboard(latest.payload);
+      renderStoryboard(await hydrateVideoProject(latest.payload));
       setStatus("Proyek terakhir dipulihkan dari riwayat cloud.");
       return;
     }
@@ -1111,7 +1131,7 @@ window.addEventListener("zaida:open-video-project", async event => {
     if (!result.project?.payload?.scenes?.length) throw new Error("Proyek tidak memiliki storyboard.");
     activeVideoProjectId = id;
     if (projectIdKey) localStorage.setItem(projectIdKey, id);
-    renderStoryboard(result.project.payload);
+    renderStoryboard(await hydrateVideoProject(result.project.payload));
     setStatus("Proyek berhasil dibuka dari riwayat cloud.");
   } catch (error) { setStatus("Gagal membuka proyek: " + error.message, true); }
 });

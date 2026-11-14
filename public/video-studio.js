@@ -1108,6 +1108,39 @@ $("visualStyleGrid")?.addEventListener("click", event => {
 updateVisualStyleDescription();
 $("videoDurationMode")?.addEventListener("change", syncVideoDurationMode);
 syncVideoDurationMode();
+function createNewVideoProject() {
+  // A new UUID isolates this draft from every previously saved project.
+  activeVideoProjectId = crypto.randomUUID();
+  if (projectIdKey) localStorage.setItem(projectIdKey, activeVideoProjectId);
+  if (storageKey) localStorage.removeItem(storageKey);
+  currentStoryboard = null;
+  generatedNarrationBlob = null;
+  videoAudioAsset = null;
+  generatedSubtitleText = "";
+  generatedWordCues = [];
+  $("videoTopic").value = "";
+  $("storyboardResult").hidden = true;
+  $("storyboardEmpty").hidden = false;
+  $("sceneCountLabel").textContent = "Belum ada adegan";
+  $("videoNarrationAudio").value = "";
+  const player = $("videoNarrationPreview");
+  if (player.dataset.objectUrl) URL.revokeObjectURL(player.dataset.objectUrl);
+  delete player.dataset.objectUrl;
+  player.removeAttribute("src");
+  player.hidden = true;
+  $("videoNarrationStatus").textContent = "";
+  $("videoSubtitleDownload").hidden = true;
+  $("videoSubtitleDownload").removeAttribute("href");
+  $("videoRenderSummary").textContent = "Belum siap · Buat storyboard minimal 2 adegan.";
+  $("videoRenderDownloads").hidden = true;
+  $("videoRenderDownloads").replaceChildren();
+  $("videoStatus").textContent = "Proyek baru siap. Proyek sebelumnya tetap tersimpan di riwayat.";
+  $("videoTopic").focus();
+}
+$("videoNewProjectButton")?.addEventListener("click", createNewVideoProject);
+$("videoProjectHistoryButton")?.addEventListener("click", () => {
+  document.querySelector('[data-view="history"]')?.click();
+});
 $("generateStoryboard").addEventListener("click", generateStoryboard);
 $("downloadStoryboard").addEventListener("click", downloadJson);
 $("copyStoryboard").addEventListener("click", copyStoryboard);

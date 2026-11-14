@@ -3,9 +3,12 @@ import {
   releaseCredits, settleReservedCredits, calculateKiosapiCharge
 } from "../../lib/firebase.js";
 
-const MODEL = "openai/gpt-image-2.5-flare";
-const OPTION = "1024x1536:medium";
-const PROVIDER_PRICE_IDR = 500;
+const GENERATION_MODEL = "openai/gpt-image-2.5-flare";
+const GENERATION_OPTION = "1024x1536:medium";
+const EDIT_MODEL = "google/nano-banana-2";
+const EDIT_OPTION = "standard";
+const GENERATION_PRICE_IDR = 500;
+const EDIT_PRICE_IDR = 2500;
 const jsonError = (message, status = 502) => Response.json({ error: message }, { status });
 
 async function readJson(response) {
@@ -26,33 +29,44 @@ export async function onRequestPost({ request, env }) {
   const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : null;
   const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 1800) : "";
   const sceneNumber = Math.max(1, Math.min(30, Number(body.sceneNumber) || 1));
+  const referenceImages = Array.isArray(body.referenceImages)
+    ? body.referenceImages.filter(value => typeof value === "string" && /^data:image\/(?:png|jpe?g|webp);base64,/i.test(value)).slice(0, 4)
+    : [];
+  if (Array.isArray(body.referenceImages) && referenceImages.length !== body.referenceImages.length) return jsonError("Gambar referensi harus berupa data URL PNG, JPEG, atau WebP.", 400);
+  if (referenceImages.some(value => value.length > 3_300_000)) return jsonError("Ukuran gambar referensi terlalu besar. Coba gambar yang lebih kecil.", 413);
+  const useEdits = referenceImages.length > 0;
+  const model = useEdits ? EDIT_MODEL : GENERATION_MODEL;
+  const option = useEdits ? EDIT_OPTION : GENERATION_OPTION;
+  const providerPriceIdr = useEdits ? EDIT_PRICE_IDR : GENERATION_PRICE_IDR;
+  const aspectRatio = body.format === "16:9" ? "16:9" : "9:16";
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);
   if (prompt.length < 20) return jsonError("Prompt gambar terlalu singkat. Periksa arahan visual adegan.", 400);
 
   const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
-  const reserveAmount = Math.ceil(PROVIDER_PRICE_IDR * markup) + 1;
+  const reserveAmount = Math.ceil(providerPriceIdr * markup) + 1;
   let reservation = null;
   let settled = false;
   let providerResponded = false;
 
   try {
     await getOrCreateAccount(auth.user, env);
-    reservation = await reserveCredits(auth.user, env, reserveAmount, "video-image:kiosapi:" + MODEL, {
-      requestId, provider: "kiosapi", model: MODEL
+    reservation = await reserveCredits(auth.user, env, reserveAmount, "video-image:kiosapi:" + model, {
+      requestId, provider: "kiosapi", model
     });
 
-    const upstream = await fetch("https://api.kiosapi.id/v1/images/generations", {
+    const basePrompt = prompt + (useEdits
+      ? "\n\nUse the supplied reference images as visual identity references. Preserve the exact real-world product design, shape, colors, packaging and visible brand identity. Integrate the product naturally into the scene as an object being used or displayed in context, not as a pasted banner, floating card, collage panel or separate inset. Reproduce the supplied brand logo faithfully if visible; do not invent, redesign or misspell it. Keep the scene composition natural, coherent and suitable for a professional product advertisement."
+      : "\n\nDo not add text, watermark, or unrelated logos.");
+    const imageRequest = useEdits
+      ? { model, prompt: basePrompt, images: referenceImages, aspect_ratio: aspectRatio }
+      : { model, prompt: basePrompt + "\n\nPortrait vertical composition for 9:16 video. Keep the main subject and important details centered and safe for crop.", option, n: 1 };
+    const upstream = await fetch("https://api.kiosapi.id/v1/images/" + (useEdits ? "edits" : "generations"), {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + env.KIOSAPI_API_KEY,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: MODEL,
-        prompt: prompt + "\n\nKomposisi portrait vertikal untuk video 9:16. Jaga subjek utama dan detail penting di area tengah agar aman saat crop. Jangan tampilkan teks, watermark, atau logo.",
-        option: OPTION,
-        n: 1
-      })
+      body: JSON.stringify(imageRequest)
     });
 
     const data = await readJson(upstream);
@@ -64,12 +78,12 @@ export async function onRequestPost({ request, env }) {
 
     providerResponded = true;
     const image = data.data?.[0];
-    const providerCostIdr = Math.max(0, Number(data.kiosapi?.cost_rupiah) || PROVIDER_PRICE_IDR);
+    const providerCostIdr = Math.max(0, Number(data.kiosapi?.cost_rupiah) || providerPriceIdr);
     const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
     const charge = await settleReservedCredits(
       auth.user, env, reservation.reservationId, billing.credits,
-      "video-image:kiosapi:" + MODEL,
-      { provider: "kiosapi", model: MODEL, providerCostIdr, requestId }
+      "video-image:kiosapi:" + model,
+      { provider: "kiosapi", model, providerCostIdr, requestId, imageMode: useEdits ? "reference-edit" : "text-to-image" }
     );
     settled = true;
 
@@ -79,8 +93,9 @@ export async function onRequestPost({ request, env }) {
 
     return Response.json({
       image: { b64: image.b64_json, mime: image.mime || "image/png" },
-      model: MODEL,
-      option: OPTION,
+      model,
+      option,
+      imageMode: useEdits ? "reference-edit" : "text-to-image",
       providerCostIdr,
       creditsCharged: charge.charged,
       creditsRemaining: charge.remaining,

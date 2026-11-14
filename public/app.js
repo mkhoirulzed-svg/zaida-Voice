@@ -22,6 +22,10 @@ function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode===
 function closeAuth(){$("authOverlay").hidden=true;}
 const $ = (id) => document.getElementById(id);
 const state = { voices: [], audioUrl: null, downloadUrl: null, audioBlob: null, history: [], alignment: null, subtitles: [], currentStep: 1, sourceText: "", voicePage: 0, catalogVoicePage: 0, previewAudio: null };
+let activeVoiceProjectId=crypto.randomUUID();
+let voiceProjectSaveTimer=null;
+let voiceProjectSaveQueue=Promise.resolve();
+let voiceProjectSaving=false;
 const SAMPLE = "Halo, selamat datang di ZAIDA Voice.\n\nDi sini, setiap kata bisa memiliki karakter. Sampaikan pesanmu dengan suara yang hangat, jelas, dan penuh percaya diri. Mari mulai berkarya.";
 function toast(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),3200)}
 function setBusy(busy,message="Sedang membuat audio…"){$("generateButton").disabled=busy;$("dockAction").disabled=busy;$("generateButton").textContent=busy?"Sedang membuat audio…":"Buat Audio";$("progressWrap").hidden=!busy;$("progressText").textContent=message}
@@ -76,6 +80,92 @@ function renderHistory(){
 }
 
 
+function voiceProjectPayload(){
+  return {
+    sourceText:state.sourceText||$("scriptText").value||"",
+    voiceId:$("voiceSelect").value||"",
+    voiceSettings:{stability:$("stability").value,similarity:$("similarity").value,style:$("style").value},
+    includeSubtitle:$("includeSubtitle").checked,includeMetadataTags:$("includeMetadataTags").checked,
+    writerLength:$("settingsWriterLength").value||$("writerLength").value,
+    audioAsset:state.audioAsset||null,subtitles:state.subtitles||[],alignment:state.alignment||null,
+    audioTitle:$("resultTitle").textContent||"Narasi ZAIDA Voice",
+    audioDetails:$("resultDetails").textContent||"MP3",
+    hasAudio:Boolean(state.audioAsset)
+  };
+}
+function scheduleVoiceProjectSave(){
+  if(!currentUser||!activeVoiceProjectId)return;
+  clearTimeout(voiceProjectSaveTimer);
+  voiceProjectSaveTimer=setTimeout(()=>saveVoiceProject(),700);
+}
+async function saveVoiceProject(){
+  if(!currentUser||!activeVoiceProjectId)return false;
+  const id=activeVoiceProjectId,payload=voiceProjectPayload();
+  voiceProjectSaveQueue=voiceProjectSaveQueue.catch(()=>{}).then(async()=>{
+    if(!currentUser||!auth.currentUser)return false;
+    const title=(payload.sourceText.split(/\\s+/).slice(0,7).join(" ")||"Proyek Voice Studio").slice(0,70);
+    await api("/api/voice/projects",{method:"POST",authRequired:true,body:JSON.stringify({id,title,payload})});
+    return true;
+  });
+  try{const ok=await voiceProjectSaveQueue;if(ok){const status=$("voiceProjectSaveStatus");if(status)status.textContent="Tersimpan di akun kamu";}return Boolean(ok);}
+  catch(error){const status=$("voiceProjectSaveStatus");if(status)status.textContent="Gagal menyimpan: "+error.message;return false;}
+}
+async function flushVoiceProjectSave(){clearTimeout(voiceProjectSaveTimer);voiceProjectSaveTimer=null;return saveVoiceProject();}
+async function loadVoiceProjectHistory(){
+  const box=$("voiceProjectHistory");if(!box)return;
+  if(!currentUser){box.innerHTML='<div class="empty-output"><b>Masuk untuk melihat proyek Voice Studio</b></div>';return;}
+  box.innerHTML='<div class="empty-output">Memuat proyek…</div>';
+  try{
+    const result=await api("/api/voice/projects",{authRequired:true}),projects=result.projects||[];
+    box.replaceChildren();
+    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada proyek Voice Studio</b><small>Proyek yang disimpan akan muncul di sini.</small></div>';return;}
+    projects.forEach(project=>{
+      const row=document.createElement("div");row.className="history-item";
+      const icon=document.createElement("span");icon.className="result-icon";icon.textContent="♫";
+      const info=document.createElement("div"),title=document.createElement("b"),small=document.createElement("small");
+      title.textContent=project.title||"Proyek Voice Studio";
+      small.textContent=(project.payload?.hasAudio?"Audio tersimpan":"Naskah") +" · Diperbarui "+(project.updatedAt?new Date(project.updatedAt).toLocaleString("id-ID"):"");
+      info.append(title,small);
+      const open=document.createElement("button");open.className="subtle-button";open.type="button";open.textContent="Buka";
+      open.addEventListener("click",()=>restoreVoiceProject(project.id));
+      row.append(icon,info,open);box.append(row);
+    });
+  }catch(error){box.innerHTML='<div class="empty-output"><b>Riwayat belum dapat dimuat</b><small></small></div>';box.querySelector("small").textContent=error.message;}
+}
+async function restoreVoiceProject(id){
+  try{
+    const result=await api("/api/voice/projects?id="+encodeURIComponent(id),{authRequired:true}),project=result.project,p=project?.payload||{};
+    if(!project)throw new Error("Proyek tidak ditemukan.");
+    activeVoiceProjectId=project.id;
+    $("scriptText").value=p.sourceText||"";state.sourceText=p.sourceText||"";
+    if(p.voiceSettings){$("stability").value=p.voiceSettings.stability??50;$("similarity").value=p.voiceSettings.similarity??75;$("style").value=p.voiceSettings.style??0;}
+    if(p.voiceId&&[...$("voiceSelect").options].some(o=>o.value===p.voiceId))$("voiceSelect").value=p.voiceId;
+    $("includeSubtitle").checked=p.includeSubtitle===true;$("includeMetadataTags").checked=p.includeMetadataTags===true;
+    if(p.writerLength){$("settingsWriterLength").value=p.writerLength;if($("writerLength"))$("writerLength").value=p.writerLength;}
+    state.subtitles=Array.isArray(p.subtitles)?p.subtitles:[];state.alignment=p.alignment||null;state.audioAsset=p.audioAsset||null;
+    state.audioBlob=null;state.audioUrl=null;
+    if(p.audioAsset?.assetId){
+      const response=await fetch("/api/voice/assets/"+encodeURIComponent(p.audioAsset.assetId),{headers:await authHeaders()});
+      if(!response.ok)throw new Error("Audio proyek tidak dapat dipulihkan. "+(await response.json().catch(()=>({}))).error);
+      state.audioBlob=await response.blob();state.audioUrl=URL.createObjectURL(state.audioBlob);
+      $("audioPlayer").src=state.audioUrl;$("resultAudio").src=state.audioUrl;updateDownloadLink();
+      $("resultTitle").textContent=p.audioTitle||project.title;$("resultDetails").textContent=p.audioDetails||"MP3";$("dockTrack").textContent=$("resultTitle").textContent;
+      $("subtitlePreviewToggle").hidden=!$("includeSubtitle").checked;renderSubtitles();setStep(3);
+    }else{
+      $("audioPlayer").removeAttribute("src");$("resultAudio").removeAttribute("src");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";setStep(1);
+    }
+    updateCount();showView("studio");toast("Proyek berhasil dipulihkan.");
+  }catch(error){toast("Gagal membuka proyek: "+error.message);}
+}
+function startNewVoiceProject(){
+  activeVoiceProjectId=crypto.randomUUID();state.audioAsset=null;state.audioBlob=null;state.audioUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";
+  if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);state.downloadUrl=null;
+  $("scriptText").value="";$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("resultAudio").pause();$("resultAudio").removeAttribute("src");
+  $("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";
+  $("includeSubtitle").checked=false;$("includeMetadataTags").checked=false;$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").hidden=true;
+  renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus();
+  const status=$("voiceProjectSaveStatus");if(status)status.textContent="Proyek baru · belum disimpan";
+}
 async function loadVideoProjectHistory(){
   const box=$("videoProjectHistory");
   if(!box)return;
@@ -317,13 +407,13 @@ function showView(requestedView){
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
   $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"Auto Video Studio"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
-  if(view==="history")loadVideoProjectHistory();
+  if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();}
   if(view==="assistant")renderStandaloneConversation();
   if(view==="video")window.dispatchEvent(new Event("zaida:video-page-open"));
   if(view==="persona"&&!currentUser){openAuth();toast("Persona Saya hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}
   closeSidebar();
 }
-$("scriptText").addEventListener("input",updateCount);$("editScriptFromVoice").addEventListener("click",()=>{setStep(1);$("scriptText").focus();});$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",()=>{$("scriptText").value="";state.audioUrl=null;state.audioBlob=null;if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);state.downloadUrl=null;state.alignment=null;state.subtitles=[];state.sourceText="";$("includeSubtitle").checked=false;$("includeMetadataTags").checked=false;$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");$("audioPlayer").pause();$("audioPlayer").removeAttribute("src");$("resultAudio").pause();$("resultAudio").removeAttribute("src");$("downloadButton").removeAttribute("href");$("resultTitle").textContent="Audio belum dibuat";$("resultDetails").textContent="MP3";$("dockTrack").textContent="Belum ada audio";renderSubtitles();updateCount();showView("studio");setStep(1);$("scriptText").focus()});document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("openVoicesCatalog").addEventListener("click",e=>{e.preventDefault();showView("voices");});$("studioVoicePreview").addEventListener("click",()=>{const voice=state.voices.find(v=>v.voice_id===$("voiceSelect").value);if(!voice||!voice.preview_url){toast("Pratinjau tidak tersedia untuk suara ini.");return;}stopVoicePreview();const audio=new Audio(voice.preview_url);state.previewAudio=audio;audio.addEventListener("ended",()=>{if(state.previewAudio===audio)state.previewAudio=null;$("studioVoicePreview").textContent="▶";},{once:true});$("studioVoicePreview").textContent="…";audio.play().catch(()=>{if(state.previewAudio===audio)state.previewAudio=null;$("studioVoicePreview").textContent="▶";toast("Pratinjau tidak dapat diputar.");});});$("voiceSelect").addEventListener("change",()=>{$("studioVoicePreview").textContent="▶";updateDownloadLink();});$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>showView("persona"));
+$("scriptText").addEventListener("input",()=>{updateCount();scheduleVoiceProjectSave();});$("editScriptFromVoice").addEventListener("click",()=>{setStep(1);$("scriptText").focus();});$("generateButton").addEventListener("click",()=>generate());$("improveScript").addEventListener("click",improveScript);$("addAudioTags").addEventListener("click",addAudioTags);$("clearText").addEventListener("click",()=>{$("scriptText").value="";updateCount()});$("newProject").addEventListener("click",startNewVoiceProject);document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));$("openVoicesCatalog").addEventListener("click",e=>{e.preventDefault();showView("voices");});$("studioVoicePreview").addEventListener("click",()=>{const voice=state.voices.find(v=>v.voice_id===$("voiceSelect").value);if(!voice||!voice.preview_url){toast("Pratinjau tidak tersedia untuk suara ini.");return;}stopVoicePreview();const audio=new Audio(voice.preview_url);state.previewAudio=audio;audio.addEventListener("ended",()=>{if(state.previewAudio===audio)state.previewAudio=null;$("studioVoicePreview").textContent="▶";},{once:true});$("studioVoicePreview").textContent="…";audio.play().catch(()=>{if(state.previewAudio===audio)state.previewAudio=null;$("studioVoicePreview").textContent="▶";toast("Pratinjau tidak dapat diputar.");});});$("voiceSelect").addEventListener("change",()=>{$("studioVoicePreview").textContent="▶";updateDownloadLink();scheduleVoiceProjectSave();});$("mobileMenu").addEventListener("click",()=>{const open=!$("sidebar").classList.contains("open");$("sidebar").classList.toggle("open",open);$("sidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open);});$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);$("settingsButton").addEventListener("click",()=>showView("persona"));
 async function loadStudioSettings(){
   if(!currentUser)return;
   try{
@@ -613,14 +703,19 @@ async function generate(){
     
     $("resultDetails").textContent="MP3 · "+formatAudioDuration(duration)+" · "+text.length+" karakter";
     $("subtitlePreviewToggle").hidden=!$("includeSubtitle").checked;$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");renderSubtitles();
-    state.history.unshift({title:$("resultTitle").textContent,details:$("resultDetails").textContent,url:state.audioUrl,text});renderHistory();setStep(3);toast("Suara berhasil dibuat.");
+    state.history.unshift({title:$("resultTitle").textContent,details:$("resultDetails").textContent,url:state.audioUrl,text});renderHistory();
+    const assetId=crypto.randomUUID();
+    const upload=await fetch("/api/voice/assets/"+encodeURIComponent(assetId),{method:"PUT",headers:{...(await authHeaders()),"Content-Type":audioBlob.type||"audio/mpeg"},body:audioBlob});
+    if(!upload.ok){const problem=await upload.json().catch(()=>({}));throw new Error(problem.error||"Audio berhasil dibuat, tetapi gagal disimpan ke cloud.");}
+    state.audioAsset={assetId,mime:audioBlob.type||"audio/mpeg",size:audioBlob.size};
+    await flushVoiceProjectSave();setStep(3);toast("Suara berhasil dibuat dan proyek tersimpan di cloud.");
   }catch(error){toast(error.message);}finally{setBusy(false);}
 }
 $("continueToVoice").addEventListener("click",()=>{if(!$("scriptText").value.trim()){toast("Masukkan naskah terlebih dahulu.");return;}setStep(2);});
 
 $("resultAudio").addEventListener("play",()=>{if(!$("audioPlayer").paused)$("audioPlayer").pause();});
 $("audioPlayer").addEventListener("play",()=>{if(!$("resultAudio").paused)$("resultAudio").pause();});
-document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
+document.querySelectorAll("#similarity,#style,#stability").forEach(el=>el.addEventListener("input",scheduleVoiceProjectSave));$("includeSubtitle").addEventListener("change",scheduleVoiceProjectSave);$("includeMetadataTags").addEventListener("change",scheduleVoiceProjectSave);document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
 $("voiceSelect").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();renderCatalogVoices();});$("voiceSearch").addEventListener("input",()=>{state.voicePage=0;renderVoiceCards();});$("voiceGenderFilter").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();});$("catalogVoiceSearch").addEventListener("input",()=>{state.catalogVoicePage=0;renderCatalogVoices();});$("catalogVoiceGenderFilter").addEventListener("change",()=>{stopVoicePreview();state.catalogVoicePage=0;renderCatalogVoices();});
 $("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
 $("includeSubtitle").addEventListener("change",()=>{if(state.audioUrl){$("subtitlePreviewToggle").hidden=!$("includeSubtitle").checked;if(!$("includeSubtitle").checked){$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");}else renderSubtitles();}});
@@ -668,7 +763,7 @@ onAuthStateChanged(auth,user=>{
   $("profileAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("topAvatar").textContent=allowed?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";
   $("resendVerification").hidden=!(user&&!user.emailVerified);
-  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(async()=>{await loadPersonaProfile();await loadStudioSettings();});loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
+  if(allowed){$("personaNav").hidden=false;personaReady=refreshAccount().then(async()=>{await loadPersonaProfile();await loadStudioSettings();await loadVoiceProjectHistory();});loadVoices();if(pendingPackageId){const packageId=pendingPackageId;pendingPackageId=null;startPackageCheckout(packageId);}else{checkReturnedPayment();}}else{activeVoiceProjectId=crypto.randomUUID();state.audioAsset=null;loadVoices();if(pendingPackageId)openAuth();$("personaNav").hidden=true;personaReady=Promise.resolve();$("creditBalance").hidden=true;$("creditBalance").textContent="Kredit: —";$("sidebarCreditBalance").textContent="Masuk untuk melihat saldo";$("dockCredits").textContent="Kredit: —";accountInfo=null;$("adminNav").hidden=true;applyAssistantProfile({persona:"",interests:[],style:"santai dan akrab",emotion:"natural dan netral",audience:"",length:"fleksibel sesuai kebutuhan"});}
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }

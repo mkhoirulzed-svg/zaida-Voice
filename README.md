@@ -41,9 +41,9 @@ Never put API keys in frontend files or commit them to Git.
 - Primary text gateway: OpenRouter using the OpenAI-compatible Chat Completions endpoint.
 - Default text model: `google/gemini-3.1-flash-lite` for script editing, assistant chat, and storyboard JSON.
 - Default image model: `bytedance-seed/seedream-5-0-flash` through OpenRouter Images API (listed from $0.018/image; actual usage cost is read from the API response when available).
-- KiosAPI remains available when OpenRouter is not configured, and as a fallback for storyboard/image workflows; direct DeepSeek remains an optional text fallback.
+- Text fallback order: OpenRouter → KiosAPI → direct DeepSeek (when each credential is configured). Image fallback order: OpenRouter → KiosAPI. Storyboard fallback order: OpenRouter → KiosAPI model candidates → direct DeepSeek.
 - OpenRouter usage cost in USD is converted to IDR using `ZAIDA_USD_TO_IDR`, then the existing `ZAIDA_AI_MARKUP` multiplier is applied.
-- Credit reservation is made before provider calls, then settled using Kiosapi's reported `usage.cost_idr` (or cost header) with the configured 1.5x multiplier. Failed provider attempts release the reservation.
+- Credits are reserved before provider calls and settled only for the provider that returns a usable response. OpenRouter USD usage is converted to IDR; KiosAPI uses its reported `usage.cost_idr` or cost header; direct DeepSeek uses token-based estimates. Image requests reserve enough to cover the configured KiosAPI fallback before trying OpenRouter.
 - DeepSeek direct fallback uses the existing token-based DeepSeek cost calculation.
 
 ## API routes

@@ -433,6 +433,36 @@ const videoProjectFields = (doc) => {
   try { payload = JSON.parse(val(f.payload) || "{}"); } catch {}
   return { id: val(f.projectId), title: val(f.title) || "Proyek video", createdAt: val(f.createdAt), updatedAt: val(f.updatedAt), payload };
 };
+function voiceProjectFields(doc) {
+  const fields=doc?.fields||{};
+  let payload={};
+  try{payload=JSON.parse(val(fields.payload)||"{}");}catch{}
+  return {id:val(fields.projectId)||doc.name.split("/").pop(),title:val(fields.title)||"Proyek Voice Studio",payload,createdAt:val(fields.createdAt),updatedAt:val(fields.updatedAt)};
+}
+export async function listVoiceProjects(user, env) {
+  const response=await firestore(env,":runQuery",{method:"POST",body:JSON.stringify({structuredQuery:{from:[{collectionId:"voice_projects"}],where:{fieldFilter:{field:{fieldPath:"uid"},op:"EQUAL",value:{stringValue:user.uid}}},limit:50}})});
+  return (Array.isArray(response)?response:[]).filter(row=>row.document).map(row=>voiceProjectFields(row.document)).sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
+}
+export async function getVoiceProject(user,env,projectId) {
+  if(!/^[a-zA-Z0-9_-]{8,80}$/.test(projectId)){const e=new Error("ID proyek tidak valid.");e.status=400;throw e;}
+  const doc=await firestore(env,"/voice_projects/"+encodeURIComponent(projectId));
+  if(val(doc.fields?.uid)!==user.uid){const e=new Error("Proyek tidak ditemukan.");e.status=404;throw e;}
+  return voiceProjectFields(doc);
+}
+export async function saveVoiceProject(user,env,project) {
+  const id=String(project.id||"");
+  if(!/^[a-zA-Z0-9_-]{8,80}$/.test(id)){const e=new Error("ID proyek tidak valid.");e.status=400;throw e;}
+  const payload=JSON.stringify(project.payload||{});
+  if(payload.length>700000){const e=new Error("Data proyek terlalu besar. File audio harus disimpan terpisah.");e.status=413;throw e;}
+  const path="/voice_projects/"+encodeURIComponent(id);let existing=null;
+  try{existing=await firestore(env,path);}catch(error){if(error.status!==404)throw error;}
+  if(existing&&val(existing.fields?.uid)!==user.uid){const e=new Error("ID proyek sudah digunakan.");e.status=409;throw e;}
+  const now=new Date().toISOString(),createdAt=existing?val(existing.fields?.createdAt):now;
+  const fields={uid:str(user.uid),projectId:str(id),title:str(String(project.title||"Proyek Voice Studio").slice(0,120)),payload:str(payload),createdAt:str(createdAt),updatedAt:str(now)};
+  const write=existing?{update:{name:existing.name,fields},updateMask:{fieldPaths:Object.keys(fields)},currentDocument:{updateTime:existing.updateTime}}:{update:{name:"projects/"+env.FIREBASE_PROJECT_ID+"/databases/(default)/documents/voice_projects/"+id,fields},currentDocument:{exists:false}};
+  await firestore(env,":commit",{method:"POST",body:JSON.stringify({writes:[write]})});
+  return {id,title:fields.title.stringValue,createdAt,updatedAt:now};
+}
 export async function listVideoProjects(user, env) {
   const response = await firestore(env, ":runQuery", { method: "POST", body: JSON.stringify({
     structuredQuery: {

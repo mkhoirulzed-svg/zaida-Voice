@@ -21,7 +21,7 @@ async function authHeaders(){ if(!auth.currentUser) throw new Error("Silakan mas
 function openAuth(mode="login"){authMode=mode;$("authTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice."; $("authDescription").textContent=mode==="login"?"Masuk untuk mulai membuat audio.":"Daftar menggunakan email aktif."; $("authSubmit").textContent=mode==="login"?"Masuk":"Buat akun"; $("authSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk"; $("authMessage").textContent="";$("authOverlay").hidden=false;}
 function closeAuth(){$("authOverlay").hidden=true;}
 const $ = (id) => document.getElementById(id);
-const state = { voices: [], audioUrl: null, downloadUrl: null, audioBlob: null, history: [], alignment: null, subtitles: [], currentStep: 1, sourceText: "", voicePage: 0, catalogVoicePage: 0, previewAudio: null };
+const state = { voices: [], audioUrl: null, downloadUrl: null, audioBlob: null, history: [], alignment: null, subtitles: [], currentStep: 1, sourceText: "", voicePage: 0, catalogVoicePage: 0, previewAudio: null, audioAsset: null };
 let activeVoiceProjectId=crypto.randomUUID();
 let voiceProjectSaveTimer=null;
 let voiceProjectSaveQueue=Promise.resolve();
@@ -447,7 +447,7 @@ async function saveStudioSettings(){
     $("writerLength").dispatchEvent(new Event("input",{bubbles:true}));
     updateDownloadLink();
     $("studioSettingsSaveStatus").textContent="Tersimpan di akun kamu";
-    toast("Pengaturan berhasil disimpan.");
+    toast("Pengaturan berhasil disimpan.");scheduleVoiceProjectSave();
   }catch(error){
     $("studioSettingsSaveStatus").textContent="Gagal menyimpan";
     toast(error.message);
@@ -717,7 +717,7 @@ $("resultAudio").addEventListener("play",()=>{if(!$("audioPlayer").paused)$("aud
 $("audioPlayer").addEventListener("play",()=>{if(!$("resultAudio").paused)$("resultAudio").pause();});
 document.querySelectorAll("#similarity,#style,#stability").forEach(el=>el.addEventListener("input",scheduleVoiceProjectSave));$("includeSubtitle").addEventListener("change",scheduleVoiceProjectSave);$("includeMetadataTags").addEventListener("change",scheduleVoiceProjectSave);document.querySelectorAll(".stepper-item").forEach(b=>b.addEventListener("click",()=>{const n=Number(b.dataset.step);if(n===1||n<=state.currentStep||n===2&&$("scriptText").value.trim()||n===3&&state.audioUrl)setStep(n);else toast("Selesaikan langkah sebelumnya terlebih dahulu.");}));
 $("voiceSelect").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();renderCatalogVoices();});$("voiceSearch").addEventListener("input",()=>{state.voicePage=0;renderVoiceCards();});$("voiceGenderFilter").addEventListener("change",()=>{stopVoicePreview();state.voicePage=0;renderVoiceCards();});$("catalogVoiceSearch").addEventListener("input",()=>{state.catalogVoicePage=0;renderCatalogVoices();});$("catalogVoiceGenderFilter").addEventListener("change",()=>{stopVoicePreview();state.catalogVoicePage=0;renderCatalogVoices();});
-$("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;});
+$("subtitleList").addEventListener("input",e=>{const field=e.target.dataset.field,i=Number(e.target.dataset.index);if(!field||!state.subtitles[i])return;if(field==="text")state.subtitles[i].text=e.target.value;else state.subtitles[i][field]=e.target.value;scheduleVoiceProjectSave();});
 $("includeSubtitle").addEventListener("change",()=>{if(state.audioUrl){$("subtitlePreviewToggle").hidden=!$("includeSubtitle").checked;if(!$("includeSubtitle").checked){$("subtitleOptions").hidden=true;$("subtitlePreviewToggle").textContent="Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded","false");}else renderSubtitles();}});
 $("subtitlePreviewToggle").addEventListener("click",()=>{const opening=$("subtitleOptions").hidden;$("subtitleOptions").hidden=!opening;$("subtitlePreviewToggle").textContent=opening?"Tutup Preview":"Preview Subtitle";$("subtitlePreviewToggle").setAttribute("aria-expanded",String(opening));if(opening)renderSubtitles();});
 $("downloadSrt").addEventListener("click",downloadSubtitle);

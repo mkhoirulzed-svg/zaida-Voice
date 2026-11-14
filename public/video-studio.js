@@ -63,7 +63,7 @@ async function uploadVideoBrandAsset(kind,file) {
     videoBrandAssets[kind]={name:file.name,dataUrl};
     try{localStorage.setItem(videoBrandAssetsKey,JSON.stringify(videoBrandAssets));}
     catch{videoBrandAssets[kind]=previous;throw new Error("Penyimpanan browser penuh. Hapus aset lain atau gunakan gambar lebih kecil.");}
-    renderVideoBrandAsset(kind);refreshStoryboardBrandOverlays();setStatus((kind==="product"?"Foto produk":"Logo brand")+" berhasil disimpan. Aset tampil di preview storyboard dan ikut saat render video.");
+    renderVideoBrandAsset(kind);refreshStoryboardBrandOverlays();setStatus((kind==="product"?"Foto produk":"Logo brand")+" berhasil disimpan. Aset akan dikirim sebagai referensi ke AI saat gambar adegan dibuat.");
   }catch(error){setStatus(error.message||"Gagal mengunggah gambar.",true);}
   input.value="";
 }
@@ -78,7 +78,7 @@ function removeVideoBrandAsset(kind) {
   videoBrandAssets[kind]=null;
   if(videoBrandAssetsKey){try{localStorage.setItem(videoBrandAssetsKey,JSON.stringify(videoBrandAssets));}catch{}}
   renderVideoBrandAsset(kind);refreshStoryboardBrandOverlays();
-  setStatus((kind==="product"?"Foto produk":"Logo brand")+" dihapus dari aset video.");
+  setStatus((kind==="product"?"Foto produk":"Logo brand")+" dihapus. Gambar AI berikutnya tidak lagi memakai referensi tersebut.");
 }
 
 
@@ -204,20 +204,6 @@ function renderGeneratedImage(scene, previewArea) {
   image.alt = "Hasil gambar adegan " + scene.scene_number;
   image.src = source;
   visual.append(image);
-  if (videoBrandAssets.product?.dataUrl) {
-    const product = document.createElement("img");
-    product.className = "scene-brand-product-overlay";
-    product.src = videoBrandAssets.product.dataUrl;
-    product.alt = "Foto produk";
-    visual.append(product);
-  }
-  if (videoBrandAssets.logo?.dataUrl) {
-    const logo = document.createElement("img");
-    logo.className = "scene-brand-logo-overlay";
-    logo.src = videoBrandAssets.logo.dataUrl;
-    logo.alt = "Logo brand";
-    visual.append(logo);
-  }
   const caption = document.createElement("figcaption");
   caption.textContent = isUploaded ? "Gambar milikmu · tanpa biaya kredit" : "Gambar AI · " + Number(scene.generatedImage.cost).toLocaleString("id-ID") + " kredit";
   const download = document.createElement("a");
@@ -235,11 +221,11 @@ async function generateSceneImage(scene, button, imageArea) {
   scene.imageBusy = true;
   button.disabled = true;
   button.textContent = "Membuat gambar…";
-  setStatus("Mengirim prompt adegan " + scene.scene_number + " ke Kiosapi. Proses dapat memerlukan beberapa puluh detik…");
+  setStatus("Mengirim prompt dan foto referensi produk/brand adegan " + scene.scene_number + " ke KiosAPI Image Editing…");
   try {
     const result = await api("/api/video/image", {
       method: "POST",
-      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, prompt: selectedStyle.prompt + "\\n\\nScene direction: " + scene.visual_prompt })
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
     });
     scene.generatedImage = {
       b64: result.image.b64,
@@ -250,7 +236,7 @@ async function generateSceneImage(scene, button, imageArea) {
     updateStoryboardImageStrip();
     updateRenderAvailability();
     syncCredits(result.creditsRemaining);
-    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · biaya provider Rp" +
+    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat dengan " + (result.imageMode === "reference-edit" ? "foto referensi AI" : "generasi AI") + " · biaya provider Rp" +
       Number(result.providerCostIdr).toLocaleString("id-ID") + " · " +
       Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
   } catch (error) {
@@ -834,7 +820,6 @@ async function startDualRender(isExport = false) {
       subtitleText: isExport ? selectedSubtitleText : "",
       burnCaptions: isExport ? burnCaptions : false,
       captionStyle: { ...getCaptionStyle(), wordCues: generatedWordCues },
-      brandAssets: videoBrandAssets,
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {

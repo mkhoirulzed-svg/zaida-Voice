@@ -1137,6 +1137,19 @@ function createNewVideoProject() {
   $("videoStatus").textContent = "Proyek baru siap. Proyek sebelumnya tetap tersimpan di riwayat.";
   $("videoTopic").focus();
 }
+document.querySelectorAll("[data-video-step]").forEach(button => {
+  button.addEventListener("click", () => {
+    const target = document.getElementById(button.dataset.videoStep);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.querySelectorAll("[data-video-step]").forEach(item => {
+      const active = item === button;
+      item.classList.toggle("is-active", active);
+      if (active) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+    });
+  });
+});
 $("videoNewProjectButton")?.addEventListener("click", createNewVideoProject);
 $("videoProjectHistoryButton")?.addEventListener("click", () => {
   document.querySelector('[data-view="history"]')?.click();

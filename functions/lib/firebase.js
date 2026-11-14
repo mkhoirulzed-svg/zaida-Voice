@@ -424,3 +424,59 @@ export async function fulfillPaymentCredits(env, orderId, confirmedAmount) {
   }
   throw new Error("Pemrosesan kredit sedang bersamaan. Notifikasi dapat dikirim ulang.");
 }
+
+
+// Video Studio projects: private Firestore metadata, scoped to the verified Firebase UID.
+const videoProjectFields = (doc) => {
+  const f = doc?.fields || {};
+  let payload = {};
+  try { payload = JSON.parse(val(f.payload) || "{}"); } catch {}
+  return { id: val(f.projectId), title: val(f.title) || "Proyek video", createdAt: val(f.createdAt), updatedAt: val(f.updatedAt), payload };
+};
+export async function listVideoProjects(user, env) {
+  const response = await firestore(env, ":runQuery", { method: "POST", body: JSON.stringify({
+    structuredQuery: {
+      from: [{ collectionId: "video_projects" }],
+      where: { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: user.uid } } },
+      orderBy: [{ field: { fieldPath: "updatedAt" }, direction: "DESCENDING" }],
+      limit: 50
+    }
+  }) });
+  return (Array.isArray(response) ? response : []).filter(row => row.document).map(row => videoProjectFields(row.document));
+}
+export async function getVideoProject(user, env, projectId) {
+  if (!/^[a-zA-Z0-9_-]{8,80}$/.test(projectId)) { const e = new Error("ID proyek tidak valid."); e.status = 400; throw e; }
+  try {
+    const doc = await firestore(env, "/video_projects/" + encodeURIComponent(projectId));
+    if (val(doc.fields?.uid) !== user.uid) { const e = new Error("Proyek tidak ditemukan."); e.status = 404; throw e; }
+    return videoProjectFields(doc);
+  } catch (error) { if (error.status === 404) throw error; throw error; }
+}
+export async function saveVideoProject(user, env, project) {
+  const id = String(project.id || "");
+  if (!/^[a-zA-Z0-9_-]{8,80}$/.test(id)) { const e = new Error("ID proyek tidak valid."); e.status = 400; throw e; }
+  const payload = JSON.stringify(project.payload || {});
+  if (payload.length > 700000) { const e = new Error("Data proyek terlalu besar. File media harus disimpan terpisah."); e.status = 413; throw e; }
+  const path = "/video_projects/" + encodeURIComponent(id);
+  const now = new Date().toISOString();
+  let existing = null;
+  try { existing = await firestore(env, path); } catch (error) { if (error.status !== 404) throw error; }
+  if (existing && val(existing.fields?.uid) !== user.uid) { const e = new Error("ID proyek sudah digunakan."); e.status = 409; throw e; }
+  const createdAt = existing ? val(existing.fields?.createdAt) : now;
+  const fields = {
+    uid: str(user.uid), projectId: str(id),
+    title: str(String(project.title || "Proyek video").slice(0, 120)),
+    payload: str(payload), createdAt: str(createdAt), updatedAt: str(now)
+  };
+  const write = existing
+    ? { update: { name: existing.name, fields }, updateMask: { fieldPaths: Object.keys(fields) }, currentDocument: { updateTime: existing.updateTime } }
+    : { update: { name: "projects/" + env.FIREBASE_PROJECT_ID + "/databases/(default)/documents/video_projects/" + id, fields }, currentDocument: { exists: false } };
+  await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [write] }) });
+  return { id, title: fields.title.stringValue, createdAt, updatedAt: now };
+}
+export async function deleteVideoProject(user, env, projectId) {
+  const doc = await firestore(env, "/video_projects/" + encodeURIComponent(projectId));
+  if (val(doc.fields?.uid) !== user.uid) { const e = new Error("Proyek tidak ditemukan."); e.status = 404; throw e; }
+  await firestore(env, ":commit", { method: "POST", body: JSON.stringify({ writes: [{ delete: doc.name, currentDocument: { updateTime: doc.updateTime } }] }) });
+  return true;
+}

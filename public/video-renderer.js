@@ -46,42 +46,6 @@ function drawCover(ctx, image, width, height, progress, shot) {
   ctx.restore();
 }
 
-function imageFromDataUrl(dataUrl, label) {
-  if(!dataUrl)return Promise.resolve(null);
-  return new Promise((resolve,reject)=>{
-    const image=new Image();
-    image.onload=()=>resolve(image);
-    image.onerror=()=>reject(new Error(label+" gagal dimuat."));
-    image.src=dataUrl;
-  });
-}
-function drawBrandAssets(ctx, assets, width, height) {
-  if(!assets)return;
-  const margin=width*.045;
-  const product=assets.productImage;
-  if(product){
-    const boxW=width*.27,boxH=height*.17,x=margin,y=margin;
-    ctx.save();
-    ctx.shadowColor="rgba(0,0,0,.22)";ctx.shadowBlur=width*.012;ctx.shadowOffsetY=height*.004;
-    ctx.fillStyle="rgba(255,255,255,.94)";ctx.beginPath();ctx.roundRect(x,y,boxW,boxH,width*.018);ctx.fill();
-    ctx.shadowColor="transparent";
-    const pad=width*.018,scale=Math.min((boxW-pad*2)/product.naturalWidth,(boxH-pad*2)/product.naturalHeight);
-    const w=product.naturalWidth*scale,h=product.naturalHeight*scale;
-    ctx.drawImage(product,x+(boxW-w)/2,y+(boxH-h)/2,w,h);
-    ctx.restore();
-  }
-  const logo=assets.logoImage;
-  if(logo){
-    const maxW=width*.19,maxH=height*.105;
-    const scale=Math.min(maxW/logo.naturalWidth,maxH/logo.naturalHeight);
-    const w=logo.naturalWidth*scale,h=logo.naturalHeight*scale;
-    const x=width-margin-w,y=margin;
-    ctx.save();
-    ctx.shadowColor="rgba(0,0,0,.32)";ctx.shadowBlur=width*.008;
-    ctx.drawImage(logo,x,y,w,h);
-    ctx.restore();
-  }
-}
 
 function drawCaption(ctx, text, width, height, style = {}, time = 0, cue = null) {
   if (!text) return;
@@ -150,7 +114,7 @@ function drawCaption(ctx, text, width, height, style = {}, time = 0, cue = null)
   ctx.restore();
 }
 
-export async function renderVideo({ scenes, audioFile, audioDuration = null, subtitleText = "", burnCaptions = false, captionStyle = {}, brandAssets = {}, format = "9:16", onProgress = () => {} }) {
+export async function renderVideo({ scenes, audioFile, audioDuration = null, subtitleText = "", burnCaptions = false, captionStyle = {}, format = "9:16", onProgress = () => {} }) {
   if (!Array.isArray(scenes) || scenes.length < 2) throw new Error("Storyboard belum memiliki cukup adegan.");
   if (!["9:16", "16:9"].includes(format)) throw new Error("Pilih format video terlebih dahulu.");
   if (typeof VideoEncoder === "undefined" || typeof VideoFrame === "undefined") {
@@ -166,11 +130,6 @@ export async function renderVideo({ scenes, audioFile, audioDuration = null, sub
   if (!ctx) throw new Error("Browser tidak dapat membuat kanvas video.");
 
   const images = await Promise.all(scenes.map(imageFromScene));
-  const [productImage,logoImage]=await Promise.all([
-    imageFromDataUrl(brandAssets.product?.dataUrl,"Foto produk"),
-    imageFromDataUrl(brandAssets.logo?.dataUrl,"Logo brand")
-  ]);
-  const loadedBrandAssets={productImage,logoImage};
   const baseDurations = scenes.map(scene => Math.max(0.8, Math.min(40, Number(scene.estimated_seconds) || 6)));
   const sceneTotal = baseDurations.reduce((a, b) => a + b, 0);
   let audioContext = null, audioBuffer = null, output = null, videoSource = null, audioSource = null;
@@ -210,7 +169,6 @@ export async function renderVideo({ scenes, audioFile, audioDuration = null, sub
         ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "700 " + Math.round(width * .045) + "px Arial";
         ctx.fillText(scene.title || ("Adegan " + (sceneIndex + 1)), width / 2, height / 2, width * .82);
       }
-      drawBrandAssets(ctx,loadedBrandAssets,width,height);
       const cue = cues.find(item => time >= item.start && time <= item.end);
       if (cue) drawCaption(ctx, cue.text, width, height, captionStyle, time, cue);
       await videoSource.add(time, Math.min(1 / fps, totalDuration - time));

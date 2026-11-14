@@ -117,8 +117,15 @@
           <section class="panel admin-transactions"><div class="panel-heading"><div><h2>Transaksi terbaru</h2></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b></div></div></section></section>
 <section class="page video-page" id="videoStudioPage">
         <div class="video-heading video-heading-native"><div><h1>Video Studio</h1><p>Lanjutkan ide, atau mulai karya baru.</p></div><div class="video-project-actions"><button type="button" class="video-quiet-action" id="videoProjectHistoryButton">Riwayat</button><button type="button" class="video-new-project-button" id="videoNewProjectButton"><span>＋</span> Proyek baru</button></div></div>
-        <div class="video-layout">
-          <section class="panel video-form-panel">
+        <nav class="video-workflow-nav" aria-label="Tahapan pembuatan video">
+  <button type="button" class="video-workflow-step is-active" data-video-step="videoScriptStep" aria-current="step"><span>1</span> Naskah</button>
+  <button type="button" class="video-workflow-step" data-video-step="videoStoryboardStep"><span>2</span> Visual</button>
+  <button type="button" class="video-workflow-step" data-video-step="videoAudioPanel"><span>3</span> Audio</button>
+  <button type="button" class="video-workflow-step" data-video-step="captionEditorPanel"><span>4</span> Subtitle</button>
+  <button type="button" class="video-workflow-step" data-video-step="videoRenderPanel"><span>5</span> Ekspor</button>
+</nav>
+<div class="video-layout">
+          <section class="panel video-form-panel" id="videoScriptStep">
             
             <label class="field-label" for="videoTopic">NASKAH VIDEO</label>
             <textarea id="videoTopic" maxlength="30000" rows="10" placeholder="Tempel atau tulis naskah lengkap di sini…"></textarea>
@@ -178,7 +185,7 @@
             <button class="generate-button" id="generateStoryboard"><span>✧</span> Buat storyboard <b>→</b></button>
             <div class="video-status" id="videoStatus" role="status" aria-live="polite"></div>
           </section>
-          <section class="panel storyboard-panel">
+          <section class="panel storyboard-panel" id="videoStoryboardStep">
             <div class="section-head"><h2>02 · Storyboard</h2><span id="sceneCountLabel">Belum ada adegan</span></div>
             <div id="storyboardEmpty" class="storyboard-empty"><div class="storyboard-empty-icon">▧</div><b>Ide kamu dimulai di sini</b><p>Isi topik, lalu buat storyboard. Hasilnya bisa kamu edit sebelum masuk tahap visual.</p></div>
             <div id="storyboardResult" hidden>

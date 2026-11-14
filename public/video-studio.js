@@ -141,29 +141,43 @@ function syncStoryboardJson() {
   const editor = $("storyboardJson");
   if (editor && currentStoryboard) editor.value = JSON.stringify(buildPayload(), null, 2);
 }
+async function persistVideoDraft(snapshot = null) {
+  if (!currentStoryboard || !currentUser || !auth.currentUser || auth.currentUser.uid !== currentUser.uid) return false;
+  if (!activeVideoProjectId) activeVideoProjectId = crypto.randomUUID();
+  if (projectIdKey) { try { localStorage.setItem(projectIdKey, activeVideoProjectId); } catch {} }
+  const payload = snapshot || buildPayload();
+  const id = activeVideoProjectId;
+  const title = payload.title || "Proyek video";
+  videoSaveQueue = videoSaveQueue.catch(() => {}).then(async () => {
+    if (!auth.currentUser || auth.currentUser.uid !== currentUser?.uid) return false;
+    await api("/api/video/projects", { method: "POST", body: JSON.stringify({ id, title, payload }) });
+    return true;
+  });
+  try {
+    const saved = await videoSaveQueue;
+    if (saved) setStatus("Tersimpan di cloud · " + new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+    return Boolean(saved);
+  } catch (error) {
+    setStatus("Penyimpanan cloud gagal: " + error.message + ". Draft lokal tetap disimpan.", true);
+    return false;
+  }
+}
 function saveDraft() {
   if (!currentStoryboard) return;
   const payload = buildPayload();
-  if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(payload)); } catch {} }
+  if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(payload)); } catch { setStatus("Penyimpanan perangkat penuh. Draft belum aman.", true); } }
   syncStoryboardJson();
   if (!currentUser) return;
-  if (!activeVideoProjectId) activeVideoProjectId = crypto.randomUUID();
-  if (projectIdKey) { try { localStorage.setItem(projectIdKey, activeVideoProjectId); } catch {} }
   clearTimeout(videoSaveTimer);
-  videoSaveTimer = setTimeout(() => {
-    const snapshot = JSON.parse(JSON.stringify(payload));
-    const id = activeVideoProjectId;
-    const title = snapshot.title || "Proyek video";
-    videoSaveQueue = videoSaveQueue.catch(() => {}).then(async () => {
-      if (!auth.currentUser || auth.currentUser.uid !== currentUser?.uid) return;
-      try {
-        await api("/api/video/projects", { method: "POST", body: JSON.stringify({ id, title, payload: snapshot }) });
-        setStatus("Tersimpan otomatis · " + new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
-      } catch (error) {
-        setStatus("Draft tersimpan di perangkat, tetapi sinkronisasi cloud gagal: " + error.message, true);
-      }
-    });
-  }, 900);
+  videoSaveTimer = setTimeout(() => { persistVideoDraft(payload); }, 350);
+}
+async function flushVideoDraft() {
+  if (!currentStoryboard) return false;
+  clearTimeout(videoSaveTimer);
+  videoSaveTimer = null;
+  const payload = JSON.parse(JSON.stringify(buildPayload()));
+  if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(payload)); } catch {} }
+  return persistVideoDraft(payload);
 }
 function applyStoryboardJson() {
   const editor = $("storyboardJson");
@@ -255,6 +269,7 @@ async function generateSceneImage(scene, button, imageArea) {
       assetId: result.image.assetId || ""
     };
     saveDraft();
+    await flushVideoDraft();
     renderGeneratedImage(scene, imageArea);
     updateStoryboardImageStrip();
     updateRenderAvailability();
@@ -485,6 +500,9 @@ async function generateStoryboard() {
       })
     });
     renderStoryboard(result);
+    // Pastikan storyboard tersimpan di cloud sebelum proses gambar berbayar dimulai.
+    const storyboardSaved = await flushVideoDraft();
+    if (!storyboardSaved) throw new Error("Storyboard belum berhasil disimpan ke cloud. Pembuatan gambar dihentikan agar kredit tidak terpakai sebelum proyek aman.");
     if (result.creditsRemaining !== undefined) {
       syncCredits(result.creditsRemaining);
       $("sidebarCreditBalance").textContent = Number(result.creditsRemaining).toLocaleString("id-ID") + " kredit";
@@ -948,16 +966,19 @@ async function restoreDraft() {
   if (!storageKey || !currentUser) return;
   let localDraft = null;
   try { localDraft = JSON.parse(localStorage.getItem(storageKey) || "null"); } catch {}
-  try {
-    activeVideoProjectId = projectIdKey ? localStorage.getItem(projectIdKey) : null;
-    if (activeVideoProjectId) {
+  activeVideoProjectId = projectIdKey ? localStorage.getItem(projectIdKey) : null;
+  let lastError = null;
+  if (activeVideoProjectId) {
+    try {
       const remote = await api("/api/video/projects/" + encodeURIComponent(activeVideoProjectId));
       if (remote.project?.payload?.scenes?.length) {
         renderStoryboard(await hydrateVideoProject(remote.project.payload));
         setStatus("Proyek dipulihkan dari penyimpanan cloud.");
         return;
       }
-    }
+    } catch (error) { lastError = error; }
+  }
+  try {
     const history = await api("/api/video/projects");
     const latest = history.projects?.[0];
     if (latest?.payload?.scenes?.length) {
@@ -967,18 +988,13 @@ async function restoreDraft() {
       setStatus("Proyek terakhir dipulihkan dari riwayat cloud.");
       return;
     }
-    if (localDraft?.scenes?.length) {
-      renderStoryboard(localDraft);
-      activeVideoProjectId = activeVideoProjectId || crypto.randomUUID();
-      saveDraft();
-      setStatus("Draft lokal dipulihkan dan sedang dipindahkan ke penyimpanan cloud.");
-    }
-  } catch (error) {
-    if (localDraft?.scenes?.length) {
-      renderStoryboard(localDraft);
-      setStatus("Cloud belum dapat diakses. Draft lokal dipulihkan: " + error.message, true);
-    } else setStatus("Belum dapat memuat proyek cloud: " + error.message, true);
-  }
+  } catch (error) { lastError = error; }
+  if (localDraft?.scenes?.length) {
+    renderStoryboard(localDraft);
+    activeVideoProjectId = activeVideoProjectId || crypto.randomUUID();
+    await flushVideoDraft();
+    setStatus(lastError ? "Draft lokal dipulihkan. Cloud belum dapat diakses: " + lastError.message : "Draft lokal dipulihkan dan disinkronkan.");
+  } else if (lastError) setStatus("Belum dapat memuat proyek cloud: " + lastError.message, true);
 }
 
 const videoAssistantMessages=[];
@@ -1122,6 +1138,22 @@ onAuthStateChanged(auth, user => {
   else updateRenderAvailability();
 });
 window.addEventListener("zaida:video-page-open", activateVideoStudio);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && currentStoryboard) flushVideoDraft();
+});
+window.addEventListener("pagehide", () => {
+  if (currentStoryboard && storageKey) {
+    try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {}
+    // Keepalive best-effort backup; normal persistence is awaited after generation and edits.
+    if (auth.currentUser && currentUser) {
+      auth.currentUser.getIdToken().then(token => fetch("/api/video/projects", {
+        method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ id: activeVideoProjectId || crypto.randomUUID(), title: currentStoryboard.title || "Proyek video", payload: buildPayload() })
+      })).catch(() => {});
+    }
+  }
+});
 
 window.addEventListener("zaida:open-video-project", async event => {
   const id = event.detail?.id;

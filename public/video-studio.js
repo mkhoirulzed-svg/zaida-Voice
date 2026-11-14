@@ -131,7 +131,7 @@ async function api(path, options = {}) {
 }
 function buildPayload() {
   return {
-    title: currentStoryboard.title, hook: currentStoryboard.hook, summary: currentStoryboard.summary,
+    title: currentStoryboard.title, sourceScript: currentStoryboard.sourceScript || "", hook: currentStoryboard.hook, summary: currentStoryboard.summary,
     closing: currentStoryboard.closing, format: currentStoryboard.format, outputFormats: currentStoryboard.outputFormats || ["9:16", "16:9"],
     resolution: currentStoryboard.resolution, outputResolutions: currentStoryboard.outputResolutions || ["720x1280", "1280x720"], visualStyle: currentStoryboard.visualStyle,
     scenes: currentStoryboard.scenes.map(({ generatedImage, uploadedImageDataUrl, imageBusy, ...scene }) => ({ ...scene, generatedImage: generatedImage ? { assetId: generatedImage.assetId || "", mime: generatedImage.mime || "image/png", cost: Number(generatedImage.cost) || 0 } : null }))
@@ -499,6 +499,7 @@ async function generateStoryboard() {
         language: "id"
       })
     });
+    result.sourceScript = topic;
     renderStoryboard(result);
     // Pastikan storyboard tersimpan di cloud sebelum proses gambar berbayar dimulai.
     const storyboardSaved = await flushVideoDraft();
@@ -972,6 +973,7 @@ async function restoreDraft() {
     try {
       const remote = await api("/api/video/projects/" + encodeURIComponent(activeVideoProjectId));
       if (remote.project?.payload?.scenes?.length) {
+        if (remote.project.payload.sourceScript) $("videoTopic").value = remote.project.payload.sourceScript;
         renderStoryboard(await hydrateVideoProject(remote.project.payload));
         setStatus("Proyek dipulihkan dari penyimpanan cloud.");
         return;
@@ -984,6 +986,7 @@ async function restoreDraft() {
     if (latest?.payload?.scenes?.length) {
       activeVideoProjectId = latest.id;
       if (projectIdKey) localStorage.setItem(projectIdKey, activeVideoProjectId);
+      if (latest.payload.sourceScript) $("videoTopic").value = latest.payload.sourceScript;
       renderStoryboard(await hydrateVideoProject(latest.payload));
       setStatus("Proyek terakhir dipulihkan dari riwayat cloud.");
       return;
@@ -1163,6 +1166,7 @@ window.addEventListener("zaida:open-video-project", async event => {
     if (!result.project?.payload?.scenes?.length) throw new Error("Proyek tidak memiliki storyboard.");
     activeVideoProjectId = id;
     if (projectIdKey) localStorage.setItem(projectIdKey, id);
+    if (result.project.payload.sourceScript) $("videoTopic").value = result.project.payload.sourceScript;
     renderStoryboard(await hydrateVideoProject(result.project.payload));
     setStatus("Proyek berhasil dibuka dari riwayat cloud.");
   } catch (error) { setStatus("Gagal membuka proyek: " + error.message, true); }

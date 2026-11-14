@@ -122,9 +122,14 @@ export async function onRequestPost({ request, env }) {
     if (!image?.b64_json || typeof image.b64_json !== "string") {
       return jsonError("Provider merespons, tetapi data gambar tidak ditemukan. Biaya provider sudah tercatat.", 502);
     }
+    if (!env.VIDEO_MEDIA) return jsonError("Penyimpanan media R2 belum terhubung. Kredit provider sudah tercatat; hubungi admin sebelum mengulang generasi.", 503);
+    const assetId = requestId;
+    const mime = image.media_type || image.mime || "image/png";
+    const binary = Uint8Array.from(atob(image.b64_json), ch => ch.charCodeAt(0));
+    await env.VIDEO_MEDIA.put(auth.user.uid + "/" + assetId, binary, { httpMetadata: { contentType: mime, cacheControl: "private, no-store" }, customMetadata: { uid: auth.user.uid, project: "zaida-video-studio" } });
 
     return Response.json({
-      image: { b64: image.b64_json, mime: image.media_type || image.mime || "image/png" },
+      image: { b64: image.b64_json, mime, assetId },
       model: modelUsed,
       option: providerUsed === "kiosapi" ? (useEdits ? EDIT_OPTION : GENERATION_OPTION) : option,
       imageMode: useEdits ? "reference-edit" : "text-to-image",

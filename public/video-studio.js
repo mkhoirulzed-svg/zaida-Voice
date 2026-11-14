@@ -1102,3 +1102,17 @@ onAuthStateChanged(auth, user => {
   else updateRenderAvailability();
 });
 window.addEventListener("zaida:video-page-open", activateVideoStudio);
+
+window.addEventListener("zaida:open-video-project", async event => {
+  const id = event.detail?.id;
+  if (!id || !auth.currentUser) return;
+  try {
+    const result = await api("/api/video/projects/" + encodeURIComponent(id));
+    if (!result.project?.payload?.scenes?.length) throw new Error("Proyek tidak memiliki storyboard.");
+    activeVideoProjectId = id;
+    if (projectIdKey) localStorage.setItem(projectIdKey, id);
+    renderStoryboard(result.project.payload);
+    setStatus("Proyek berhasil dibuka dari riwayat cloud.");
+  } catch (error) { setStatus("Gagal membuka proyek: " + error.message, true); }
+});
+

@@ -506,3 +506,38 @@
 }
 .video-studio-page .visual-style-option strong{color:#292936}
 .video-studio-page .visual-style-option small{color:#777783}
+
+
+/* Native-feeling project controls */
+.video-studio-page .video-heading-native{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-bottom:22px;
+}
+.video-studio-page .video-heading-native h1{
+  margin:0;font-size:clamp(25px,3vw,32px);letter-spacing:-.045em;font-weight:720;
+}
+.video-studio-page .video-heading-native p{
+  margin:5px 0 0;color:#858591;font-size:13px;letter-spacing:0;
+}
+.video-studio-page .video-project-actions{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.video-studio-page .video-quiet-action,
+.video-studio-page .video-new-project-button{
+  min-height:40px;border-radius:12px;padding:0 14px;font:inherit;font-size:13px;font-weight:650;
+  cursor:pointer;transition:background .18s ease,transform .18s ease;
+}
+.video-studio-page .video-quiet-action{
+  border:1px solid #e8e8ee;background:#fff;color:#5d5d69;
+}
+.video-studio-page .video-new-project-button{
+  border:1px solid #7656c9;background:#7656c9;color:#fff;
+  box-shadow:0 3px 9px rgba(118,86,201,.13);
+}
+.video-studio-page .video-new-project-button span{font-size:17px;vertical-align:-1px;margin-right:3px}
+.video-studio-page .video-quiet-action:active,
+.video-studio-page .video-new-project-button:active{transform:scale(.97)}
+@media(max-width:520px){
+  .video-studio-page .video-heading-native{align-items:flex-start;flex-direction:column;gap:12px}
+  .video-studio-page .video-project-actions{width:100%}
+  .video-studio-page .video-quiet-action,
+  .video-studio-page .video-new-project-button{flex:1}
+}

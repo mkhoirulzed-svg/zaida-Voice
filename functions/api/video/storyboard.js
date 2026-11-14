@@ -168,6 +168,12 @@ Kembalikan HANYA JSON valid:
       "video-storyboard:ai",
       { requestId, provider: "multi-provider", model: primaryModel }
     );
+    // Jalur 1-2: KiosAPI. Jalur 3: DeepSeek API langsung, independen dari KiosAPI.
+    let upstream = null;
+    let data = null;
+    let providerName = "kiosapi";
+    let modelUsed = primaryModel;
+    let lastProviderError = null;
     // Primary: OpenRouter. KiosAPI and direct DeepSeek remain as fallbacks.
     if (env.OPENROUTER_API_KEY) {
       try {
@@ -201,13 +207,7 @@ Kembalikan HANYA JSON valid:
         lastProviderError = { status: 502, message: providerError?.message || "Koneksi OpenRouter gagal." };
       }
     }
-    // Jalur 1-2: KiosAPI. Jalur 3: DeepSeek API langsung, independen dari KiosAPI.
     const modelCandidates = (!upstream && env.KIOSAPI_API_KEY) ? [...new Set([primaryModel, fallbackModel])] : [];
-    let upstream = null;
-    let data = null;
-    let providerName = "kiosapi";
-    let modelUsed = primaryModel;
-    let lastProviderError = null;
     for (const modelCandidate of modelCandidates) {
       try {
         const candidateResponse = await fetch("https://api.kiosapi.id/v1/chat/completions", {

@@ -75,6 +75,31 @@ function renderHistory(){
   });
 }
 
+
+async function loadVideoProjectHistory(){
+  const box=$("videoProjectHistory");
+  if(!box)return;
+  if(!currentUser){box.innerHTML='<div class="empty-output"><b>Masuk untuk melihat proyek video</b></div>';return;}
+  box.innerHTML='<div class="empty-output">Memuat proyek…</div>';
+  try{
+    const result=await api("/api/video/projects",{authRequired:true});
+    const projects=result.projects||[];
+    box.replaceChildren();
+    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada proyek video</b><small>Proyek yang disimpan dari Video Studio akan muncul di sini.</small></div>';return;}
+    projects.forEach(project=>{
+      const row=document.createElement("div");row.className="history-item";
+      const icon=document.createElement("span");icon.className="result-icon";icon.textContent="▶";
+      const info=document.createElement("div"),title=document.createElement("b"),small=document.createElement("small");
+      title.textContent=project.title||"Proyek video";
+      small.textContent=(project.payload?.scenes?.length||0)+" adegan · Diperbarui "+(project.updatedAt?new Date(project.updatedAt).toLocaleString("id-ID"):"");
+      info.append(title,small);
+      const open=document.createElement("button");open.className="subtle-button";open.type="button";open.textContent="Buka";
+      open.addEventListener("click",()=>{showView("video");window.dispatchEvent(new CustomEvent("zaida:open-video-project",{detail:{id:project.id}}));});
+      row.append(icon,info,open);box.append(row);
+    });
+  }catch(error){box.innerHTML='<div class="empty-output"><b>Riwayat belum dapat dimuat</b><small></small></div>';box.querySelector("small").textContent=error.message;}
+}
+
 const scriptAssistantState={messages:[],draft:"",busy:false};
 const superChatState={messages:[],draft:"",busy:false};
 function assistantProfile(){return {persona:$("writerName").value.trim(),interests:[...document.querySelectorAll("#interestGrid input:checked")].map(x=>x.value),style:$("writerStyle").value,emotion:$("writerEmotion").value,audience:$("writerAudience").value.trim(),length:$("writerLength").value};}
@@ -292,6 +317,7 @@ function showView(requestedView){
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
   $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"Auto Video Studio"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
+  if(view==="history")loadVideoProjectHistory();
   if(view==="assistant")renderStandaloneConversation();
   if(view==="video")window.dispatchEvent(new Event("zaida:video-page-open"));
   if(view==="persona"&&!currentUser){openAuth();toast("Persona Saya hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}

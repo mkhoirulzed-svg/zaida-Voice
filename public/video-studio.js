@@ -8,6 +8,10 @@ const $ = id => document.getElementById(id);
 let currentUser = null;
 let currentStoryboard = null;
 let storageKey = null;
+let projectIdKey = null;
+let activeVideoProjectId = null;
+let videoSaveTimer = null;
+let videoSaveQueue = Promise.resolve();
 let renderedVideoUrls = [];
 let previewVideoUrl = null;
 let previewCaptionCues = [];
@@ -139,8 +143,27 @@ function syncStoryboardJson() {
 }
 function saveDraft() {
   if (!currentStoryboard) return;
-  if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {} }
+  const payload = buildPayload();
+  if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(payload)); } catch {} }
   syncStoryboardJson();
+  if (!currentUser) return;
+  if (!activeVideoProjectId) activeVideoProjectId = crypto.randomUUID();
+  if (projectIdKey) { try { localStorage.setItem(projectIdKey, activeVideoProjectId); } catch {} }
+  clearTimeout(videoSaveTimer);
+  videoSaveTimer = setTimeout(() => {
+    const snapshot = JSON.parse(JSON.stringify(payload));
+    const id = activeVideoProjectId;
+    const title = snapshot.title || "Proyek video";
+    videoSaveQueue = videoSaveQueue.catch(() => {}).then(async () => {
+      if (!auth.currentUser || auth.currentUser.uid !== currentUser?.uid) return;
+      try {
+        await api("/api/video/projects", { method: "POST", body: JSON.stringify({ id, title, payload: snapshot }) });
+        setStatus("Tersimpan otomatis · " + new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+      } catch (error) {
+        setStatus("Draft tersimpan di perangkat, tetapi sinkronisasi cloud gagal: " + error.message, true);
+      }
+    });
+  }, 900);
 }
 function applyStoryboardJson() {
   const editor = $("storyboardJson");
@@ -901,15 +924,41 @@ async function startDualRender(isExport = false) {
     updateRenderAvailability();
   }
 }
-function restoreDraft() {
-  if (!storageKey) return;
+async function restoreDraft() {
+  if (!storageKey || !currentUser) return;
+  let localDraft = null;
+  try { localDraft = JSON.parse(localStorage.getItem(storageKey) || "null"); } catch {}
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-    if (saved && Array.isArray(saved.scenes) && saved.scenes.length) {
-      renderStoryboard(saved);
-      setStatus("Draft storyboard lokal dipulihkan. Video bisa dirender tanpa membuat gambar AI.");
+    activeVideoProjectId = projectIdKey ? localStorage.getItem(projectIdKey) : null;
+    if (activeVideoProjectId) {
+      const remote = await api("/api/video/projects/" + encodeURIComponent(activeVideoProjectId));
+      if (remote.project?.payload?.scenes?.length) {
+        renderStoryboard(remote.project.payload);
+        setStatus("Proyek dipulihkan dari penyimpanan cloud.");
+        return;
+      }
     }
-  } catch {}
+    const history = await api("/api/video/projects");
+    const latest = history.projects?.[0];
+    if (latest?.payload?.scenes?.length) {
+      activeVideoProjectId = latest.id;
+      if (projectIdKey) localStorage.setItem(projectIdKey, activeVideoProjectId);
+      renderStoryboard(latest.payload);
+      setStatus("Proyek terakhir dipulihkan dari riwayat cloud.");
+      return;
+    }
+    if (localDraft?.scenes?.length) {
+      renderStoryboard(localDraft);
+      activeVideoProjectId = activeVideoProjectId || crypto.randomUUID();
+      saveDraft();
+      setStatus("Draft lokal dipulihkan dan sedang dipindahkan ke penyimpanan cloud.");
+    }
+  } catch (error) {
+    if (localDraft?.scenes?.length) {
+      renderStoryboard(localDraft);
+      setStatus("Cloud belum dapat diakses. Draft lokal dipulihkan: " + error.message, true);
+    } else setStatus("Belum dapat memuat proyek cloud: " + error.message, true);
+  }
 }
 
 const videoAssistantMessages=[];
@@ -1036,6 +1085,8 @@ function activateVideoStudio() {
 onAuthStateChanged(auth, user => {
   currentUser = user && user.emailVerified ? user : null;
   storageKey = currentUser ? "zaida-video-studio-draft-v1-" + currentUser.uid : null;
+  projectIdKey = currentUser ? "zaida-video-studio-project-v1-" + currentUser.uid : null;
+  activeVideoProjectId = projectIdKey ? localStorage.getItem(projectIdKey) : null;
   loadVideoBrandAssets();
   const allowed = Boolean(currentUser);
   $("generateStoryboard").disabled = !allowed;

@@ -16,6 +16,63 @@ let generatedNarrationBlob = null;
 let generatedSubtitleText = "";
 let videoVoicesLoadedFor = null;
 let videoDraftRestoredFor = null;
+let videoBrandAssets = { product: null, logo: null };
+let videoBrandAssetsKey = null;
+function renderVideoBrandAsset(kind) {
+  const asset=videoBrandAssets[kind];
+  const preview=$(kind==="product"?"videoProductPreview":"videoLogoPreview");
+  const name=$(kind==="product"?"videoProductFileName":"videoLogoFileName");
+  const remove=$(kind==="product"?"removeVideoProductImage":"removeVideoBrandLogo");
+  preview.replaceChildren();
+  if(asset?.dataUrl){
+    const img=document.createElement("img");img.src=asset.dataUrl;img.alt=kind==="product"?"Foto produk":"Logo brand";
+    preview.append(img);name.textContent=asset.name||"Gambar tersimpan";remove.hidden=false;
+  }else{
+    const placeholder=document.createElement("span");placeholder.textContent=kind==="product"?"▧":"◇";preview.append(placeholder);
+    name.textContent=kind==="product"?"Belum ada foto produk":"Belum ada logo";remove.hidden=true;
+  }
+}
+function loadVideoBrandAssets() {
+  videoBrandAssetsKey=currentUser?"zaida-video-brand-assets-v1-"+currentUser.uid:null;
+  videoBrandAssets={product:null,logo:null};
+  if(videoBrandAssetsKey){
+    try{const saved=JSON.parse(localStorage.getItem(videoBrandAssetsKey)||"{}");videoBrandAssets.product=saved.product||null;videoBrandAssets.logo=saved.logo||null;}catch{}
+  }
+  renderVideoBrandAsset("product");renderVideoBrandAsset("logo");
+}
+async function compressVideoBrandImage(file) {
+  if(!file?.type?.startsWith("image/"))throw new Error("Pilih file gambar yang valid.");
+  if(file.size>10*1024*1024)throw new Error("Ukuran gambar maksimal 10 MB.");
+  const bitmap=await createImageBitmap(file);
+  try{
+    const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const dataUrl=canvas.toDataURL("image/webp",0.86);
+    if(dataUrl.length>2_400_000)throw new Error("Gambar terlalu besar setelah dikompres. Coba gambar lain.");
+    return dataUrl;
+  }finally{bitmap.close?.();}
+}
+async function uploadVideoBrandAsset(kind,file) {
+  if(!file)return;
+  if(!currentUser||!videoBrandAssetsKey){setStatus("Masuk ke akun ZAIDA Voice untuk menyimpan aset brand.",true);return;}
+  const input=$(kind==="product"?"videoProductImage":"videoBrandLogo");
+  try{
+    const dataUrl=await compressVideoBrandImage(file);
+    const previous=videoBrandAssets[kind];
+    videoBrandAssets[kind]={name:file.name,dataUrl};
+    try{localStorage.setItem(videoBrandAssetsKey,JSON.stringify(videoBrandAssets));}
+    catch{videoBrandAssets[kind]=previous;throw new Error("Penyimpanan browser penuh. Hapus aset lain atau gunakan gambar lebih kecil.");}
+    renderVideoBrandAsset(kind);setStatus((kind==="product"?"Foto produk":"Logo brand")+" berhasil disimpan. Aset akan ikut saat render video.");
+  }catch(error){setStatus(error.message||"Gagal mengunggah gambar.",true);}
+  input.value="";
+}
+function removeVideoBrandAsset(kind) {
+  videoBrandAssets[kind]=null;
+  if(videoBrandAssetsKey){try{localStorage.setItem(videoBrandAssetsKey,JSON.stringify(videoBrandAssets));}catch{}}
+  renderVideoBrandAsset(kind);setStatus((kind==="product"?"Foto produk":"Logo brand")+" dihapus dari aset video.");
+}
+
 
 const VIDEO_VISUAL_STYLES={
   stickman:{label:"Stickman",prompt:"Use a clean minimalist stickman illustration style: simple expressive line-drawn human characters, clear poses, uncluttered backgrounds, consistent character design, restrained color palette. Not photorealistic."},
@@ -712,6 +769,7 @@ async function startDualRender(isExport = false) {
       subtitleText: isExport ? selectedSubtitleText : "",
       burnCaptions: isExport ? burnCaptions : false,
       captionStyle: { ...getCaptionStyle(), wordCues: generatedWordCues },
+      brandAssets: videoBrandAssets,
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
         else if (info.phase === "rendering") {
@@ -838,6 +896,10 @@ $("toggleStoryboardEditor").addEventListener("click",()=>{
 $("captionPreset").addEventListener("change",applyCaptionPreset);
 $("captionAnimation").addEventListener("change",syncCaptionPreview);
 applyCaptionPreset();
+$("videoProductImage").addEventListener("change",e=>uploadVideoBrandAsset("product",e.target.files?.[0]));
+$("videoBrandLogo").addEventListener("change",e=>uploadVideoBrandAsset("logo",e.target.files?.[0]));
+$("removeVideoProductImage").addEventListener("click",()=>removeVideoBrandAsset("product"));
+$("removeVideoBrandLogo").addEventListener("click",()=>removeVideoBrandAsset("logo"));
 $("videoVisualStyle").addEventListener("change",updateVisualStyleDescription);
 $("visualStyleGrid")?.addEventListener("click", event => {
   const card = event.target.closest("[data-visual-style]");
@@ -915,6 +977,7 @@ function activateVideoStudio() {
 onAuthStateChanged(auth, user => {
   currentUser = user && user.emailVerified ? user : null;
   storageKey = currentUser ? "zaida-video-studio-draft-v1-" + currentUser.uid : null;
+  loadVideoBrandAssets();
   const allowed = Boolean(currentUser);
   $("generateStoryboard").disabled = !allowed;
   $("generateVideoNarration").disabled = !allowed;

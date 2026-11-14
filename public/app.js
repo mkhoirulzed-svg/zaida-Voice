@@ -101,6 +101,7 @@ function scheduleVoiceProjectSave(){
 async function saveVoiceProject(){
   if(!currentUser||!activeVoiceProjectId)return false;
   const id=activeVoiceProjectId,payload=voiceProjectPayload();
+  const saveStatus=$("voiceProjectSaveStatus");if(saveStatus)saveStatus.textContent="Menyimpan…";
   voiceProjectSaveQueue=voiceProjectSaveQueue.catch(()=>{}).then(async()=>{
     if(!currentUser||!auth.currentUser)return false;
     const title=(payload.sourceText.split(/\s+/).slice(0,7).join(" ")||"Proyek Voice Studio").slice(0,70);

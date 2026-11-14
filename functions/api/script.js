@@ -102,10 +102,15 @@ export async function onRequestPost({ request, env }) {
           if (output) {
             const modelUsed = (hasOpenRouter ? data.model : upstream.headers.get("X-Kiosapi-Model-Used")) || data.model || primaryModel;
             const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
-            const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+            const usdToIdr = Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000);
+            const reportedCost = hasOpenRouter
+              ? (Number.isFinite(Number(data.usage?.cost)) ? Number(data.usage.cost) * usdToIdr : null)
+              : (data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null));
             const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
               ? Math.max(0, Number(reportedCost))
-              : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+              : (hasOpenRouter
+                ? (((Number(data.usage?.prompt_tokens) || 0) * 4500) + ((Number(data.usage?.completion_tokens) || 0) * 27000)) / 1000000
+                : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env));
             const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
             const charged = await settleReservedCredits(
               auth.user,

@@ -190,6 +190,11 @@
               <button class="secondary-button storyboard-edit-toggle" id="toggleStoryboardEditor" type="button" aria-expanded="false">✎ Edit storyboard, teks & gambar</button>
               <div id="storyboardEditor" hidden>
                 <div class="storyboard-summary"><span class="storyboard-tag">STORYBOARD · 720P</span><h3 id="storyboardTitle"></h3><p id="storyboardSummary"></p><div class="hook-box"><small>HOOK PEMBUKA</small><p id="storyboardHook"></p></div></div>
+                <section class="storyboard-json-editor" aria-labelledby="storyboardJsonTitle">
+                  <div class="storyboard-json-heading"><div><b id="storyboardJsonTitle">Edit seluruh storyboard (JSON)</b><small>Tempel JSON lengkap, lalu terapkan semua perubahan sekaligus.</small></div><button type="button" class="secondary-button" id="formatStoryboardJson">Muat ulang JSON</button></div>
+                  <textarea id="storyboardJson" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder='{"title":"Judul video","scenes":[...]}'></textarea>
+                  <div class="storyboard-json-actions"><small>Ctrl + Enter untuk menerapkan · Gambar adegan yang sudah dibuat akan dipertahankan sesuai urutan.</small><button type="button" class="primary-button" id="applyStoryboardJson">Terapkan JSON ke storyboard</button></div>
+                </section>
                 <div id="sceneList" class="scene-list"></div>
                 <div class="storyboard-actions"><button class="secondary-button" id="copyStoryboard">Salin storyboard</button><button class="primary-button" id="downloadStoryboard">Unduh JSON</button></div>
               </div>

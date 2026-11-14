@@ -23,9 +23,11 @@ export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
 
+  const hasOpenRouter = Boolean(env.OPENROUTER_API_KEY);
   const hasKiosapi = Boolean(env.KIOSAPI_API_KEY);
+  const hasPrimaryAI = hasOpenRouter || hasKiosapi;
   const hasDirectDeepSeek = Boolean(env.DEEPSEEK_API_KEY);
-  if (!hasKiosapi && !hasDirectDeepSeek) {
+  if (!hasPrimaryAI && !hasDirectDeepSeek) {
     return jsonError("KIOSAPI_API_KEY atau DEEPSEEK_API_KEY belum dikonfigurasi di Cloudflare.", 503);
   }
 
@@ -47,8 +49,8 @@ export async function onRequestPost({ request, env }) {
     ? "You are a professional editor for spoken-audio scripts in English. Improve flow, grammar, punctuation, and how naturally the text sounds when read aloud. Preserve the user's meaning, facts, names, and numbers. Do not add new claims. Use natural, conversational phrasing. Return only the revised script, with no introduction or explanation."
     : "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
 
-  const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
-  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";
+  const primaryModel = env.ZAIDA_OPENROUTER_TEXT_MODEL || env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "google/gemini-3.1-flash-lite";
+  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4.1-flash";
   const directDeepSeekModel = env.ZAIDA_DIRECT_DEEPSEEK_MODEL || "deepseek-chat";
   const maxOutputTokens = 1500;
   let reservation = null;
@@ -57,30 +59,30 @@ export async function onRequestPost({ request, env }) {
 
   try {
     await getOrCreateAccount(auth.user, env);
-    const reserveAmount = hasKiosapi
+    const reserveAmount = hasPrimaryAI
       ? estimateKiosapiReservation(text.length + system.length, maxOutputTokens, env)
       : estimateDeepSeekReservation(text.length + system.length, maxOutputTokens, env);
 
     reservation = await reserveCredits(auth.user, env, reserveAmount, task === "audio_tags" ? "ai-script-audio-tags" : "ai-script-edit", {
       requestId,
-      provider: hasKiosapi ? "kiosapi" : "deepseek",
-      model: hasKiosapi ? primaryModel : directDeepSeekModel
+      provider: hasOpenRouter ? "openrouter" : (hasKiosapi ? "kiosapi" : "deepseek"),
+      model: hasPrimaryAI ? primaryModel : directDeepSeekModel
     });
 
     let lastError = null;
 
     // Kiosapi is the primary gateway. Its models array enables an in-request
     // provider fallback to DeepSeek; only the model that answers is billed.
-    if (hasKiosapi) {
+    if (hasPrimaryAI) {
       try {
-        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+        const upstream = await fetch(hasOpenRouter ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.kiosapi.id/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": "Bearer " + env.KIOSAPI_API_KEY,
+            "Authorization": "Bearer " + (hasOpenRouter ? env.OPENROUTER_API_KEY : env.KIOSAPI_API_KEY),
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            ...(hasOpenRouter ? { model: primaryModel } : { models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel] }),
             messages: [
               { role: "system", content: system },
               { role: "user", content: text }
@@ -98,7 +100,7 @@ export async function onRequestPost({ request, env }) {
           providerResponded = true;
           const output = data.choices?.[0]?.message?.content?.trim();
           if (output) {
-            const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+            const modelUsed = (hasOpenRouter ? data.model : upstream.headers.get("X-Kiosapi-Model-Used")) || data.model || primaryModel;
             const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
             const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
             const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
@@ -110,9 +112,9 @@ export async function onRequestPost({ request, env }) {
               env,
               reservation.reservationId,
               billing.credits,
-              "ai-script-edit:kiosapi:" + modelUsed,
+              "ai-script-edit:" + (hasOpenRouter ? "openrouter:" : "kiosapi:") + modelUsed,
               {
-                provider: "kiosapi",
+                provider: hasOpenRouter ? "openrouter" : "kiosapi",
                 model: modelUsed,
                 providerCostIdr: Math.ceil(providerCostIdr),
                 inputTokens: billing.inputTokens,
@@ -126,7 +128,7 @@ export async function onRequestPost({ request, env }) {
               creditsCharged: charged.charged,
               creditsRemaining: charged.remaining,
               usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
-              provider: "kiosapi",
+              provider: hasOpenRouter ? "openrouter" : "kiosapi",
               model: modelUsed,
               providerCostIdr: providerCostIdr
             });

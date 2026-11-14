@@ -23,9 +23,11 @@ export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
 
+  const hasOpenRouter = Boolean(env.OPENROUTER_API_KEY);
   const hasKiosapi = Boolean(env.KIOSAPI_API_KEY);
+  const hasPrimaryAI = hasOpenRouter || hasKiosapi;
   const hasDirectDeepSeek = Boolean(env.DEEPSEEK_API_KEY);
-  if (!hasKiosapi && !hasDirectDeepSeek) {
+  if (!hasPrimaryAI && !hasDirectDeepSeek) {
     return jsonError("KIOSAPI_API_KEY atau DEEPSEEK_API_KEY belum dikonfigurasi di Cloudflare.", 503);
   }
 
@@ -47,8 +49,9 @@ export async function onRequestPost({ request, env }) {
     ? "You are a professional editor for spoken-audio scripts in English. Improve flow, grammar, punctuation, and how naturally the text sounds when read aloud. Preserve the user's meaning, facts, names, and numbers. Do not add new claims. Use natural, conversational phrasing. Return only the revised script, with no introduction or explanation."
     : "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
 
-  const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
-  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";
+  const kiosapiPrimaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
+  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4.1-flash";
+  const primaryModel = hasOpenRouter ? (env.ZAIDA_OPENROUTER_TEXT_MODEL || "google/gemini-3.1-flash-lite") : kiosapiPrimaryModel;
   const directDeepSeekModel = env.ZAIDA_DIRECT_DEEPSEEK_MODEL || "deepseek-chat";
   const maxOutputTokens = 1500;
   let reservation = null;
@@ -57,30 +60,30 @@ export async function onRequestPost({ request, env }) {
 
   try {
     await getOrCreateAccount(auth.user, env);
-    const reserveAmount = hasKiosapi
+    const reserveAmount = hasPrimaryAI
       ? estimateKiosapiReservation(text.length + system.length, maxOutputTokens, env)
       : estimateDeepSeekReservation(text.length + system.length, maxOutputTokens, env);
 
     reservation = await reserveCredits(auth.user, env, reserveAmount, task === "audio_tags" ? "ai-script-audio-tags" : "ai-script-edit", {
       requestId,
-      provider: hasKiosapi ? "kiosapi" : "deepseek",
-      model: hasKiosapi ? primaryModel : directDeepSeekModel
+      provider: hasOpenRouter ? "openrouter" : (hasKiosapi ? "kiosapi" : "deepseek"),
+      model: hasPrimaryAI ? primaryModel : directDeepSeekModel
     });
 
     let lastError = null;
 
     // Kiosapi is the primary gateway. Its models array enables an in-request
     // provider fallback to DeepSeek; only the model that answers is billed.
-    if (hasKiosapi) {
+    if (hasPrimaryAI) {
       try {
-        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+        const upstream = await fetch(hasOpenRouter ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.kiosapi.id/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": "Bearer " + env.KIOSAPI_API_KEY,
+            "Authorization": "Bearer " + (hasOpenRouter ? env.OPENROUTER_API_KEY : env.KIOSAPI_API_KEY),
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            ...(hasOpenRouter ? { model: primaryModel } : { models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel] }),
             messages: [
               { role: "system", content: system },
               { role: "user", content: text }
@@ -98,21 +101,26 @@ export async function onRequestPost({ request, env }) {
           providerResponded = true;
           const output = data.choices?.[0]?.message?.content?.trim();
           if (output) {
-            const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+            const modelUsed = (hasOpenRouter ? data.model : upstream.headers.get("X-Kiosapi-Model-Used")) || data.model || primaryModel;
             const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
-            const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+            const usdToIdr = Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000);
+            const reportedCost = hasOpenRouter
+              ? (Number.isFinite(Number(data.usage?.cost)) ? Number(data.usage.cost) * usdToIdr : null)
+              : (data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null));
             const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
               ? Math.max(0, Number(reportedCost))
-              : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+              : (hasOpenRouter
+                ? (((Number(data.usage?.prompt_tokens) || 0) * 4500) + ((Number(data.usage?.completion_tokens) || 0) * 27000)) / 1000000
+                : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env));
             const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
             const charged = await settleReservedCredits(
               auth.user,
               env,
               reservation.reservationId,
               billing.credits,
-              "ai-script-edit:kiosapi:" + modelUsed,
+              "ai-script-edit:" + (hasOpenRouter ? "openrouter:" : "kiosapi:") + modelUsed,
               {
-                provider: "kiosapi",
+                provider: hasOpenRouter ? "openrouter" : "kiosapi",
                 model: modelUsed,
                 providerCostIdr: Math.ceil(providerCostIdr),
                 inputTokens: billing.inputTokens,
@@ -126,7 +134,7 @@ export async function onRequestPost({ request, env }) {
               creditsCharged: charged.charged,
               creditsRemaining: charged.remaining,
               usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
-              provider: "kiosapi",
+              provider: hasOpenRouter ? "openrouter" : "kiosapi",
               model: modelUsed,
               providerCostIdr: providerCostIdr
             });
@@ -136,6 +144,46 @@ export async function onRequestPost({ request, env }) {
           lastError = new Error(data.error?.message || data.message || "Kiosapi gagal memproses naskah (HTTP " + upstream.status + ").");
           lastError.status = upstream.status;
         }
+      } catch (error) {
+        if (providerResponded) throw error;
+        lastError = error;
+      }
+    }
+
+    // Provider fallback: if OpenRouter fails, try KiosAPI before direct DeepSeek.
+    if (hasOpenRouter && hasKiosapi && !providerResponded) {
+      try {
+        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel],
+            messages: [{ role: "system", content: system }, { role: "user", content: text }],
+            temperature: 0.7, max_tokens: maxOutputTokens, stream: false
+          })
+        });
+        const data = await readJson(upstream);
+        if (!upstream.ok) throw new Error(data.error?.message || data.message || "KiosAPI gagal memproses naskah (HTTP " + upstream.status + ").");
+        const output = data.choices?.[0]?.message?.content?.trim();
+        if (!output) throw new Error("KiosAPI tidak mengembalikan naskah.");
+        providerResponded = true;
+        const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+        const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
+        const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+        const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
+          ? Math.max(0, Number(reportedCost)) : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+        const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
+        const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
+          "ai-script-edit:kiosapi:" + modelUsed, {
+            provider: "kiosapi", model: modelUsed, providerCostIdr: Math.ceil(providerCostIdr),
+            inputTokens: billing.inputTokens, outputTokens: billing.outputTokens, requestId
+          });
+        reservationSettled = true;
+        return Response.json({
+          text: output, creditsCharged: charged.charged, creditsRemaining: charged.remaining,
+          usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
+          provider: "kiosapi", model: modelUsed, providerCostIdr
+        });
       } catch (error) {
         if (providerResponded) throw error;
         lastError = error;

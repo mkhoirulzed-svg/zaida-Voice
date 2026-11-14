@@ -108,7 +108,7 @@ function parseStoryboard(raw, script, units, duration, requestedCount) {
 export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
-  if (!env.KIOSAPI_API_KEY && !env.DEEPSEEK_API_KEY) return jsonError("Konfigurasikan KIOSAPI_API_KEY atau DEEPSEEK_API_KEY di Cloudflare.", 503);
+  if (!env.OPENROUTER_API_KEY && !env.KIOSAPI_API_KEY && !env.DEEPSEEK_API_KEY) return jsonError("Konfigurasikan KIOSAPI_API_KEY atau DEEPSEEK_API_KEY di Cloudflare.", 503);
 
   let body;
   try { body = await request.json(); } catch { return jsonError("Format permintaan tidak valid.", 400); }
@@ -155,7 +155,7 @@ Kembalikan HANYA JSON valid:
     if (configured.startsWith("openai/gpt-4o") || configured === "openai/o4-mini" || configured.startsWith("deepseek/")) return replacement;
     return configured;
   };
-  const primaryModel = resolveConfiguredModel(configuredPrimary, "google/gemini-3.1-flash-lite") || "google/gemini-3.1-flash-lite";
+  const primaryModel = env.ZAIDA_OPENROUTER_STORYBOARD_MODEL || resolveConfiguredModel(configuredPrimary, "google/gemini-3.1-flash-lite") || "google/gemini-3.1-flash-lite";
   const fallbackModel = resolveConfiguredModel(configuredFallback, "google/gemini-3.5-flash") || "google/gemini-3.5-flash";
   const maxTokens = Math.min(12000, Math.max(6500, units.length * 260));
   let reservation = null, settled = false, providerResponded = false;
@@ -169,12 +169,45 @@ Kembalikan HANYA JSON valid:
       { requestId, provider: "multi-provider", model: primaryModel }
     );
     // Jalur 1-2: KiosAPI. Jalur 3: DeepSeek API langsung, independen dari KiosAPI.
-    const modelCandidates = env.KIOSAPI_API_KEY ? [...new Set([primaryModel, fallbackModel])] : [];
     let upstream = null;
     let data = null;
     let providerName = "kiosapi";
     let modelUsed = primaryModel;
     let lastProviderError = null;
+    // Primary: OpenRouter. KiosAPI and direct DeepSeek remain as fallbacks.
+    if (env.OPENROUTER_API_KEY) {
+      try {
+        const candidateResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + env.OPENROUTER_API_KEY,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://voice.zaidalabs.com",
+            "X-Title": "ZAIDA Voice"
+          },
+          body: JSON.stringify({
+            model: primaryModel,
+            messages: [{ role: "system", content: system }, { role: "user", content: userContent }],
+            temperature: 0.35,
+            max_tokens: maxTokens,
+            response_format: { type: "json_object" },
+            stream: false
+          })
+        });
+        const candidateData = await readJson(candidateResponse);
+        if (candidateResponse.ok && candidateData.choices?.[0]?.message?.content) {
+          upstream = candidateResponse;
+          data = candidateData;
+          providerName = "openrouter";
+          modelUsed = candidateData.model || primaryModel;
+        } else {
+          lastProviderError = { status: candidateResponse.status || 502, message: candidateData.error?.message || "OpenRouter tidak mengembalikan storyboard." };
+        }
+      } catch (providerError) {
+        lastProviderError = { status: 502, message: providerError?.message || "Koneksi OpenRouter gagal." };
+      }
+    }
+    const modelCandidates = (!upstream && env.KIOSAPI_API_KEY) ? [...new Set([primaryModel, fallbackModel])] : [];
     for (const modelCandidate of modelCandidates) {
       try {
         const candidateResponse = await fetch("https://api.kiosapi.id/v1/chat/completions", {
@@ -242,7 +275,9 @@ Kembalikan HANYA JSON valid:
     providerResponded = true;
     const raw = data.choices?.[0]?.message?.content?.trim();
     const headerCost = providerName === "kiosapi" ? upstream.headers.get("X-Kiosapi-Cost-IDR") : null;
-    const reportedCost = providerName === "kiosapi" ? (data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null)) : null;
+    const reportedCost = providerName === "openrouter"
+      ? (Number.isFinite(Number(data.usage?.cost)) ? Number(data.usage.cost) * Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000) : null)
+      : (providerName === "kiosapi" ? (data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null)) : null);
     const directInputRate = Math.max(0, Number(env.ZAIDA_DEEPSEEK_INPUT_MAX_IDR_PER_MILLION) || 6000);
     const directOutputRate = Math.max(0, Number(env.ZAIDA_DEEPSEEK_OUTPUT_MAX_IDR_PER_MILLION) || 24000);
     const directUsage = data.usage || {};
@@ -252,7 +287,9 @@ Kembalikan HANYA JSON valid:
       ? directCostIdr
       : (reportedCost !== null && Number.isFinite(Number(reportedCost))
         ? Math.max(0, Number(reportedCost))
-        : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env));
+        : (providerName === "openrouter"
+          ? (((Number(data.usage?.prompt_tokens) || 0) * 4500) + ((Number(data.usage?.completion_tokens) || 0) * 27000)) / 1000000
+          : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env)));
     const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
     const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
       "video-storyboard:" + providerName + ":" + modelUsed, {

@@ -34,9 +34,11 @@ export async function onRequestPost({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
 
+  const hasOpenRouter = Boolean(env.OPENROUTER_API_KEY);
   const hasKiosapi = Boolean(env.KIOSAPI_API_KEY);
+  const hasPrimaryAI = hasOpenRouter || hasKiosapi;
   const hasDirectDeepSeek = Boolean(env.DEEPSEEK_API_KEY);
-  if (!hasKiosapi && !hasDirectDeepSeek) {
+  if (!hasPrimaryAI && !hasDirectDeepSeek) {
     return jsonError("KIOSAPI_API_KEY atau DEEPSEEK_API_KEY belum dikonfigurasi di Cloudflare.", 503);
   }
 
@@ -80,8 +82,9 @@ Panjang target: ${length}
 Gunakan preferensi ini sebagai arahan, bukan batasan kaku.
 OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" berisi respons percakapan untuk pengguna. "script" berisi naskah final lengkap HANYA jika pengguna secara eksplisit meminta dibuatkan/dituliskan naskah atau meminta versi final; selain itu gunakan string kosong. Naskah harus siap dibacakan, tanpa catatan proses atau label yang tidak perlu. Jangan mengubah preferensi personalisasi menjadi klaim faktual.`;
 
-  const primaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
-  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4-flash";
+  const kiosapiPrimaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
+  const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4.1-flash";
+  const primaryModel = hasOpenRouter ? (env.ZAIDA_OPENROUTER_TEXT_MODEL || "google/gemini-3.1-flash-lite") : kiosapiPrimaryModel;
   const directDeepSeekModel = env.ZAIDA_DIRECT_DEEPSEEK_MODEL || "deepseek-chat";
   const maxOutputTokens = 1200;
   const promptMessages = [{ role: "system", content: system }, ...messages];
@@ -92,29 +95,29 @@ OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" ber
   try {
     await getOrCreateAccount(auth.user, env);
     const inputCharacters = system.length + messages.reduce((n, m) => n + m.content.length, 0);
-    const reserveAmount = hasKiosapi
+    const reserveAmount = hasPrimaryAI
       ? estimateKiosapiReservation(inputCharacters, maxOutputTokens, env)
       : estimateDeepSeekReservation(inputCharacters, maxOutputTokens, env);
 
     reservation = await reserveCredits(auth.user, env, reserveAmount, "ai-assistant", {
       requestId,
-      provider: hasKiosapi ? "kiosapi" : "deepseek",
-      model: hasKiosapi ? primaryModel : directDeepSeekModel
+      provider: hasOpenRouter ? "openrouter" : (hasKiosapi ? "kiosapi" : "deepseek"),
+      model: hasPrimaryAI ? primaryModel : directDeepSeekModel
     });
 
     let lastError = null;
 
     // Kiosapi is the primary gateway. The models array provides its model-level fallback.
-    if (hasKiosapi) {
+    if (hasPrimaryAI) {
       try {
-        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+        const upstream = await fetch(hasOpenRouter ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.kiosapi.id/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": "Bearer " + env.KIOSAPI_API_KEY,
+            "Authorization": "Bearer " + (hasOpenRouter ? env.OPENROUTER_API_KEY : env.KIOSAPI_API_KEY),
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            ...(hasOpenRouter ? { model: primaryModel } : { models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel] }),
             messages: promptMessages,
             temperature: 0.75,
             max_tokens: maxOutputTokens,
@@ -133,21 +136,26 @@ OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" ber
         // Once a successful upstream response arrives it may be billable.
         // Do not call another provider if billing or output parsing subsequently fails.
         providerResponded = true;
-        const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+        const modelUsed = (hasOpenRouter ? data.model : upstream.headers.get("X-Kiosapi-Model-Used")) || data.model || primaryModel;
         const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
-        const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+        const usdToIdr = Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000);
+        const reportedCost = hasOpenRouter
+          ? (Number.isFinite(Number(data.usage?.cost)) ? Number(data.usage.cost) * usdToIdr : null)
+          : (data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null));
         const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
           ? Math.max(0, Number(reportedCost))
-          : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+          : (hasOpenRouter
+            ? (((Number(data.usage?.prompt_tokens) || 0) * 4500) + ((Number(data.usage?.completion_tokens) || 0) * 27000)) / 1000000
+            : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env));
         const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
         const charged = await settleReservedCredits(
           auth.user,
           env,
           reservation.reservationId,
           billing.credits,
-          "ai-assistant:kiosapi:" + modelUsed,
+          "ai-assistant:" + (hasOpenRouter ? "openrouter:" : "kiosapi:") + modelUsed,
           {
-            provider: "kiosapi",
+            provider: hasOpenRouter ? "openrouter" : "kiosapi",
             model: modelUsed,
             providerCostIdr: Math.ceil(providerCostIdr),
             inputTokens: billing.inputTokens,
@@ -163,9 +171,48 @@ OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" ber
           creditsCharged: charged.charged,
           creditsRemaining: charged.remaining,
           usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
-          provider: "kiosapi",
+          provider: hasOpenRouter ? "openrouter" : "kiosapi",
           model: modelUsed,
           providerCostIdr
+        });
+      } catch (error) {
+        if (providerResponded) throw error;
+        lastError = error;
+      }
+    }
+
+    // Provider fallback: if OpenRouter fails, try KiosAPI before direct DeepSeek.
+    if (hasOpenRouter && hasKiosapi && !providerResponded) {
+      try {
+        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel],
+            messages: promptMessages, temperature: 0.75, max_tokens: maxOutputTokens,
+            response_format: { type: "json_object" }, stream: false
+          })
+        });
+        const data = await readJson(upstream);
+        if (!upstream.ok) throw new Error(data.error?.message || data.message || "KiosAPI gagal memproses percakapan (HTTP " + upstream.status + ").");
+        providerResponded = true;
+        const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+        const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
+        const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+        const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
+          ? Math.max(0, Number(reportedCost)) : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+        const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
+        const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
+          "ai-assistant:kiosapi:" + modelUsed, {
+            provider: "kiosapi", model: modelUsed, providerCostIdr: Math.ceil(providerCostIdr),
+            inputTokens: billing.inputTokens, outputTokens: billing.outputTokens, requestId
+          });
+        reservationSettled = true;
+        const parsed = parseAssistantOutput(data.choices?.[0]?.message?.content);
+        return Response.json({
+          ...parsed, creditsCharged: charged.charged, creditsRemaining: charged.remaining,
+          usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
+          provider: "kiosapi", model: modelUsed, providerCostIdr
         });
       } catch (error) {
         if (providerResponded) throw error;

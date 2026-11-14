@@ -532,8 +532,12 @@ function updateCaptionPreviewAspectRatio() {
   if (!stage) return;
   const format = document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16";
   const isLandscape = format === "16:9";
+  // Keep the preview's actual box ratio; mobile min/max-height rules must not flatten it.
   stage.style.aspectRatio = isLandscape ? "16 / 9" : "9 / 16";
   stage.style.width = isLandscape ? "100%" : "min(100%, 320px)";
+  stage.style.height = "auto";
+  stage.style.minHeight = "0";
+  stage.style.maxHeight = "none";
 }
 function updateCaptionPreview() {
   const style = getCaptionStyle();

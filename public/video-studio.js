@@ -128,9 +128,49 @@ function buildPayload() {
     scenes: currentStoryboard.scenes.map(({ generatedImage, uploadedImageDataUrl, imageBusy, ...scene }) => scene)
   };
 }
+function syncStoryboardJson() {
+  const editor = $("storyboardJson");
+  if (editor && currentStoryboard) editor.value = JSON.stringify(buildPayload(), null, 2);
+}
 function saveDraft() {
-  if (!currentStoryboard || !storageKey) return;
-  try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {}
+  if (!currentStoryboard) return;
+  if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {} }
+  syncStoryboardJson();
+}
+function applyStoryboardJson() {
+  const editor = $("storyboardJson");
+  try {
+    const parsed = JSON.parse(editor.value);
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.scenes) || parsed.scenes.length < 2) {
+      throw new Error("JSON harus berisi objek storyboard dengan minimal 2 adegan di dalam scenes.");
+    }
+    const previous = currentStoryboard?.scenes || [];
+    parsed.scenes = parsed.scenes.map((scene, index) => {
+      if (!scene || typeof scene !== "object") throw new Error("Format adegan " + (index + 1) + " tidak valid.");
+      const old = previous[index] || {};
+      return {
+        ...scene,
+        scene_number: Number(scene.scene_number) || index + 1,
+        title: String(scene.title || ("Adegan " + (index + 1))),
+        narration: String(scene.narration || ""),
+        visual_description: String(scene.visual_description || ""),
+        visual_prompt: String(scene.visual_prompt || ""),
+        on_screen_text: String(scene.on_screen_text || ""),
+        estimated_seconds: Math.max(1, Number(scene.estimated_seconds) || 6),
+        transition: String(scene.transition || "cut"),
+        generatedImage: old.generatedImage || null,
+        uploadedImageDataUrl: old.uploadedImageDataUrl || ""
+      };
+    });
+    parsed.title = String(parsed.title || "Storyboard baru");
+    parsed.hook = String(parsed.hook || "");
+    parsed.summary = String(parsed.summary || "");
+    parsed.closing = String(parsed.closing || "");
+    renderStoryboard(parsed);
+    setStatus("JSON berhasil diterapkan ke seluruh storyboard. Gambar yang sudah dibuat tetap dipertahankan berdasarkan urutan adegan.");
+  } catch (error) {
+    setStatus("JSON belum bisa diterapkan: " + error.message, true);
+  }
 }
 function createField(labelText, value, className, onInput) {
   const wrap = document.createElement("div");
@@ -150,16 +190,33 @@ function renderGeneratedImage(scene, previewArea) {
   const isUploaded = Boolean(scene.uploadedImageDataUrl);
   const figure = document.createElement("figure");
   figure.className = "scene-image-preview";
+  const visual = document.createElement("div");
+  visual.className = "scene-image-composite";
   const image = document.createElement("img");
   image.alt = "Hasil gambar adegan " + scene.scene_number;
   image.src = source;
+  visual.append(image);
+  if (videoBrandAssets.product?.dataUrl) {
+    const product = document.createElement("img");
+    product.className = "scene-brand-product-overlay";
+    product.src = videoBrandAssets.product.dataUrl;
+    product.alt = "Foto produk";
+    visual.append(product);
+  }
+  if (videoBrandAssets.logo?.dataUrl) {
+    const logo = document.createElement("img");
+    logo.className = "scene-brand-logo-overlay";
+    logo.src = videoBrandAssets.logo.dataUrl;
+    logo.alt = "Logo brand";
+    visual.append(logo);
+  }
   const caption = document.createElement("figcaption");
   caption.textContent = isUploaded ? "Gambar milikmu · tanpa biaya kredit" : "Gambar AI · " + Number(scene.generatedImage.cost).toLocaleString("id-ID") + " kredit";
   const download = document.createElement("a");
   download.href = image.src;
   download.download = "zaida-adegan-" + scene.scene_number + ".png";
-  download.textContent = "Unduh gambar";
-  figure.append(image, caption, download);
+  download.textContent = "Unduh gambar dasar";
+  figure.append(visual, caption, download);
   previewArea.append(figure);
 }
 async function generateSceneImage(scene, button, imageArea) {
@@ -900,6 +957,9 @@ $("videoProductImage").addEventListener("change",e=>uploadVideoBrandAsset("produ
 $("videoBrandLogo").addEventListener("change",e=>uploadVideoBrandAsset("logo",e.target.files?.[0]));
 $("removeVideoProductImage").addEventListener("click",()=>removeVideoBrandAsset("product"));
 $("removeVideoBrandLogo").addEventListener("click",()=>removeVideoBrandAsset("logo"));
+$("applyStoryboardJson")?.addEventListener("click",applyStoryboardJson);
+$("formatStoryboardJson")?.addEventListener("click",()=>{if(currentStoryboard)syncStoryboardJson();setStatus("JSON diformat ulang dari storyboard aktif.");});
+$("storyboardJson")?.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key==="Enter"){event.preventDefault();applyStoryboardJson();}});
 $("videoVisualStyle").addEventListener("change",updateVisualStyleDescription);
 $("visualStyleGrid")?.addEventListener("click", event => {
   const card = event.target.closest("[data-visual-style]");

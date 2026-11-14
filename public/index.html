@@ -116,10 +116,10 @@
           <div class="panel admin-credit-panel"><div class="panel-heading"><div><div><h2>Tambah kredit pengguna</h2></div></div></div><form id="adminCreditForm" class="admin-credit-form"><label>Email pengguna<input id="adminCreditEmail" type="email" placeholder="nama@email.com" required></label><label>Jumlah kredit<input id="adminCreditAmount" type="number" min="1" max="1000000" step="1" value="10000" required></label><button class="generate-button" id="adminCreditSubmit" type="submit">Tambahkan kredit</button></form></div><div class="admin-provider-grid" id="adminProviders"></div>
           <section class="panel admin-transactions"><div class="panel-heading"><div><h2>Transaksi terbaru</h2></div></div><div id="adminTransactionList" class="admin-transaction-list"><div class="empty-output"><b>Belum ada data</b></div></div></section></section>
 <section class="page video-page" id="videoStudioPage">
-        <div class="video-heading"><div><div class="eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Auto Video <em>Studio.</em></h1><p>Buat konsep video dari HP, untuk format vertikal dan horizontal.</p></div><div class="format-chip"><b>720P</b><span>FORMAT VIDEO</span></div></div>
+        <div class="video-heading"><div><h1>Auto Video <em>Studio.</em></h1></div></div>
         <div class="video-layout">
           <section class="panel video-form-panel">
-            <div class="section-head"><h2>01 · Konsep video</h2><span class="video-engine">KIOSAPI AI</span></div>
+            
             <label class="field-label" for="videoTopic">NASKAH VIDEO</label>
             <textarea id="videoTopic" maxlength="30000" rows="10" placeholder="Tempel atau tulis naskah lengkap di sini…"></textarea>
             <small class="video-input-note">Tulis naskah sendiri atau minta bantuan Asisten AI di bawah.</small>
@@ -153,7 +153,6 @@
               <button type="button" class="visual-style-option" data-visual-style="comic" aria-pressed="false"><span class="visual-style-art visual-style-image"><img src="https://cdn.pixabay.com/photo/2025/10/08/12/37/elderly-man-9881461_1280.png" alt="Contoh ilustrasi komik" loading="lazy" decoding="async"></span><strong>Komik</strong><small>Graphic novel</small></button>
               <button type="button" class="visual-style-option" data-visual-style="stickman" aria-pressed="false"><span class="visual-style-art visual-style-image"><img src="https://cdn.pixabay.com/photo/2022/03/20/16/48/stick-figure-7081366_1280.jpg" alt="Contoh karakter stickman" loading="lazy" decoding="async"></span><strong>Stickman</strong><small>Karakter garis</small></button>
             </div>
-            <div class="visual-style-card" id="visualStyleDescription"><div><b>Cinematic</b><small>Visual realistis dengan pencahayaan dramatis dan komposisi seperti film.</small></div><span>VISUAL</span></div>
             <section class="video-brand-assets" aria-labelledby="videoBrandAssetsTitle">
               <div class="video-brand-assets-heading"><div><h3 id="videoBrandAssetsTitle">Foto Produk &amp; Logo Brand</h3><p>Tambahkan identitas visual agar tampil pada video hasil render.</p></div><span>✦</span></div>
               <div class="video-brand-assets-grid">
@@ -168,7 +167,6 @@
                   <input type="file" id="videoBrandLogo" accept="image/*" hidden>
                 </article>
               </div>
-              <small class="video-brand-assets-note">Foto produk dan logo dikirim ke AI sebagai referensi visual untuk menyatu alami dalam setiap gambar adegan. File diproses di browser dan disimpan di perangkat ini.</small>
             </section>
             <div class="video-format-settings">
               <label class="field-label">FORMAT VIDEO</label>
@@ -178,7 +176,6 @@
               </fieldset>
             </div>
             <button class="generate-button" id="generateStoryboard"><span>✧</span> Buat storyboard <b>→</b></button>
-            <p class="privacy-note">Storyboard dan gambar dibuat dengan AI. Pemakaian kredit ZAIDA ditampilkan sebelum proses dan disesuaikan dengan biaya aktual setelah gambar selesai.</p>
             <div class="video-status" id="videoStatus" role="status" aria-live="polite"></div>
           </section>
           <section class="panel storyboard-panel">
@@ -202,7 +199,7 @@
           </section>
         </div>
         <section class="panel video-audio-panel" id="videoAudioPanel">
-          <div class="section-head"><div><h2>03 · Audio & Narasi</h2><small>Pilih cara menambahkan suara ke videomu.</small></div><span class="video-engine">AUDIO STUDIO</span></div>
+          <div class="section-head"><h2>03 · Audio & Narasi</h2><span class="video-engine">AUDIO STUDIO</span></div>
           <div class="audio-choice-card">
             <div class="audio-choice-heading"><span class="audio-choice-number">1</span><div><b>Pilih suara ZAIDA Voice</b><small>Tentukan karakter suara untuk narasimu.</small></div></div>
             <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA</label>

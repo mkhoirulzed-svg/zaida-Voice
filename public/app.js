@@ -103,7 +103,7 @@ async function saveVoiceProject(){
   const id=activeVoiceProjectId,payload=voiceProjectPayload();
   voiceProjectSaveQueue=voiceProjectSaveQueue.catch(()=>{}).then(async()=>{
     if(!currentUser||!auth.currentUser)return false;
-    const title=(payload.sourceText.split(/\\s+/).slice(0,7).join(" ")||"Proyek Voice Studio").slice(0,70);
+    const title=(payload.sourceText.split(/\s+/).slice(0,7).join(" ")||"Proyek Voice Studio").slice(0,70);
     await api("/api/voice/projects",{method:"POST",authRequired:true,body:JSON.stringify({id,title,payload})});
     return true;
   });

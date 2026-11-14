@@ -49,8 +49,9 @@ export async function onRequestPost({ request, env }) {
     ? "You are a professional editor for spoken-audio scripts in English. Improve flow, grammar, punctuation, and how naturally the text sounds when read aloud. Preserve the user's meaning, facts, names, and numbers. Do not add new claims. Use natural, conversational phrasing. Return only the revised script, with no introduction or explanation."
     : "Kamu adalah editor naskah profesional untuk narasi audio berbahasa Indonesia. Perbaiki alur, ejaan, tanda baca, dan keterdengaran saat dibacakan. Pertahankan maksud, fakta, nama, dan angka dari pengguna. Jangan menambahkan klaim baru. Gunakan kalimat natural, tidak kaku. Kembalikan hanya naskah hasil revisi tanpa pembuka atau penjelasan.";
 
-  const primaryModel = env.ZAIDA_OPENROUTER_TEXT_MODEL || env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "google/gemini-3.1-flash-lite";
+  const kiosapiPrimaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
   const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4.1-flash";
+  const primaryModel = hasOpenRouter ? (env.ZAIDA_OPENROUTER_TEXT_MODEL || "google/gemini-3.1-flash-lite") : kiosapiPrimaryModel;
   const directDeepSeekModel = env.ZAIDA_DIRECT_DEEPSEEK_MODEL || "deepseek-chat";
   const maxOutputTokens = 1500;
   let reservation = null;
@@ -82,7 +83,7 @@ export async function onRequestPost({ request, env }) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            ...(hasOpenRouter ? { model: primaryModel } : { models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel] }),
+            ...(hasOpenRouter ? { model: primaryModel } : { models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel] }),
             messages: [
               { role: "system", content: system },
               { role: "user", content: text }
@@ -156,7 +157,7 @@ export async function onRequestPost({ request, env }) {
           method: "POST",
           headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
           body: JSON.stringify({
-            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel],
             messages: [{ role: "system", content: system }, { role: "user", content: text }],
             temperature: 0.7, max_tokens: maxOutputTokens, stream: false
           })

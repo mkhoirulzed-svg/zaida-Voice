@@ -510,3 +510,11 @@ body:not(.in-studio) .bottom-dock,body:not(.in-studio) .mobile-step-nav{display:
 .voice-use{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--text)}
 .voice-use:hover,.voice-preview:hover:not(:disabled){border-color:var(--accent);filter:brightness(1.08)}
 @media(max-width:420px){.voice-card{gap:6px;padding:9px}.voice-card-actions{gap:4px}.voice-use{padding:0 7px}}
+
+
+/* Voice Studio cloud project status */
+.voice-project-save-status{display:inline-flex;align-items:center;gap:6px;margin-left:auto;color:var(--muted,#85858f);font-size:12px;white-space:nowrap}
+#voiceProjectHistory .history-item{gap:14px}
+#voiceProjectHistory .history-item>div{min-width:0;flex:1}
+#voiceProjectHistory .history-item small{display:block;color:var(--muted,#85858f);margin-top:4px}
+@media(max-width:640px){.voice-project-save-status{font-size:11px}}

@@ -24,6 +24,7 @@ export async function onRequestPost({ request, env }) {
   if (auth.error) return auth.error;
   const useOpenRouter = Boolean(env.OPENROUTER_API_KEY);
   if (!useOpenRouter && !env.KIOSAPI_API_KEY) return jsonError("OPENROUTER_API_KEY atau KIOSAPI_API_KEY belum dikonfigurasi di Cloudflare.", 503);
+  if (!env.VIDEO_MEDIA) return jsonError("R2 VIDEO_MEDIA belum terhubung. Tidak ada kredit yang dipotong.", 503);
 
   let body;
   try { body = await request.json(); }

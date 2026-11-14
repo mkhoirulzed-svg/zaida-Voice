@@ -479,12 +479,16 @@ async function generateAllSceneImages() {
   const scenes = currentStoryboard?.scenes || [];
   const pending = scenes.filter(scene => !scene.generatedImage);
   if (!pending.length) return;
-  const estimate = pending.length * 500;
+  const hasReferenceImages = Boolean(videoBrandAssets.product?.dataUrl || videoBrandAssets.logo?.dataUrl);
+  const estimatePerImage = hasReferenceImages ? 2500 : 500;
+  const estimate = pending.length * estimatePerImage;
+  const imageModeLabel = hasReferenceImages ? "AI Image Editing (foto referensi)" : "AI Image Generation (tanpa referensi)";
   const approved = confirm(
     "Storyboard selesai dengan " + scenes.length + " adegan.\n\n" +
     "ZAIDA akan membuat otomatis " + pending.length + " gambar yang belum tersedia.\n" +
-    "Estimasi biaya provider: Rp" + estimate.toLocaleString("id-ID") + ".\n" +
-    "Kredit ZAIDA dipotong sesuai tarif akun dan ditampilkan setelah tiap gambar selesai.\n\n" +
+    "Mode: " + imageModeLabel + ".\n" +
+    "Estimasi biaya provider: Rp" + estimate.toLocaleString("id-ID") + " (sekitar Rp" + estimatePerImage.toLocaleString("id-ID") + " per gambar).\n" +
+    "Kredit ZAIDA dipotong sesuai biaya aktual provider dan markup akun, lalu ditampilkan setelah tiap gambar selesai.\n\n" +
     "Lanjutkan membuat semua gambar?"
   );
   if (!approved) {

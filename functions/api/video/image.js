@@ -3,12 +3,14 @@ import {
   releaseCredits, settleReservedCredits, calculateKiosapiCharge
 } from "../../lib/firebase.js";
 
-const GENERATION_MODEL = "bytedance-seed/seedream-5-0-flash";
+const GENERATION_MODEL = "openai/gpt-image-2.5-flare";
 const GENERATION_OPTION = "1024x1536:medium";
-const EDIT_MODEL = "bytedance-seed/seedream-5-0-flash";
+const EDIT_MODEL = "google/nano-banana-2";
 const EDIT_OPTION = "standard";
-const GENERATION_PRICE_IDR = 324;
-const EDIT_PRICE_IDR = 324;
+const GENERATION_PRICE_IDR = 500;
+const EDIT_PRICE_IDR = 2500;
+const OPENROUTER_IMAGE_MODEL = "bytedance-seed/seedream-5-0-flash";
+const OPENROUTER_IMAGE_PRICE_IDR = 324;
 const jsonError = (message, status = 502) => Response.json({ error: message }, { status });
 
 async function readJson(response) {
@@ -36,7 +38,7 @@ export async function onRequestPost({ request, env }) {
   if (Array.isArray(body.referenceImages) && referenceImages.length !== body.referenceImages.length) return jsonError("Gambar referensi harus berupa data URL PNG, JPEG, atau WebP.", 400);
   if (referenceImages.some(value => value.length > 3_300_000)) return jsonError("Ukuran gambar referensi terlalu besar. Coba gambar yang lebih kecil.", 413);
   const useEdits = referenceImages.length > 0;
-  const model = useEdits ? (env.ZAIDA_OPENROUTER_IMAGE_EDIT_MODEL || EDIT_MODEL) : (env.ZAIDA_OPENROUTER_IMAGE_MODEL || GENERATION_MODEL);
+  const model = useOpenRouter ? (useEdits ? (env.ZAIDA_OPENROUTER_IMAGE_EDIT_MODEL || OPENROUTER_IMAGE_MODEL) : (env.ZAIDA_OPENROUTER_IMAGE_MODEL || OPENROUTER_IMAGE_MODEL)) : (useEdits ? EDIT_MODEL : GENERATION_MODEL);
   const option = useEdits ? EDIT_OPTION : GENERATION_OPTION;
   const providerPriceIdr = useEdits ? EDIT_PRICE_IDR : GENERATION_PRICE_IDR;
   const aspectRatio = body.format === "16:9" ? "16:9" : "9:16";
@@ -44,7 +46,7 @@ export async function onRequestPost({ request, env }) {
   if (prompt.length < 20) return jsonError("Prompt gambar terlalu singkat. Periksa arahan visual adegan.", 400);
 
   const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
-  const reserveAmount = Math.ceil((useOpenRouter ? (providerPriceIdr * Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000) / 18000) : providerPriceIdr) * markup) + 1;
+  const reserveAmount = Math.ceil((useOpenRouter ? OPENROUTER_IMAGE_PRICE_IDR : providerPriceIdr) * markup) + 1;
   let reservation = null;
   let settled = false;
   let providerResponded = false;
@@ -90,7 +92,7 @@ export async function onRequestPost({ request, env }) {
     providerResponded = true;
     const image = data.data?.[0];
     const providerCostIdr = useOpenRouter
-      ? Math.max(0, Number(data.usage?.cost) * (Number(env.ZAIDA_USD_TO_IDR) || 18000) || providerPriceIdr)
+      ? Math.max(0, Number(data.usage?.cost) * (Number(env.ZAIDA_USD_TO_IDR) || 18000) || OPENROUTER_IMAGE_PRICE_IDR)
       : Math.max(0, Number(data.kiosapi?.cost_rupiah) || providerPriceIdr);
     const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
     const charge = await settleReservedCredits(

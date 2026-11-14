@@ -17,6 +17,7 @@ let previewVideoUrl = null;
 let previewCaptionCues = [];
 let generatedWordCues = [];
 let generatedNarrationBlob = null;
+let videoAudioAsset = null;
 let generatedSubtitleText = "";
 let videoVoicesLoadedFor = null;
 let videoDraftRestoredFor = null;
@@ -129,9 +130,32 @@ async function api(path, options = {}) {
   if (!response.ok) throw new Error(data.error || "Permintaan gagal (" + response.status + ").");
   return data;
 }
+async function uploadVideoAudio(blob, source, name = "") {
+  if (!blob || !auth.currentUser) throw new Error("Audio atau sesi akun tidak tersedia.");
+  if (blob.size > 100 * 1024 * 1024) throw new Error("Ukuran audio maksimal 100 MB.");
+  const mime = (blob.type || "audio/mpeg").split(";")[0].toLowerCase();
+  if (!mime.startsWith("audio/")) throw new Error("File yang dipilih bukan audio.");
+  const assetId = crypto.randomUUID();
+  const response = await fetch("/api/video/assets/" + encodeURIComponent(assetId), {
+    method: "PUT",
+    headers: { Authorization: "Bearer " + await auth.currentUser.getIdToken(), "Content-Type": mime, "X-Video-Audio-Source": source },
+    body: blob
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Gagal menyimpan audio ke cloud.");
+  videoAudioAsset = { assetId, mime, name: String(name || "").slice(0, 180), source, size: blob.size };
+  return videoAudioAsset;
+}
+function setVideoAudioPreview(blob) {
+  const player = $("videoNarrationPreview");
+  if (!blob || !player) return;
+  if (player.dataset.objectUrl) URL.revokeObjectURL(player.dataset.objectUrl);
+  const url = URL.createObjectURL(blob);
+  player.dataset.objectUrl = url; player.src = url; player.hidden = false;
+}
 function buildPayload() {
   return {
-    title: currentStoryboard.title, sourceScript: currentStoryboard.sourceScript || "", hook: currentStoryboard.hook, summary: currentStoryboard.summary,
+    title: currentStoryboard.title, sourceScript: currentStoryboard.sourceScript || "", audioAsset: videoAudioAsset, subtitleText: generatedSubtitleText, wordCues: generatedWordCues, hook: currentStoryboard.hook, summary: currentStoryboard.summary,
     closing: currentStoryboard.closing, format: currentStoryboard.format, outputFormats: currentStoryboard.outputFormats || ["9:16", "16:9"],
     resolution: currentStoryboard.resolution, outputResolutions: currentStoryboard.outputResolutions || ["720x1280", "1280x720"], visualStyle: currentStoryboard.visualStyle,
     scenes: currentStoryboard.scenes.map(({ generatedImage, uploadedImageDataUrl, imageBusy, ...scene }) => ({ ...scene, generatedImage: generatedImage ? { assetId: generatedImage.assetId || "", mime: generatedImage.mime || "image/png", cost: Number(generatedImage.cost) || 0 } : null }))
@@ -761,6 +785,7 @@ async function generateVideoNarration() {
     const bytes=new Uint8Array(binary.length);
     for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
     generatedNarrationBlob=new Blob([bytes],{type:"audio/mpeg"});
+    videoAudioAsset = null;
     generatedSubtitleText=makeVideoSrt(text,data.alignment);
     generatedWordCues=makeVideoWordCues(text,data.alignment);
     // Sinkronkan durasi tiap adegan memakai timestamp kata dari TTS, bukan estimasi 5 detik.
@@ -783,10 +808,10 @@ async function generateVideoNarration() {
       });
       saveDraft();
     }
-    const audioUrl=URL.createObjectURL(generatedNarrationBlob);
-    const player=$("videoNarrationPreview");
-    if(player.dataset.objectUrl)URL.revokeObjectURL(player.dataset.objectUrl);
-    player.dataset.objectUrl=audioUrl;player.src=audioUrl;player.hidden=false;
+    setVideoAudioPreview(generatedNarrationBlob);
+    $("videoNarrationStatus").textContent = "Mengunggah audio narasi ke penyimpanan cloud…";
+    await uploadVideoAudio(generatedNarrationBlob, "generated", "narasi-zaida.mp3");
+    await flushVideoDraft();
     $("videoNarrationAudio").value="";
     const remainingCredits = response.headers.get("X-Credits-Remaining");
     if (remainingCredits !== null) syncCredits(remainingCredits);
@@ -947,6 +972,31 @@ async function startDualRender(isExport = false) {
 }
 async function hydrateVideoProject(payload) {
   if (!payload || !Array.isArray(payload.scenes)) return payload;
+  videoAudioAsset = payload.audioAsset || null;
+  generatedSubtitleText = typeof payload.subtitleText === "string" ? payload.subtitleText : "";
+  generatedWordCues = Array.isArray(payload.wordCues) ? payload.wordCues : [];
+  if (videoAudioAsset?.assetId) {
+    try {
+      const audioResponse = await fetch("/api/video/assets/" + encodeURIComponent(videoAudioAsset.assetId), {
+        headers: { Authorization: "Bearer " + await auth.currentUser.getIdToken() }
+      });
+      if (!audioResponse.ok) throw new Error("Audio cloud tidak dapat diunduh (" + audioResponse.status + ").");
+      generatedNarrationBlob = await audioResponse.blob();
+      setVideoAudioPreview(generatedNarrationBlob);
+      $("videoNarrationStatus").textContent = "Audio proyek dipulihkan dari cloud · " + (videoAudioAsset.name || "audio narasi");
+      const link = $("videoSubtitleDownload");
+      if (generatedSubtitleText.trim()) {
+        link.href = URL.createObjectURL(new Blob([generatedSubtitleText], { type: "text/plain;charset=utf-8" }));
+        link.hidden = false;
+      } else link.hidden = true;
+    } catch (error) {
+      console.warn("Gagal memulihkan audio proyek:", error);
+      $("videoNarrationStatus").textContent = "Audio belum dapat dipulihkan: " + error.message;
+    }
+  } else {
+    videoAudioAsset = null;
+    generatedNarrationBlob = null;
+  }
   const token = await auth.currentUser.getIdToken();
   await Promise.all(payload.scenes.map(async scene => {
     const assetId = scene.generatedImage?.assetId;
@@ -1073,7 +1123,7 @@ document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => in
 }));
 updateCaptionPreviewAspectRatio();
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
-$("videoNarrationAudio").addEventListener("change", () => {
+$("videoNarrationAudio").addEventListener("change", async () => {
   const file = $("videoNarrationAudio").files?.[0];
   const player = $("videoNarrationPreview");
   if (!file) {
@@ -1089,10 +1139,22 @@ $("videoNarrationAudio").addEventListener("change", () => {
   if (!file.type.startsWith("audio/")) { setStatus("Pilih file audio yang valid.", true); $("videoNarrationAudio").value = ""; return; }
   if (file.size > 100 * 1024 * 1024) { setStatus("Ukuran audio maksimal 100 MB.", true); $("videoNarrationAudio").value = ""; return; }
   if (player.dataset.objectUrl) URL.revokeObjectURL(player.dataset.objectUrl);
+  generatedNarrationBlob = null;
+  generatedSubtitleText = "";
+  generatedWordCues = [];
+  videoAudioAsset = null;
   const url = URL.createObjectURL(file);
   player.dataset.objectUrl = url; player.src = url; player.hidden = false;
-  $("videoNarrationStatus").textContent = "Audio milikmu siap digunakan · tanpa biaya kredit. Durasi audio akan menentukan durasi video.";
-  setStatus("Audio sendiri berhasil dipilih. Tidak ada kredit yang dipotong.");
+  $("videoNarrationStatus").textContent = "Mengunggah audio milikmu ke penyimpanan cloud…";
+  try {
+    await uploadVideoAudio(file, "uploaded", file.name);
+    if (currentStoryboard) await flushVideoDraft();
+    $("videoNarrationStatus").textContent = "Audio tersimpan di cloud · " + file.name;
+    setStatus("Audio berhasil disimpan ke cloud dan ditautkan ke proyek.");
+  } catch (error) {
+    $("videoNarrationStatus").textContent = error.message;
+    setStatus("Audio dipakai sementara di sesi ini, tetapi belum aman di cloud: " + error.message, true);
+  }
 });
 // Pakai Firebase Auth dan sesi yang sama dengan dashboard utama.
 async function refreshVideoAccount() {

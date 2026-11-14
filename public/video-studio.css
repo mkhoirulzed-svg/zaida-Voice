@@ -541,3 +541,38 @@
   .video-studio-page .video-quiet-action,
   .video-studio-page .video-new-project-button{flex:1}
 }
+
+
+/* Compact editor workflow navigation */
+.video-studio-page .video-workflow-nav{
+  display:flex;align-items:center;gap:6px;overflow-x:auto;
+  padding:5px;margin:0 0 18px;border:1px solid #ececf1;
+  border-radius:15px;background:rgba(255,255,255,.86);
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.video-studio-page .video-workflow-nav::-webkit-scrollbar{display:none}
+.video-studio-page .video-workflow-step{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  flex:1 0 auto;min-height:38px;padding:0 12px;border:0;border-radius:10px;
+  background:transparent;color:#777783;font:inherit;font-size:12px;font-weight:650;
+  white-space:nowrap;cursor:pointer;transition:background .18s ease,color .18s ease;
+}
+.video-studio-page .video-workflow-step>span{
+  display:grid;place-items:center;width:21px;height:21px;border-radius:50%;
+  background:#f0f0f4;color:#777783;font-size:10px;font-weight:700;
+}
+.video-studio-page .video-workflow-step.is-active{
+  background:#f2edff;color:#6242b4;
+}
+.video-studio-page .video-workflow-step.is-active>span{
+  background:#7656c9;color:#fff;
+}
+.video-studio-page #videoScriptStep,
+.video-studio-page #videoStoryboardStep,
+.video-studio-page #videoAudioPanel,
+.video-studio-page #captionEditorPanel,
+.video-studio-page #videoRenderPanel{scroll-margin-top:22px}
+@media(max-width:520px){
+  .video-studio-page .video-workflow-nav{margin-left:-2px;margin-right:-2px;gap:3px}
+  .video-studio-page .video-workflow-step{padding:0 10px;min-height:36px}
+}

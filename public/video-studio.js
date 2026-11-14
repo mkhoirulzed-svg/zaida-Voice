@@ -93,11 +93,8 @@ const VIDEO_VISUAL_STYLES={
   comic:{label:"Komik",prompt:"Use polished graphic novel comic-book illustration, confident ink outlines, dynamic framing, controlled halftone texture, expressive poses, coherent panel-like composition."}
 };
 function updateVisualStyleDescription(){
+  // Update only the selected visual-style card; AI prompts remain internal.
   const selected = $("videoVisualStyle").value;
-  const style=VIDEO_VISUAL_STYLES[selected]||VIDEO_VISUAL_STYLES.cinematic;
-  const box=$("visualStyleDescription");
-  box.querySelector("b").textContent=style.label;
-  box.querySelector("small").textContent=style.prompt;
   $("visualStyleGrid")?.querySelectorAll("[data-visual-style]").forEach(card => {
     const active = card.dataset.visualStyle === selected;
     card.classList.toggle("is-selected", active);
@@ -984,7 +981,6 @@ document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => in
   updateCaptionPreviewAspectRatio();
   if (previewVideoUrl) {
     $("exportFinalVideo").hidden = true;
-    setStatus("Format video berubah. Buat preview baru sebelum ekspor final.");
   }
 }));
 updateCaptionPreviewAspectRatio();

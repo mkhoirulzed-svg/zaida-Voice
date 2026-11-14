@@ -438,11 +438,10 @@ export async function listVideoProjects(user, env) {
     structuredQuery: {
       from: [{ collectionId: "video_projects" }],
       where: { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: user.uid } } },
-      orderBy: [{ field: { fieldPath: "updatedAt" }, direction: "DESCENDING" }],
       limit: 50
     }
   }) });
-  return (Array.isArray(response) ? response : []).filter(row => row.document).map(row => videoProjectFields(row.document));
+  return (Array.isArray(response) ? response : []).filter(row => row.document).map(row => videoProjectFields(row.document)).sort((a,b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
 }
 export async function getVideoProject(user, env, projectId) {
   if (!/^[a-zA-Z0-9_-]{8,80}$/.test(projectId)) { const e = new Error("ID proyek tidak valid."); e.status = 400; throw e; }

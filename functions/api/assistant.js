@@ -82,8 +82,9 @@ Panjang target: ${length}
 Gunakan preferensi ini sebagai arahan, bukan batasan kaku.
 OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" berisi respons percakapan untuk pengguna. "script" berisi naskah final lengkap HANYA jika pengguna secara eksplisit meminta dibuatkan/dituliskan naskah atau meminta versi final; selain itu gunakan string kosong. Naskah harus siap dibacakan, tanpa catatan proses atau label yang tidak perlu. Jangan mengubah preferensi personalisasi menjadi klaim faktual.`;
 
-  const primaryModel = env.ZAIDA_OPENROUTER_TEXT_MODEL || env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "google/gemini-3.1-flash-lite";
+  const kiosapiPrimaryModel = env.ZAIDA_KIOSAPI_PRIMARY_MODEL || "openai/gpt-4o-mini";
   const fallbackModel = env.ZAIDA_KIOSAPI_FALLBACK_MODEL || "deepseek/deepseek-v4.1-flash";
+  const primaryModel = hasOpenRouter ? (env.ZAIDA_OPENROUTER_TEXT_MODEL || "google/gemini-3.1-flash-lite") : kiosapiPrimaryModel;
   const directDeepSeekModel = env.ZAIDA_DIRECT_DEEPSEEK_MODEL || "deepseek-chat";
   const maxOutputTokens = 1200;
   const promptMessages = [{ role: "system", content: system }, ...messages];
@@ -116,7 +117,7 @@ OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" ber
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            ...(hasOpenRouter ? { model: primaryModel } : { models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel] }),
+            ...(hasOpenRouter ? { model: primaryModel } : { models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel] }),
             messages: promptMessages,
             temperature: 0.75,
             max_tokens: maxOutputTokens,
@@ -187,7 +188,7 @@ OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" ber
           method: "POST",
           headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
           body: JSON.stringify({
-            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            models: kiosapiPrimaryModel === fallbackModel ? [kiosapiPrimaryModel] : [kiosapiPrimaryModel, fallbackModel],
             messages: promptMessages, temperature: 0.75, max_tokens: maxOutputTokens,
             response_format: { type: "json_object" }, stream: false
           })

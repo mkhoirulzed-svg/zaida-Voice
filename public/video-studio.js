@@ -63,14 +63,22 @@ async function uploadVideoBrandAsset(kind,file) {
     videoBrandAssets[kind]={name:file.name,dataUrl};
     try{localStorage.setItem(videoBrandAssetsKey,JSON.stringify(videoBrandAssets));}
     catch{videoBrandAssets[kind]=previous;throw new Error("Penyimpanan browser penuh. Hapus aset lain atau gunakan gambar lebih kecil.");}
-    renderVideoBrandAsset(kind);setStatus((kind==="product"?"Foto produk":"Logo brand")+" berhasil disimpan. Aset akan ikut saat render video.");
+    renderVideoBrandAsset(kind);refreshStoryboardBrandOverlays();setStatus((kind==="product"?"Foto produk":"Logo brand")+" berhasil disimpan. Aset tampil di preview storyboard dan ikut saat render video.");
   }catch(error){setStatus(error.message||"Gagal mengunggah gambar.",true);}
   input.value="";
+}
+function refreshStoryboardBrandOverlays() {
+  if (!currentStoryboard) return;
+  currentStoryboard.scenes.forEach((scene, index) => {
+    const preview = $("sceneList")?.children[index]?.querySelector(".scene-image-preview-area");
+    if (preview) renderGeneratedImage(scene, preview);
+  });
 }
 function removeVideoBrandAsset(kind) {
   videoBrandAssets[kind]=null;
   if(videoBrandAssetsKey){try{localStorage.setItem(videoBrandAssetsKey,JSON.stringify(videoBrandAssets));}catch{}}
-  renderVideoBrandAsset(kind);setStatus((kind==="product"?"Foto produk":"Logo brand")+" dihapus dari aset video.");
+  renderVideoBrandAsset(kind);refreshStoryboardBrandOverlays();
+  setStatus((kind==="product"?"Foto produk":"Logo brand")+" dihapus dari aset video.");
 }
 
 

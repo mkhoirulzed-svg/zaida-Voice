@@ -236,8 +236,7 @@ async function generateSceneImage(scene, button, imageArea) {
     updateStoryboardImageStrip();
     updateRenderAvailability();
     syncCredits(result.creditsRemaining);
-    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat dengan " + (result.imageMode === "reference-edit" ? "foto referensi AI" : "generasi AI") + " · biaya provider Rp" +
-      Number(result.providerCostIdr).toLocaleString("id-ID") + " · " +
+    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · terpakai " +
       Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
   } catch (error) {
     setStatus(error.message, true);
@@ -480,15 +479,16 @@ async function generateAllSceneImages() {
   const pending = scenes.filter(scene => !scene.generatedImage);
   if (!pending.length) return;
   const hasReferenceImages = Boolean(videoBrandAssets.product?.dataUrl || videoBrandAssets.logo?.dataUrl);
-  const estimatePerImage = hasReferenceImages ? 2500 : 500;
-  const estimate = pending.length * estimatePerImage;
-  const imageModeLabel = hasReferenceImages ? "AI Image Editing (foto referensi)" : "AI Image Generation (tanpa referensi)";
+  const estimateProviderPerImage = hasReferenceImages ? 2500 : 500;
+  const estimateCreditsPerImage = Math.ceil(estimateProviderPerImage * 1.5);
+  const estimateCredits = pending.length * estimateCreditsPerImage;
+  const imageModeLabel = hasReferenceImages ? "Dengan foto referensi" : "Tanpa foto referensi";
   const approved = confirm(
     "Storyboard selesai dengan " + scenes.length + " adegan.\n\n" +
     "ZAIDA akan membuat otomatis " + pending.length + " gambar yang belum tersedia.\n" +
     "Mode: " + imageModeLabel + ".\n" +
-    "Estimasi biaya provider: Rp" + estimate.toLocaleString("id-ID") + " (sekitar Rp" + estimatePerImage.toLocaleString("id-ID") + " per gambar).\n" +
-    "Kredit ZAIDA dipotong sesuai biaya aktual provider dan markup akun, lalu ditampilkan setelah tiap gambar selesai.\n\n" +
+    "Estimasi pemakaian: " + estimateCredits.toLocaleString("id-ID") + " kredit ZAIDA (sekitar " + estimateCreditsPerImage.toLocaleString("id-ID") + " kredit per gambar).\n" +
+    "Pemotongan akhir mengikuti biaya aktual dan pengaturan tarif akun.\n\n" +
     "Lanjutkan membuat semua gambar?"
   );
   if (!approved) {

@@ -84,9 +84,9 @@ export async function onRequestPost({ request, env }) {
 
     const data = await readJson(upstream);
     if (!upstream.ok) {
-      await releaseCredits(auth.user, env, reservation.reservationId, "kiosapi-image-http-" + upstream.status);
+      await releaseCredits(auth.user, env, reservation.reservationId, (useOpenRouter ? "openrouter-image-http-" : "kiosapi-image-http-") + upstream.status);
       settled = true;
-      return jsonError(data.error?.message || data.message || "Kiosapi gagal membuat gambar.", upstream.status);
+      return jsonError(data.error?.message || data.message || "Provider gagal membuat gambar.", upstream.status);
     }
 
     providerResponded = true;
@@ -97,7 +97,7 @@ export async function onRequestPost({ request, env }) {
     const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
     const charge = await settleReservedCredits(
       auth.user, env, reservation.reservationId, billing.credits,
-      "video-image:kiosapi:" + model,
+      "video-image:" + (useOpenRouter ? "openrouter:" : "kiosapi:") + model,
       { provider: useOpenRouter ? "openrouter" : "kiosapi", model, providerCostIdr, requestId, imageMode: useEdits ? "reference-edit" : "text-to-image" }
     );
     settled = true;

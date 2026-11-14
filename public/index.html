@@ -79,6 +79,22 @@
                 <div class="studio-legacy-voice-tools" aria-hidden="true"><input id="voiceSearch" type="search"><select id="voiceGenderFilter"><option value="all">Semua</option></select><div id="voiceCards"></div><div id="voicePagination"></div></div>
                 <div class="script-review-panel studio-hidden-support"><span id="voiceScriptCharCount">0 karakter</span><button type="button" id="editScriptFromVoice">Edit naskah</button><div id="voiceScriptPreview"></div></div>
               </div>
+              <section class="panel studio-assets-panel" aria-labelledby="studioAssetsTitle">
+                <div class="studio-assets-heading"><div><h2 id="studioAssetsTitle">Visual &amp; Branding</h2><p>Siapkan foto produk dan logo untuk materi iklan.</p></div><span class="studio-assets-mark">✦</span></div>
+                <div class="studio-asset-list">
+                  <article class="studio-asset-card" id="productAssetCard">
+                    <div class="studio-asset-preview" id="productAssetPreview"><span class="studio-asset-placeholder">▧</span></div>
+                    <div class="studio-asset-info"><b>Foto produk</b><small id="productAssetName">Belum ada gambar</small><div class="studio-asset-actions"><label class="studio-asset-upload" for="productAssetInput">Pilih gambar</label><button type="button" class="studio-asset-remove" id="removeProductAsset" hidden>Hapus</button></div></div>
+                    <input class="studio-asset-file" id="productAssetInput" type="file" accept="image/*">
+                  </article>
+                  <article class="studio-asset-card" id="logoAssetCard">
+                    <div class="studio-asset-preview studio-logo-preview" id="logoAssetPreview"><span class="studio-asset-placeholder">◇</span></div>
+                    <div class="studio-asset-info"><b>Logo brand</b><small id="logoAssetName">Belum ada logo</small><div class="studio-asset-actions"><label class="studio-asset-upload" for="logoAssetInput">Pilih logo</label><button type="button" class="studio-asset-remove" id="removeLogoAsset" hidden>Hapus</button></div></div>
+                    <input class="studio-asset-file" id="logoAssetInput" type="file" accept="image/*">
+                  </article>
+                </div>
+                <p class="studio-assets-note">Gambar disimpan di browser pada perangkat ini. Maksimal 10 MB per file sebelum diproses.</p>
+              </section>
             </section>
           </aside>
         </div>

@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, getVideoProject, saveVideoProject, deleteVideoProject } from "../../lib/firebase.js";
+import { verifyFirebaseUser, getVideoProject, saveVideoProject, deleteVideoProject } from "../../../lib/firebase.js";
 
 export async function onRequestGet({ request, env, params }) {
   const auth = await verifyFirebaseUser(request, env);

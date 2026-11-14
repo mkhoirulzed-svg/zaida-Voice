@@ -154,6 +154,22 @@
               <button type="button" class="visual-style-option" data-visual-style="stickman" aria-pressed="false"><span class="visual-style-art visual-style-image"><img src="https://cdn.pixabay.com/photo/2022/03/20/16/48/stick-figure-7081366_1280.jpg" alt="Contoh karakter stickman" loading="lazy" decoding="async"></span><strong>Stickman</strong><small>Karakter garis</small></button>
             </div>
             <div class="visual-style-card" id="visualStyleDescription"><div><b>Cinematic</b><small>Visual realistis dengan pencahayaan dramatis dan komposisi seperti film.</small></div><span>VISUAL</span></div>
+            <section class="video-brand-assets" aria-labelledby="videoBrandAssetsTitle">
+              <div class="video-brand-assets-heading"><div><h3 id="videoBrandAssetsTitle">Foto Produk &amp; Logo Brand</h3><p>Tambahkan identitas visual agar tampil pada video hasil render.</p></div><span>✦</span></div>
+              <div class="video-brand-assets-grid">
+                <article class="video-brand-asset">
+                  <div class="video-brand-asset-preview" id="videoProductPreview"><span>▧</span></div>
+                  <div class="video-brand-asset-info"><b>Foto produk</b><small id="videoProductFileName">Belum ada foto produk</small><div><label for="videoProductImage" class="video-brand-upload">Upload foto</label><button type="button" id="removeVideoProductImage" hidden>Hapus</button></div></div>
+                  <input type="file" id="videoProductImage" accept="image/*" hidden>
+                </article>
+                <article class="video-brand-asset">
+                  <div class="video-brand-asset-preview video-brand-logo-preview" id="videoLogoPreview"><span>◇</span></div>
+                  <div class="video-brand-asset-info"><b>Logo brand</b><small id="videoLogoFileName">Belum ada logo</small><div><label for="videoBrandLogo" class="video-brand-upload">Upload logo</label><button type="button" id="removeVideoBrandLogo" hidden>Hapus</button></div></div>
+                  <input type="file" id="videoBrandLogo" accept="image/*" hidden>
+                </article>
+              </div>
+              <small class="video-brand-assets-note">Foto produk akan tampil sebagai visual tambahan, logo sebagai watermark. File diproses di browser dan disimpan di perangkat ini.</small>
+            </section>
             <div class="video-format-settings">
               <label class="field-label">FORMAT VIDEO</label>
               <fieldset class="video-format-picker video-format-compact"><legend class="sr-only">Pilih format video</legend>

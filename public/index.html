@@ -215,7 +215,7 @@
           <div class="audio-choice-card">
             <div class="audio-choice-heading"><span class="audio-choice-number">2</span><div><b>Buat narasi</b><small>ZAIDA akan membacakan gabungan narasi dari semua adegan storyboard.</small></div></div>
             <button class="primary-button" id="generateVideoNarration" type="button" disabled>Buat audio narasi</button>
-            <small class="render-hint" id="videoNarrationStatus">Tarif mengikuti ZAIDA Voice: 3 kredit per karakter. Pilih suara dan buat storyboard terlebih dahulu.</small>
+            <small class="render-hint" id="videoNarrationStatus" aria-live="polite"></small>
           </div>
           <div class="audio-choice-card">
             <div class="audio-choice-heading"><span class="audio-choice-number">3</span><div><b>Upload audio sendiri</b><small>Gunakan rekaman atau musik narasi milikmu.</small></div></div>
@@ -282,7 +282,7 @@
             <p id="videoRenderProgressText" role="status" aria-live="polite">Menyiapkan render…</p>
           </div>
           <div class="render-downloads" id="videoRenderDownloads" hidden></div>
-          <p class="render-warning">MP4 dirender langsung dari timeline pada 30 FPS. Perangkat harus mendukung WebCodecs; video panjang membutuhkan memori cukup. Jangan tutup tab sampai ekspor selesai. File belum disimpan ke cloud.</p>
+          
         </section>
       </section>
             <div class="bottom-dock"><div class="dock-player"><audio id="audioPlayer" controls preload="metadata"></audio><span id="dockTrack">Belum ada audio</span></div><span class="dock-credits" id="dockCredits">Kredit: —</span><button class="dock-action" id="dockAction">Lanjut</button></div>

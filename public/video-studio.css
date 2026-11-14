@@ -377,3 +377,95 @@
   max-height:none !important;
   flex:0 0 auto;
 }
+
+
+/* Light clean theme — remove dark surfaces across Auto Video Studio only */
+.video-studio-page .video-form-panel textarea,
+.video-studio-page .video-form-panel input,
+.video-studio-page .video-form-panel select,
+.video-studio-page .video-render-panel input[type=file],
+.video-studio-page .video-audio-panel input[type=file],
+.video-studio-page .caption-controls>select,
+.video-studio-page .caption-control-grid select,
+.video-studio-page .caption-control-grid input[type=color]{
+  background:#fff;
+  color:#252532;
+  border-color:#e5e5eb;
+}
+.video-studio-page .visual-style-card,
+.video-studio-page .hook-box,
+.video-studio-page .scene-image-area,
+.video-studio-page .render-summary,
+.video-studio-page .render-progress,
+.video-studio-page .storyboard-quick-summary,
+.video-studio-page .video-subtitle-option,
+.video-studio-page .video-audio-upload{
+  background:#fff;
+  color:#292936;
+  border-color:#e6e6ec;
+}
+.video-studio-page .hook-box small,
+.video-studio-page .render-summary,
+.video-studio-page .storyboard-quick-summary span{
+  color:#777783;
+}
+.video-studio-page .storyboard-image-thumb{
+  background:#f7f7fa;
+  color:#7656c9;
+  border-color:#dedee7;
+}
+.video-studio-page .storyboard-image-thumb small{
+  background:rgba(255,255,255,.94);
+  color:#343443;
+  border:1px solid #e5e5eb;
+}
+.video-studio-page .scene-card textarea{
+  background:#fff;
+  color:#292936;
+  border-color:#e5e5eb;
+}
+.video-studio-page .scene-meta span{
+  background:#f3f3f7;
+  color:#666675;
+}
+.video-studio-page .caption-preview-stage{
+  background:linear-gradient(145deg,#fff,#f4f3f8);
+  border-color:#e5e5eb;
+}
+.video-studio-page .caption-preview-stage:before{
+  color:#9292a0;
+}
+.video-studio-page #videoPreviewPlayer{
+  background:#f7f7fa;
+}
+.video-studio-page .caption-preview-empty{
+  color:#777783;
+}
+.video-studio-page .caption-preview-empty span{
+  background:#f0ecfa;
+  color:#7656c9;
+}
+.video-studio-page .caption-preview-empty b{
+  color:#343443;
+}
+.video-studio-page .render-step-heading>span{
+  background:#f0ecfa;
+  color:#7656c9;
+}
+.video-studio-page .render-progress-track{
+  background:#ededf2;
+}
+.video-studio-page .render-download-link{
+  background:#fff;
+  color:#7656c9;
+  border-color:#ded8ef;
+}
+.video-studio-page .scene-image-preview img{
+  background:#f7f7fa;
+}
+.video-studio-page .scene-image-preview a{
+  color:#7656c9;
+}
+.video-studio-page .video-status{
+  color:#7656c9;
+}

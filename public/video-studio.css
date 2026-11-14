@@ -367,3 +367,13 @@
 @media(max-width:380px){.visual-style-art.visual-style-image{height:74px}}
 
 .visual-style-image:before,.visual-style-image:after{display:none!important}
+
+
+/* Aspect-ratio lock: prevent mobile min/max-height rules from squashing the preview */
+#captionPreviewStage{
+  box-sizing:border-box;
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  flex:0 0 auto;
+}

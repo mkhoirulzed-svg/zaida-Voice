@@ -227,6 +227,7 @@ async function generateSceneImage(scene, button, imageArea) {
       method: "POST",
       body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
     });
+    scene.imageError = "";
     scene.generatedImage = {
       b64: result.image.b64,
       mime: result.image.mime,
@@ -239,7 +240,8 @@ async function generateSceneImage(scene, button, imageArea) {
     setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · terpakai " +
       Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
   } catch (error) {
-    setStatus(error.message, true);
+    scene.imageError = error?.message || "Kesalahan tidak diketahui saat meminta gambar ke KiosAPI.";
+    setStatus("Gagal membuat gambar adegan " + scene.scene_number + ": " + scene.imageError, true);
   } finally {
     scene.imageBusy = false;
     button.disabled = false;
@@ -505,7 +507,7 @@ async function generateAllSceneImages() {
     if (!button || !preview) continue;
     await generateSceneImage(scene, button, preview);
     if (!scene.generatedImage) {
-      setStatus("Pembuatan gambar berhenti pada adegan " + scene.scene_number + ". Kamu bisa melanjutkan dari Edit Storyboard.", true);
+      if (!scene.imageError) setStatus("Pembuatan gambar berhenti pada adegan " + scene.scene_number + ". Kamu bisa melanjutkan dari Edit Storyboard.", true);
       break;
     }
   }

@@ -926,3 +926,23 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
     max-height: 520px!important;
   }
 }
+
+/* Video Studio product photo and brand logo assets */
+.video-brand-assets{margin:16px 0 18px;padding:15px;border:1px solid #e9e8ef;border-radius:16px;background:#fbfbfd}
+.video-brand-assets-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px}
+.video-brand-assets-heading h3{margin:0 0 4px;font-size:13px;color:#34323e}
+.video-brand-assets-heading p{margin:0;color:#888691;font-size:10px;line-height:1.5}
+.video-brand-assets-heading>span{display:grid;place-items:center;width:29px;height:29px;border-radius:9px;background:#efeffb;color:#6258cf}
+.video-brand-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.video-brand-asset{display:flex;align-items:center;gap:9px;min-width:0;padding:9px;border:1px solid #ecebf1;border-radius:12px;background:#fff}
+.video-brand-asset-preview{display:grid;place-items:center;flex:0 0 56px;width:56px;height:56px;overflow:hidden;border:1px dashed #d8d6e2;border-radius:9px;background:#f5f4f8;color:#8d89a4;font-size:22px}
+.video-brand-asset-preview img{width:100%;height:100%;object-fit:contain}
+.video-brand-logo-preview{background:repeating-conic-gradient(#f1f1f5 0% 25%,#fff 0% 50%) 50%/10px 10px}
+.video-brand-asset-info{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.video-brand-asset-info>b{font-size:10px;color:#383640}
+.video-brand-asset-info>small{overflow:hidden;color:#8b8992;font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+.video-brand-asset-info>div{display:flex;align-items:center;gap:8px}
+.video-brand-upload{display:inline-flex;align-items:center;min-height:27px;padding:0 9px;border-radius:8px;background:#efeffb;color:#5750b8;font-size:9px;font-weight:650;cursor:pointer}
+.video-brand-asset-info button{padding:4px 0;border:0;background:transparent;color:#a15b63;font-size:9px;cursor:pointer}
+.video-brand-assets-note{display:block;margin-top:10px;color:#96949d;font-size:9px;line-height:1.5}
+@media(max-width:560px){.video-brand-assets-grid{grid-template-columns:1fr}.video-brand-asset{min-height:76px}.video-brand-asset-preview{width:58px;height:58px;flex-basis:58px}}

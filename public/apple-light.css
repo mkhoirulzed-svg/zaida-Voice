@@ -946,3 +946,19 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .video-brand-asset-info button{padding:4px 0;border:0;background:transparent;color:#a15b63;font-size:9px;cursor:pointer}
 .video-brand-assets-note{display:block;margin-top:10px;color:#96949d;font-size:9px;line-height:1.5}
 @media(max-width:560px){.video-brand-assets-grid{grid-template-columns:1fr}.video-brand-asset{min-height:76px}.video-brand-asset-preview{width:58px;height:58px;flex-basis:58px}}
+
+/* Storyboard JSON editor and brand overlays */
+.storyboard-json-editor{margin:16px 0;padding:14px;border:1px solid #e8e7ee;border-radius:14px;background:#fafafd}
+.storyboard-json-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.storyboard-json-heading>div{display:flex;flex-direction:column;gap:4px}
+.storyboard-json-heading b{font-size:12px;color:#28272f}
+.storyboard-json-heading small,.storyboard-json-actions small{font-size:10px;line-height:1.5;color:#85838e}
+.storyboard-json-heading .secondary-button{font-size:10px;padding:7px 10px;white-space:nowrap}
+#storyboardJson{display:block;width:100%;min-height:260px;max-height:560px;padding:12px;border:1px solid #dedde7;border-radius:10px;background:#fff;color:#292833;font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
+.storyboard-json-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.storyboard-json-actions .primary-button{font-size:11px;padding:9px 13px;white-space:nowrap}
+.scene-image-composite{position:relative;overflow:hidden;border-radius:10px}
+.scene-image-composite>img:first-child{display:block;width:100%}
+.scene-brand-product-overlay{position:absolute;left:3%;top:4%;width:22%;max-height:32%;object-fit:contain;padding:3px;background:rgba(255,255,255,.9);border-radius:6px;box-shadow:0 2px 10px #0003}
+.scene-brand-logo-overlay{position:absolute;right:3%;top:4%;width:16%;max-height:17%;object-fit:contain;filter:drop-shadow(0 1px 3px #0008)}
+@media(max-width:560px){.storyboard-json-heading,.storyboard-json-actions{align-items:stretch;flex-direction:column}.storyboard-json-actions .primary-button{width:100%}#storyboardJson{min-height:220px}}

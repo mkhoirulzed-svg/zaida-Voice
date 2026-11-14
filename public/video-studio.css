@@ -543,36 +543,52 @@
 }
 
 
-/* Compact editor workflow navigation */
+/* Floating workflow navigation: compact numbered tiles, always reachable */
 .video-studio-page .video-workflow-nav{
-  display:flex;align-items:center;gap:6px;overflow-x:auto;
-  padding:5px;margin:0 0 18px;border:1px solid #ececf1;
-  border-radius:15px;background:rgba(255,255,255,.86);
+  position:sticky;top:10px;z-index:20;
+  display:flex;align-items:stretch;justify-content:space-between;gap:8px;
+  overflow-x:auto;overscroll-behavior-x:contain;
+  padding:8px;margin:0 0 20px;
+  border:1px solid rgba(225,225,234,.92);border-radius:18px;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 8px 26px rgba(34,30,55,.08);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   scrollbar-width:none;-webkit-overflow-scrolling:touch;
 }
 .video-studio-page .video-workflow-nav::-webkit-scrollbar{display:none}
 .video-studio-page .video-workflow-step{
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  flex:1 0 auto;min-height:38px;padding:0 12px;border:0;border-radius:10px;
-  background:transparent;color:#777783;font:inherit;font-size:12px;font-weight:650;
-  white-space:nowrap;cursor:pointer;transition:background .18s ease,color .18s ease;
+  display:flex;flex:1 0 0;min-width:0;min-height:62px;
+  flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:6px 8px;border:1px solid transparent;border-radius:12px;
+  background:transparent;color:#777783;font:inherit;font-size:11px;font-weight:650;
+  white-space:nowrap;cursor:pointer;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
 }
 .video-studio-page .video-workflow-step>span{
-  display:grid;place-items:center;width:21px;height:21px;border-radius:50%;
-  background:#f0f0f4;color:#777783;font-size:10px;font-weight:700;
+  display:grid;place-items:center;width:25px;height:25px;border-radius:8px;
+  background:#f0f0f4;color:#777783;font-size:11px;font-weight:750;
 }
 .video-studio-page .video-workflow-step.is-active{
-  background:#f2edff;color:#6242b4;
+  background:#f2edff;border-color:#e4dafd;color:#6242b4;
 }
 .video-studio-page .video-workflow-step.is-active>span{
   background:#7656c9;color:#fff;
 }
+.video-studio-page .video-workflow-step:active{transform:scale(.97)}
 .video-studio-page #videoScriptStep,
 .video-studio-page #videoStoryboardStep,
 .video-studio-page #videoAudioPanel,
 .video-studio-page #captionEditorPanel,
-.video-studio-page #videoRenderPanel{scroll-margin-top:22px}
+.video-studio-page #videoRenderPanel{scroll-margin-top:104px}
 @media(max-width:520px){
-  .video-studio-page .video-workflow-nav{margin-left:-2px;margin-right:-2px;gap:3px}
-  .video-studio-page .video-workflow-step{padding:0 10px;min-height:36px}
+  .video-studio-page .video-workflow-nav{
+    top:6px;gap:5px;padding:6px;margin:0 -2px 16px;border-radius:15px;
+  }
+  .video-studio-page .video-workflow-step{
+    flex:0 0 66px;min-height:58px;padding:5px 4px;font-size:10px;
+  }
+  .video-studio-page .video-workflow-step>span{width:24px;height:24px}
+}
+@media(prefers-reduced-motion:reduce){
+  .video-studio-page .video-workflow-step{transition:none}
 }

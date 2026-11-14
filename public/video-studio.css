@@ -469,3 +469,40 @@
 .video-studio-page .video-status{
   color:#7656c9;
 }
+
+
+/* Final light treatment for format selector and visual-style gallery */
+.video-studio-page .video-format-compact .video-format-card{
+  background:#fff !important;
+  color:#292936 !important;
+  border-color:#e5e5eb;
+}
+.video-studio-page .video-format-compact .video-format-choice>input:checked+.video-format-card{
+  background:#f3efff !important;
+  color:#292936 !important;
+  border-color:#7656c9;
+}
+.video-studio-page .video-format-compact .video-format-card small{color:#777783}
+.video-studio-page .video-format-icon{
+  background:#f7f7fa;
+  color:#777783;
+}
+.video-studio-page .video-format-compact .video-format-choice>input:checked+.video-format-card .video-format-icon{
+  background:#fff;
+  color:#7656c9;
+}
+.video-studio-page .visual-style-option{
+  background:#fff !important;
+  color:#292936 !important;
+  border-color:#e5e5eb;
+}
+.video-studio-page .visual-style-option.is-selected{
+  background:#f5f1ff !important;
+  border-color:#7656c9;
+}
+.video-studio-page .visual-style-art.visual-style-image{
+  background:#f7f7fa !important;
+  border:1px solid #ededf2;
+}
+.video-studio-page .visual-style-option strong{color:#292936}
+.video-studio-page .visual-style-option small{color:#777783}

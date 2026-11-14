@@ -225,26 +225,26 @@
           <audio id="videoNarrationPreview" controls hidden></audio>
         </section>
         <section class="panel caption-editor-panel" id="captionEditorPanel">
-          <div class="section-head"><div><h2>04 · Editor Caption</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>
+          <div class="section-head"><div><h2>04 · Editor Subtitle</h2><small>Atur tampilan subtitle sebelum render.</small></div><span class="video-engine">LIVE PREVIEW</span></div>
           <div class="caption-editor-layout">
             <div class="caption-preview-stage" id="captionPreviewStage">
               <video id="videoPreviewPlayer" playsinline preload="metadata" hidden></video>
-              <div class="caption-preview-empty" id="captionPreviewEmpty"><span>▶</span><b>Preview video belum tersedia</b><small>Buat preview terlebih dahulu untuk mengedit caption sambil video diputar.</small></div>
-              <span id="captionPreviewText">Contoh caption ZAIDA Voice</span>
+              <div class="caption-preview-empty" id="captionPreviewEmpty"><span>▶</span><b>Preview video belum tersedia</b><small>Buat preview terlebih dahulu untuk mengedit subtitle sambil video diputar.</small></div>
+              <span id="captionPreviewText">Contoh subtitle ZAIDA Voice</span>
               <button class="caption-preview-play" id="captionPreviewPlay" type="button" aria-label="Putar video" hidden>▶</button>
             </div>
             <div class="caption-controls">
               <div class="caption-quick-control">
-                <label class="field-label" for="captionPreset">PILIH GAYA CAPTION</label>
+                <label class="field-label" for="captionPreset">PILIH GAYA SUBTITLE</label>
                 <select id="captionPreset">
                   <option value="classic">Classic · putih dengan outline</option>
                   <option value="capcut" selected>Social · kotak lembut</option>
                   <option value="cinematic">Cinematic · elegan</option>
                   <option value="karaoke">Highlight · kuning</option>
                 </select>
-                <p class="caption-quick-hint">Pilih preset untuk langsung menerapkan tampilan caption. Kamu bisa melihat hasilnya di preview.</p>
+                <p class="caption-quick-hint">Pilih preset untuk langsung menerapkan tampilan subtitle. Kamu bisa melihat hasilnya di preview.</p>
               </div>
-              <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam caption ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
+              <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam subtitle ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
               <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
               <div class="caption-quick-control caption-animation-control">
                 <label class="field-label" for="captionAnimation">GAYA ANIMASI</label>

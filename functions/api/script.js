@@ -149,6 +149,46 @@ export async function onRequestPost({ request, env }) {
       }
     }
 
+    // Provider fallback: if OpenRouter fails, try KiosAPI before direct DeepSeek.
+    if (hasOpenRouter && hasKiosapi && !providerResponded) {
+      try {
+        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            messages: [{ role: "system", content: system }, { role: "user", content: text }],
+            temperature: 0.7, max_tokens: maxOutputTokens, stream: false
+          })
+        });
+        const data = await readJson(upstream);
+        if (!upstream.ok) throw new Error(data.error?.message || data.message || "KiosAPI gagal memproses naskah (HTTP " + upstream.status + ").");
+        const output = data.choices?.[0]?.message?.content?.trim();
+        if (!output) throw new Error("KiosAPI tidak mengembalikan naskah.");
+        providerResponded = true;
+        const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+        const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
+        const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+        const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
+          ? Math.max(0, Number(reportedCost)) : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+        const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
+        const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
+          "ai-script-edit:kiosapi:" + modelUsed, {
+            provider: "kiosapi", model: modelUsed, providerCostIdr: Math.ceil(providerCostIdr),
+            inputTokens: billing.inputTokens, outputTokens: billing.outputTokens, requestId
+          });
+        reservationSettled = true;
+        return Response.json({
+          text: output, creditsCharged: charged.charged, creditsRemaining: charged.remaining,
+          usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
+          provider: "kiosapi", model: modelUsed, providerCostIdr
+        });
+      } catch (error) {
+        if (providerResponded) throw error;
+        lastError = error;
+      }
+    }
+
     // Optional emergency fallback through DeepSeek's own API key. This also
     // covers Kiosapi gateway/key/balance errors, not only model-provider errors.
     if (hasDirectDeepSeek && !providerResponded) {

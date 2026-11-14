@@ -180,6 +180,45 @@ OUTPUT: Balas HANYA JSON valid dengan properti "reply" dan "script". "reply" ber
       }
     }
 
+    // Provider fallback: if OpenRouter fails, try KiosAPI before direct DeepSeek.
+    if (hasOpenRouter && hasKiosapi && !providerResponded) {
+      try {
+        const upstream = await fetch("https://api.kiosapi.id/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            models: primaryModel === fallbackModel ? [primaryModel] : [primaryModel, fallbackModel],
+            messages: promptMessages, temperature: 0.75, max_tokens: maxOutputTokens,
+            response_format: { type: "json_object" }, stream: false
+          })
+        });
+        const data = await readJson(upstream);
+        if (!upstream.ok) throw new Error(data.error?.message || data.message || "KiosAPI gagal memproses percakapan (HTTP " + upstream.status + ").");
+        providerResponded = true;
+        const modelUsed = upstream.headers.get("X-Kiosapi-Model-Used") || data.model || primaryModel;
+        const headerCost = upstream.headers.get("X-Kiosapi-Cost-IDR");
+        const reportedCost = data.usage?.cost_idr ?? (headerCost !== null ? Number(headerCost) : null);
+        const providerCostIdr = reportedCost !== null && Number.isFinite(Number(reportedCost))
+          ? Math.max(0, Number(reportedCost)) : estimateKiosapiCostIdr(data.usage || {}, modelUsed, env);
+        const billing = calculateKiosapiCharge({ ...(data.usage || {}), cost_idr: providerCostIdr }, env);
+        const charged = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
+          "ai-assistant:kiosapi:" + modelUsed, {
+            provider: "kiosapi", model: modelUsed, providerCostIdr: Math.ceil(providerCostIdr),
+            inputTokens: billing.inputTokens, outputTokens: billing.outputTokens, requestId
+          });
+        reservationSettled = true;
+        const parsed = parseAssistantOutput(data.choices?.[0]?.message?.content);
+        return Response.json({
+          ...parsed, creditsCharged: charged.charged, creditsRemaining: charged.remaining,
+          usage: { inputTokens: billing.inputTokens, outputTokens: billing.outputTokens },
+          provider: "kiosapi", model: modelUsed, providerCostIdr
+        });
+      } catch (error) {
+        if (providerResponded) throw error;
+        lastError = error;
+      }
+    }
+
     // Emergency direct DeepSeek fallback if Kiosapi is unavailable or rejects the request.
     if (hasDirectDeepSeek && !providerResponded) {
       try {

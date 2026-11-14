@@ -28,62 +28,6 @@ function setBusy(busy,message="Sedang membuat audio…"){$("generateButton").dis
 function id3Synchsafe(size){return new Uint8Array([(size>>21)&127,(size>>14)&127,(size>>7)&127,size&127]);}
 function id3TextFrame(id,value){const payload=new Uint8Array([3,...new TextEncoder().encode(String(value||""))]);const frame=new Uint8Array(10+payload.length);frame.set(new TextEncoder().encode(id),0);frame.set(id3Synchsafe(payload.length),4);frame.set(payload,10);return frame;}
 function createTaggedMp3(blob,voiceName){const frames=[id3TextFrame("TIT2","Narasi ZAIDA Voice"),id3TextFrame("TPE1",voiceName||"ZAIDA Voice"),id3TextFrame("TALB","ZAIDA Voice")];const length=frames.reduce((sum,x)=>sum+x.length,0),header=new Uint8Array([73,68,51,4,0,0,...id3Synchsafe(length)]);return new Blob([header,...frames,blob],{type:"audio/mpeg"});}
-const STUDIO_ASSETS_KEY="zaidaStudioVisualAssets";
-const studioAssets={product:null,logo:null};
-function renderStudioAsset(kind){
-  const asset=studioAssets[kind],preview=$(kind==="product"?"productAssetPreview":"logoAssetPreview");
-  const name=$(kind==="product"?"productAssetName":"logoAssetName");
-  const remove=$(kind==="product"?"removeProductAsset":"removeLogoAsset");
-  preview.replaceChildren();
-  if(asset){
-    const image=document.createElement("img");image.src=asset.dataUrl;image.alt=kind==="product"?"Foto produk":"Logo brand";
-    preview.append(image);name.textContent=asset.name;remove.hidden=false;
-  }else{
-    const placeholder=document.createElement("span");placeholder.className="studio-asset-placeholder";placeholder.textContent=kind==="product"?"▧":"◇";
-    preview.append(placeholder);name.textContent=kind==="product"?"Belum ada gambar":"Belum ada logo";remove.hidden=true;
-  }
-}
-function saveStudioAssets(){
-  try{localStorage.setItem(STUDIO_ASSETS_KEY,JSON.stringify(studioAssets));}
-  catch{toast("Penyimpanan penuh. Hapus salah satu gambar atau gunakan file yang lebih kecil.");}
-}
-function loadStudioAssets(){
-  try{
-    const saved=JSON.parse(localStorage.getItem(STUDIO_ASSETS_KEY)||"{}");
-    studioAssets.product=saved.product||null;studioAssets.logo=saved.logo||null;
-  }catch{studioAssets.product=null;studioAssets.logo=null;}
-  renderStudioAsset("product");renderStudioAsset("logo");
-}
-async function prepareStudioImage(file){
-  if(!file||!file.type.startsWith("image/"))throw new Error("Pilih file gambar yang valid.");
-  if(file.size>10*1024*1024)throw new Error("Ukuran file maksimal 10 MB.");
-  const bitmap=await createImageBitmap(file);
-  try{
-    const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
-    const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-    const ctx=canvas.getContext("2d");ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
-    const dataUrl=canvas.toDataURL("image/webp",0.84);
-    if(dataUrl.length>2_400_000)throw new Error("Gambar masih terlalu besar setelah diproses. Coba file yang lebih kecil.");
-    return dataUrl;
-  }finally{bitmap.close?.();}
-}
-async function handleStudioAssetUpload(kind,file){
-  if(!file)return;
-  try{
-    const dataUrl=await prepareStudioImage(file);
-    const previous=studioAssets[kind];
-    studioAssets[kind]={name:file.name,dataUrl};
-    try{localStorage.setItem(STUDIO_ASSETS_KEY,JSON.stringify(studioAssets));}
-    catch(error){studioAssets[kind]=previous;throw new Error("Penyimpanan browser penuh. Hapus aset lain atau pilih gambar lebih kecil.");}
-    renderStudioAsset(kind);toast((kind==="product"?"Foto produk":"Logo")+" berhasil ditambahkan.");
-  }catch(error){toast(error.message||"Gagal memproses gambar.");}
-  $(kind==="product"?"productAssetInput":"logoAssetInput").value="";
-}
-function removeStudioAsset(kind){
-  studioAssets[kind]=null;
-  try{localStorage.setItem(STUDIO_ASSETS_KEY,JSON.stringify(studioAssets));}catch{}
-  renderStudioAsset(kind);toast((kind==="product"?"Foto produk":"Logo")+" dihapus.");
-}
 function updateDownloadLink(){if(!state.audioBlob)return;if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);const selected=state.voices.find(v=>v.voice_id===$("voiceSelect").value);const blob=$("includeMetadataTags").checked?createTaggedMp3(state.audioBlob,selected?.name):state.audioBlob;state.downloadUrl=URL.createObjectURL(blob);$("downloadButton").href=state.downloadUrl;}
 function formatAudioDuration(seconds){const total=Math.max(0,Math.floor(Number(seconds)||0));return Math.floor(total/60)+":"+String(total%60).padStart(2,"0");}
 function newRequestId(){return crypto.randomUUID();}
@@ -659,12 +603,6 @@ $("downloadSrt").addEventListener("click",downloadSubtitle);
 $("regenerateSrt").addEventListener("click",()=>{const cleanSource=prepareSubtitleSource(state.sourceText,state.alignment);state.subtitles=buildSubtitles(cleanSource.text,cleanSource.alignment,$("audioPlayer").duration||Math.max(1,cleanSource.text.length/12));renderSubtitles();toast("Subtitle dibuat ulang.");});
 $("dockAction").addEventListener("click",()=>generate());
 $("restartProject").addEventListener("click",()=>{$("newProject").click();});
-
-$("productAssetInput").addEventListener("change",e=>handleStudioAssetUpload("product",e.target.files?.[0]));
-$("logoAssetInput").addEventListener("change",e=>handleStudioAssetUpload("logo",e.target.files?.[0]));
-$("removeProductAsset").addEventListener("click",()=>removeStudioAsset("product"));
-$("removeLogoAsset").addEventListener("click",()=>removeStudioAsset("logo"));
-loadStudioAssets();
 
 function syncChoiceChips(){
   document.querySelectorAll(".choice-chip").forEach(button=>{

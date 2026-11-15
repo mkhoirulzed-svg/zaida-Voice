@@ -67,7 +67,7 @@ function drawCaption(ctx, text, width, height, style = {}, time = 0, cue = null)
   const preset = style.preset || "capcut";
   const fontSize = Math.max(18, Math.min(52, Number(style.fontSize) || 28)) * (width / 720);
   const font = String(style.font || (preset === "cinematic" ? "Georgia" : "Arial")).replace(/['"]/g, "");
-  const color = preset === "karaoke" ? "#ffe45e" : (style.textColor || "#ffffff");
+  const color = style.textColor || (preset === "karaoke" ? "#ffe45e" : "#ffffff");
   const outline = style.outlineColor || "#000000";
   const outlineWidth = Math.max(0, Math.min(6, Number(style.outlineWidth ?? 2))) * (width / 720);
   const background = style.background || (preset === "classic" || preset === "cinematic" ? "none" : "soft");

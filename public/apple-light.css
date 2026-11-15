@@ -1149,3 +1149,7 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 button.media-upload-button{appearance:none;-webkit-appearance:none;border:0!important;min-height:44px;padding:0 18px!important;background:#7656c9!important;color:#fff!important;font-size:13px!important;font-weight:700!important;line-height:1;box-shadow:0 3px 10px rgba(118,86,201,.18)}
 button.media-upload-button:active{transform:translateY(1px)}
 @media(max-width:600px){.media-library-toolbar{align-items:stretch}.media-library-toolbar>div{width:100%}button.media-upload-button{width:100%;min-height:46px}}
+
+.media-library-upload-row{display:flex;justify-content:flex-end;margin:-10px 0 22px}
+.media-library-upload-row .media-upload-button{min-width:170px;min-height:48px;font-size:14px!important}
+@media(max-width:600px){.media-library-upload-row{margin:0 0 18px}.media-library-upload-row .media-upload-button{width:100%;min-height:50px}}

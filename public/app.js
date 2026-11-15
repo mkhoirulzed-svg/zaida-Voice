@@ -595,13 +595,13 @@ function showView(requestedView){
     if(!state.audioUrl){toast("Buat suara sebelum menyiapkan subtitle.");view="studio";setStep(2);}
     else{view="studio";setStep(3);$("includeSubtitle").checked=true;$("subtitlePreviewToggle").hidden=false;$("subtitleOptions").hidden=false;$("subtitlePreviewToggle").textContent="Tutup Preview";$("subtitlePreviewToggle").setAttribute("aria-expanded","true");renderSubtitles();}
   }
-  const pageId={studio:"studioPage",voices:"voicesPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage",video:"videoStudioPage",image:"imageStudioPage",media:"mediaPage"}[view]||"studioPage";
+  const pageId={studio:"studioPage",voices:"voicesPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage",video:"videoStudioPage",media:"mediaPage"}[view]||"studioPage";
   document.body.classList.toggle("in-studio",view==="studio");
   document.body.classList.toggle("video-studio-page",view==="video");
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
-  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",image:"Image Studio",media:"Media Library"})[requestedView]||"Voice Studio";
+  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",media:"Media Library"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();}
   if(view==="media")loadMediaLibrary();

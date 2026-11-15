@@ -50,7 +50,7 @@ export async function onRequestGet({ request, env }) {
       creditsCharged: usage.reduce((sum, x) => sum + Math.abs(Number(x.amount) || 0), 0),
       providerCostIdr: usage.reduce((sum, x) => sum + (Number(x.providerCostIdr) || 0), 0),
       providerCostUsd: usage.reduce((sum, x) => sum + (Number(x.providerCostUsd) || 0), 0),
-      byProvider: ["deepseek", "elevenlabs"].map(provider => {
+      byProvider: ["deepseek", "elevenlabs", "openrouter", "kiosapi"].map(provider => {
         const items = usage.filter(x => x.provider === provider);
         return { provider, requests: items.length, creditsCharged: items.reduce((sum,x)=>sum+Math.abs(Number(x.amount)||0),0), providerCostIdr: items.reduce((sum,x)=>sum+(Number(x.providerCostIdr)||0),0), providerCostUsd: items.reduce((sum,x)=>sum+(Number(x.providerCostUsd)||0),0) };
       }),

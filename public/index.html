@@ -148,8 +148,12 @@
               <div class="video-assistant-compose"><textarea id="videoAssistantInput" rows="2" maxlength="3000" placeholder="Contoh: Buat naskah edukasi 2 menit tentang…"></textarea><button type="button" id="videoAssistantSend">Kirim</button></div>
               <div class="video-assistant-result" id="videoAssistantResult" hidden><label class="field-label" for="videoAssistantDraft">DRAF NASKAH</label><textarea id="videoAssistantDraft" rows="8"></textarea><button type="button" class="secondary-button" id="videoAssistantUse">Gunakan naskah ini</button></div>
             </details>
-            <details class="video-advanced-settings video-generation-advanced">
-              <summary>Pengaturan tambahan <span>Durasi, jumlah gambar & target</span></summary>
+            <details class="video-advanced-settings video-generation-advanced video-generation-settings-card">
+              <summary class="video-generation-settings-summary">
+                <span class="video-generation-settings-icon" aria-hidden="true">⚙</span>
+                <span class="video-generation-settings-copy"><b>Atur video kamu</b><small>Durasi, jumlah gambar, target penonton & gaya penyampaian</small></span>
+                <span class="video-generation-settings-action">Atur <span aria-hidden="true">⌄</span></span>
+              </summary>
               <div class="video-field-grid">
                 <div><label class="field-label" for="videoDurationMode">DURASI VIDEO</label><select id="videoDurationMode"><option value="auto" selected>Otomatis mengikuti naskah / audio</option><option value="manual">Atur manual</option></select></div>
                 <div id="videoDurationManualField" hidden><label class="field-label" for="videoDuration">DURASI TARGET (MENIT)</label><input id="videoDuration" type="number" min="0.5" max="10" step="0.5" value="1" inputmode="decimal"></div>

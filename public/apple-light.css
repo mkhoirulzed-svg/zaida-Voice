@@ -1204,3 +1204,32 @@ button.media-upload-button:active{transform:translateY(1px)}
 .image-studio-catalog,.image-studio-workspace{margin-top:24px}.image-studio-back-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;color:#888391;font-size:11px}.image-studio-back{padding:8px 11px;border:1px solid #e8e5ee;border-radius:9px;background:#fff;color:#6258a4;font-size:11px;font-weight:700;cursor:pointer}.image-template-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.image-template-card{display:flex;flex-direction:column;gap:9px;padding:0 0 13px;overflow:hidden;border:1px solid #e9e7ef;border-radius:14px;background:#fff;text-align:left;cursor:pointer}.image-template-art{height:130px;display:grid;place-items:center;color:#fff;font-size:30px;background:linear-gradient(135deg,#7565a6,#c4b5dd)}.image-template-card:nth-child(3n+2) .image-template-art{background:linear-gradient(135deg,#527b82,#b0c8c1)}.image-template-card:nth-child(3n) .image-template-art{background:linear-gradient(135deg,#95627d,#d9a8b8)}.image-template-card strong,.image-template-card small{margin:0 13px}.image-template-card strong{font-size:12px;color:#33313b}.image-template-card small{font-size:10px;line-height:1.5;color:#85828e}
 .image-workspace-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.85fr);gap:16px;align-items:start}.image-workspace-form{display:grid;gap:12px;padding:20px}.image-workspace-form h2{margin:5px 0;font-size:20px}.image-workspace-form>div:first-child p{margin:0;color:#888590;font-size:11px;line-height:1.5}.image-input-label{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:700;color:#494653}.image-input-label span{font-weight:500;color:#918d99}.image-workspace-form input[type=file],.image-workspace-form select,.image-template-fields input,.image-template-fields textarea,.image-template-fields select{width:100%;padding:11px;border:1px solid #e7e4ed;border-radius:9px;background:#fff;color:#383541;font:inherit;font-size:12px}.image-template-fields{display:grid;gap:12px}.image-template-field{display:grid;gap:6px}.image-template-field label{font-size:11px;font-weight:650;color:#514d59}.image-reference-preview img{display:block;max-width:100%;max-height:180px;object-fit:contain;border-radius:10px}.image-template-note{display:grid;gap:4px;padding:12px;border-radius:10px;background:#f7f5fb}.image-template-note b{font-size:11px;color:#51447b}.image-template-note span{font-size:10px;line-height:1.5;color:#817b8d}.image-generate-placeholder:disabled{opacity:.65;cursor:not-allowed}.image-studio-status{margin:0;color:#898591;font-size:10px;line-height:1.5}.image-workspace-preview{min-height:380px;display:grid;place-items:center;padding:20px}.image-preview-placeholder{display:grid;justify-items:center;gap:10px;text-align:center;color:#8d8797}.image-preview-placeholder span{display:grid;place-items:center;width:64px;height:64px;border-radius:20px;background:#f2eef9;color:#8062c7;font-size:30px}.image-preview-placeholder b{font-size:12px;color:#55515e}.image-preview-placeholder small{max-width:210px;font-size:10px;line-height:1.5}
 @media(max-width:900px){.image-studio-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.image-template-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.image-studio-page{padding:0 0 30px}.image-studio-heading h1{font-size:24px}.image-studio-hero{min-height:140px;padding:21px 19px}.image-studio-hero h2{font-size:20px}.image-studio-hero-mark{font-size:70px;padding:0}.image-studio-grid{gap:10px}.image-studio-card-art{height:96px;padding:11px}.image-studio-card-copy{padding:11px 12px 13px}.image-studio-card-copy strong{font-size:12px}.image-studio-card-copy small{font-size:9px}.image-studio-lower-links{grid-template-columns:1fr}.image-template-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.image-template-art{height:100px}.image-workspace-layout{grid-template-columns:1fr}.image-workspace-preview{min-height:220px}.image-workspace-form{padding:15px}}
+
+
+/* Image Studio — shared application shell and refined responsive layout */
+.image-standalone-main{min-width:0}
+.image-standalone-main>.topbar{position:sticky;top:0;z-index:8}
+.image-studio-page{width:100%;max-width:1180px;padding-top:34px}
+.image-studio-heading{align-items:flex-start;margin-top:4px}
+.image-studio-heading h1{font-size:clamp(28px,3vw,36px);letter-spacing:-1.2px}
+.image-studio-heading p{max-width:650px;font-size:13px;line-height:1.65}
+.image-studio-hero{box-shadow:0 12px 32px rgba(49,35,82,.10)}
+.image-studio-card:focus-visible,.image-template-card:focus-visible,.image-studio-back:focus-visible{outline:3px solid rgba(101,88,211,.24);outline-offset:3px}
+.image-studio-card-copy{min-height:76px}
+.image-studio-card-arrow{background:rgba(255,255,255,.25);backdrop-filter:blur(8px)}
+.image-studio-catalog[hidden],.image-studio-workspace[hidden],.image-studio-grid[hidden],.image-studio-hero[hidden],.image-studio-section-head[hidden],.image-studio-lower-links[hidden]{display:none!important}
+.profile-settings-link{margin-left:auto;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;color:#777780;text-decoration:none}
+.profile-settings-link:hover{background:#f2f2f6;color:#5148b8}
+@media(max-width:760px){
+  .image-standalone-main{padding-bottom:24px}
+  .image-standalone-main>.topbar{position:sticky}
+  .image-studio-page{padding:24px 16px 32px}
+  .image-studio-heading{margin:0 0 18px}
+  .image-studio-hero{margin-bottom:24px}
+}
+@media(max-width:420px){
+  .image-studio-page{padding-left:13px;padding-right:13px}
+  .image-studio-grid{gap:9px}
+  .image-studio-card-copy{min-height:82px}
+  .image-studio-card-copy small{font-size:9px}
+}

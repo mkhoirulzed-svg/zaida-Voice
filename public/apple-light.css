@@ -1233,3 +1233,10 @@ button.media-upload-button:active{transform:translateY(1px)}
   .image-studio-card-copy{min-height:82px}
   .image-studio-card-copy small{font-size:9px}
 }
+
+
+/* Image Studio navigation and credit display */
+.image-standalone-main a,.sidebar a{text-decoration:none}
+.image-standalone-main a:hover,.sidebar a:hover{text-decoration:none}
+.image-credit-balance{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-height:38px;padding:0 12px;border:1px solid #e8e6ee;border-radius:999px;background:#fff;color:#514b61;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(30,24,50,.04)}
+@media(max-width:760px){.image-credit-balance{min-height:34px;padding:0 9px;font-size:10px}.image-standalone-main>.topbar .top-actions{gap:6px;min-width:0}.image-standalone-main>.topbar .auth-button{max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}

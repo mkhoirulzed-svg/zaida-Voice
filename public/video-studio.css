@@ -670,3 +670,38 @@
 .video-voice-preview-button:disabled{opacity:.42;cursor:not-allowed}
 .video-voice-preview-button.is-playing{background:#e8e0fb;border-color:#8b70d0}
 @media(max-width:520px){.video-voice-preview-picker{grid-template-columns:minmax(0,1fr) 58px;gap:9px}.video-voice-preview-button{min-width:58px;min-height:56px}}
+
+
+/* AutoClip Studio mobile header: clean two-action layout */
+@media(max-width:520px){
+  .video-studio-page .video-heading-native{
+    align-items:stretch;
+    flex-direction:column;
+    gap:18px;
+    margin-bottom:24px;
+  }
+  .video-studio-page .video-heading-native h1{
+    font-size:40px;
+    line-height:1.12;
+    letter-spacing:-.045em;
+  }
+  .video-studio-page .video-project-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+    gap:12px;
+  }
+  .video-studio-page .video-quiet-action,
+  .video-studio-page .video-new-project-button{
+    min-height:72px;
+    width:100%;
+    border-radius:18px;
+    padding:0 12px;
+    font-size:18px;
+    font-weight:700;
+  }
+  .video-studio-page .video-new-project-button span{
+    font-size:24px;
+    margin-right:5px;
+  }
+}

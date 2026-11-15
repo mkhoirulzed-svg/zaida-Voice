@@ -1,5 +1,5 @@
 import {
-  verifyFirebaseUser, getOrCreateAccount, reserveCredits,
+  verifyFirebaseUser, getOrCreateAccount, reserveCredits, ensureStorageCapacity,
   releaseCredits, settleReservedCredits, calculateKiosapiCharge
 } from "../../lib/firebase.js";
 
@@ -136,7 +136,7 @@ export async function onRequestPost({ request, env }) {
     const assetId = requestId;
     const mime = image.media_type || image.mime || "image/png";
     const binary = Uint8Array.from(atob(image.b64_json), ch => ch.charCodeAt(0));
-    await env.VIDEO_MEDIA.put(auth.user.uid + "/" + assetId, binary, { httpMetadata: { contentType: mime, cacheControl: "private, no-store" }, customMetadata: { uid: auth.user.uid, project: "zaida-video-studio" } });
+    const storageKey = auth.user.uid + "/" + assetId;\n    try { await ensureStorageCapacity(auth.user, env, binary.byteLength, storageKey); } catch (storageError) { return jsonError(storageError.message, storageError.status || 500); }\n    await env.VIDEO_MEDIA.put(storageKey, binary, { httpMetadata: { contentType: mime, cacheControl: "private, no-store" }, customMetadata: { uid: auth.user.uid, project: "zaida-video-studio" } });
 
     return Response.json({
       image: { b64: image.b64_json, mime, assetId },

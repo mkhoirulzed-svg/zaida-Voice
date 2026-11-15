@@ -609,7 +609,7 @@ async function generateAllSceneImages() {
 function syncCaptionFontPicker() {
   const font=$("captionFont")?.value||"Arial";
   const current=$("captionFontCurrent");
-  if(current){current.textContent=font+" · Aa Bb 123";current.style.fontFamily="'"+font+"',sans-serif";}
+  if(current){current.textContent=font;current.style.fontFamily="'"+font+"',sans-serif";}
   $("captionFontOptions")?.querySelectorAll("[data-font]").forEach(button=>button.classList.toggle("is-selected",button.dataset.font===font));
 }
 function getCaptionStyle() {

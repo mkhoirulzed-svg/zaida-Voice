@@ -1,4 +1,4 @@
-import { verifyFirebaseUser } from "../../../lib/firebase.js";
+import { verifyFirebaseUser, ensureStorageCapacity } from "../../../lib/firebase.js";
 export async function onRequestPut({ request, env, params }) {
   const auth=await verifyFirebaseUser(request,env);if(auth.error)return auth.error;
   if(!env.VIDEO_MEDIA)return Response.json({error:"Binding R2 VIDEO_MEDIA belum tersedia."},{status:503});
@@ -7,7 +7,7 @@ export async function onRequestPut({ request, env, params }) {
   if(!mime.startsWith("audio/"))return Response.json({error:"Hanya file audio yang dapat disimpan."},{status:415});
   const bytes=await request.arrayBuffer();if(!bytes.byteLength)return Response.json({error:"File audio kosong."},{status:400});
   if(bytes.byteLength>100*1024*1024)return Response.json({error:"Ukuran audio maksimal 100 MB."},{status:413});
-  await env.VIDEO_MEDIA.put(auth.user.uid+"/voice-"+id,bytes,{httpMetadata:{contentType:mime,cacheControl:"private, no-store"},customMetadata:{uid:auth.user.uid,project:"zaida-voice-studio",kind:"audio"}});
+  const key=auth.user.uid+"/voice-"+id;\n  try { await ensureStorageCapacity(auth.user,env,bytes.byteLength,key); } catch(error) { return Response.json({error:error.message,storage:error.storage},{status:error.status||500}); }\n  await env.VIDEO_MEDIA.put(key,bytes,{httpMetadata:{contentType:mime,cacheControl:"private, no-store"},customMetadata:{uid:auth.user.uid,project:"zaida-voice-studio",kind:"audio"}});
   return Response.json({ok:true,assetId:id,size:bytes.byteLength},{headers:{"Cache-Control":"no-store"}});
 }
 export async function onRequestGet({ request, env, params }) {

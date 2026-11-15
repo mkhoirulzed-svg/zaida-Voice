@@ -455,6 +455,24 @@ function formatMediaDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "Tanggal tidak tersedia" : date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
+function formatStorageBytes(bytes) {
+  const value = Math.max(0, Number(bytes) || 0);
+  if (value < 1024 * 1024) return Math.round(value / 1024) + " KB";
+  if (value < 1024 * 1024 * 1024) return (value / (1024 * 1024)).toFixed(1) + " MB";
+  return (value / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+}
+function renderMediaStorage(storage) {
+  if (!storage) return;
+  const percent = Math.min(100, Math.max(0, Number(storage.usagePercent) || 0));
+  const used = formatStorageBytes(storage.usedBytes);
+  const quota = formatStorageBytes(storage.quotaBytes);
+  const label = $("mediaStorageLabel"), value = $("mediaStoragePercent"), bar = $("mediaStorageBar");
+  if (label) label.textContent = used + " digunakan";
+  if (value) value.textContent = percent + "%";
+  if (bar) { bar.style.width = percent + "%"; bar.classList.toggle("is-near-limit", percent >= 80); }
+  if ($("mediaStorageUsed")) $("mediaStorageUsed").textContent = used + " terpakai";
+  if ($("mediaStorageQuota")) $("mediaStorageQuota").textContent = "Kuota " + quota;
+}
 async function loadMediaLibrary() {
   const grid = $("mediaLibraryGrid");
   if (!grid) return;
@@ -467,7 +485,7 @@ async function loadMediaLibrary() {
   mediaLibraryStatus("Memuat koleksi media…");
   try {
     const result = await api("/api/media/assets", { authRequired: true });
-    mediaLibraryItems = result.assets || [];
+    mediaLibraryItems = result.assets || [];\n    renderMediaStorage(result.storage);
     $("mediaLibraryCount").textContent = mediaLibraryItems.length + " aset tersimpan";
     mediaLibraryStatus(result.hasMore ? "Menampilkan sebagian koleksi media terbaru." : "");
     await renderMediaLibrary();

@@ -1,6 +1,6 @@
 import { verifyFirebaseUser } from "../../lib/firebase.js";
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const ALLOWED_PREFIXES = ["image/", "video/", "audio/"];
 
 function jsonError(message, status = 400) {
@@ -57,10 +57,10 @@ export async function onRequestPost({ request, env }) {
   const contentType = (request.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase();
   if (!ALLOWED_PREFIXES.some(prefix => contentType.startsWith(prefix))) return jsonError("Format yang didukung: gambar, video, dan audio.", 415);
   const declaredSize = Number(request.headers.get("Content-Length") || 0);
-  if (declaredSize > MAX_FILE_SIZE) return jsonError("Ukuran file maksimal 100 MB.", 413);
+  if (declaredSize > MAX_FILE_SIZE) return jsonError("Ukuran file maksimal 25 MB.", 413);
   const bytes = await request.arrayBuffer();
   if (!bytes.byteLength) return jsonError("File kosong.", 400);
-  if (bytes.byteLength > MAX_FILE_SIZE) return jsonError("Ukuran file maksimal 100 MB.", 413);
+  if (bytes.byteLength > MAX_FILE_SIZE) return jsonError("Ukuran file maksimal 25 MB.", 413);
 
   const id = crypto.randomUUID();
   const rawName = request.headers.get("X-File-Name") || "media";

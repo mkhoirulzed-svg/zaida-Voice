@@ -163,7 +163,8 @@ async function loadVoiceProjectHistory(){
       info.append(title,small);
       const open=document.createElement("button");open.className="subtle-button";open.type="button";open.textContent="Buka";
       open.addEventListener("click",()=>restoreVoiceProject(project.id));
-      row.append(icon,info,open);box.append(row);
+      const remove=document.createElement("button");remove.className="history-delete-button";remove.type="button";remove.textContent="Hapus";remove.addEventListener("click",async()=>{if(!confirm("Hapus proyek Voice Studio ini beserta audio cloud yang terhubung?"))return;remove.disabled=true;try{await deleteVoiceProjectById(project.id);await loadVoiceProjectHistory();toast("Proyek Voice Studio dihapus.");}catch(error){remove.disabled=false;toast(error.message);}});
+      row.append(icon,info,open,remove);box.append(row);
     });
   }catch(error){box.innerHTML='<div class="empty-output"><b>Riwayat belum dapat dimuat</b><small></small></div>';box.querySelector("small").textContent=error.message;}
 }
@@ -220,7 +221,8 @@ async function loadVideoProjectHistory(){
       info.append(title,small);
       const open=document.createElement("button");open.className="subtle-button";open.type="button";open.textContent="Buka";
       open.addEventListener("click",()=>{showView("video");window.dispatchEvent(new CustomEvent("zaida:open-video-project",{detail:{id:project.id}}));});
-      row.append(icon,info,open);box.append(row);
+      const remove=document.createElement("button");remove.className="history-delete-button";remove.type="button";remove.textContent="Hapus";remove.addEventListener("click",async()=>{if(!confirm("Hapus proyek AutoClip Studio ini?"))return;remove.disabled=true;try{await deleteVideoProjectById(project.id);await loadVideoProjectHistory();toast("Proyek AutoClip Studio dihapus.");}catch(error){remove.disabled=false;toast(error.message);}});
+      row.append(icon,info,open,remove);box.append(row);
     });
   }catch(error){box.innerHTML='<div class="empty-output"><b>Riwayat belum dapat dimuat</b><small></small></div>';box.querySelector("small").textContent=error.message;}
 }
@@ -480,7 +482,10 @@ async function renderMediaLibrary() {
   if (!grid) return;
   revokeMediaLibraryUrls();
   const items = mediaLibraryFilter === "all" ? mediaLibraryItems : mediaLibraryItems.filter(item => item.kind === mediaLibraryFilter);
-  document.querySelectorAll("[data-media-filter]").forEach(button => button.classList.toggle("active", button.dataset.mediaFilter === mediaLibraryFilter));
+  $("clearVoiceProjects")?.addEventListener("click",()=>clearHistoryGroup("voice"));
+$("clearAudioHistory")?.addEventListener("click",()=>clearHistoryGroup("audio"));
+$("clearVideoProjects")?.addEventListener("click",()=>clearHistoryGroup("video"));
+document.querySelectorAll("[data-media-filter]").forEach(button => button.classList.toggle("active", button.dataset.mediaFilter === mediaLibraryFilter));
   if (!items.length) {
     const label = mediaLibraryFilter === "all" ? "media" : mediaLibraryFilter === "image" ? "gambar" : mediaLibraryFilter === "video" ? "video" : "audio";
     grid.innerHTML = '<div class="media-library-empty"><div class="media-library-empty-icon">＋</div><h3>Belum ada ' + label + '</h3><p>Upload file atau hasilkan media dari studio ZAIDA. Aset yang tersimpan akan muncul di sini.</p></div>';

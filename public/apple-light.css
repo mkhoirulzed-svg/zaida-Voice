@@ -1174,3 +1174,22 @@ button.media-upload-button:active{transform:translateY(1px)}
 .media-storage-track span{display:block;width:0;height:100%;border-radius:20px;background:#8062c7;transition:width .25s ease}
 .media-storage-track span.is-near-limit{background:#d97706}
 .media-storage-bottom{color:#85858e;font-size:11px}
+
+/* AutoClip storyboard media library picker */
+.media-picker-modal[hidden]{display:none!important}
+.media-picker-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px}
+.media-picker-backdrop{position:absolute;inset:0;background:rgba(20,18,28,.58);backdrop-filter:blur(4px)}
+.media-picker-dialog{position:relative;width:min(760px,100%);max-height:min(82vh,760px);overflow:auto;padding:20px;border:1px solid #e9e7ef;border-radius:18px;background:#fff;box-shadow:0 20px 70px #17132340}
+.media-picker-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+.media-picker-dialog h2{margin:0;font-size:17px;color:#292631}
+.media-picker-dialog p{margin:5px 0 0;color:#85818e;font-size:12px}
+.media-picker-close{width:34px;height:34px;border:0;border-radius:10px;background:#f3f1f7;color:#514c5c;font-size:23px;cursor:pointer}
+.media-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:12px}
+.media-picker-item{display:flex;min-width:0;flex-direction:column;gap:6px;padding:8px;border:1px solid #e9e7ef;border-radius:12px;background:#fff;text-align:left;cursor:pointer}
+.media-picker-item:hover{border-color:#8062c7;background:#faf8ff}
+.media-picker-item img{width:100%;height:112px;object-fit:cover;border-radius:8px;background:#f3f2f6}
+.media-picker-item span{overflow:hidden;color:#393541;font-size:11px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+.media-picker-item small{color:#898591;font-size:10px}
+.scene-image-source-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0}
+.scene-image-source-actions .scene-upload-label{margin:0}
+@media(max-width:560px){.media-picker-modal{padding:10px}.media-picker-dialog{padding:15px}.media-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

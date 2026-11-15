@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="/video-studio.css">
 
   <link rel="stylesheet" href="/apple-light.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700;900&family=Montserrat:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&family=Open+Sans:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body class="in-studio">
   <div class="app-shell">
@@ -257,10 +260,11 @@
               <button class="caption-preview-play" id="captionPreviewPlay" type="button" aria-label="Putar video" hidden>▶</button>
             </div>
             <div class="caption-controls">
+              <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam subtitle ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
               <div class="caption-preset-picker" id="captionPresetPicker">
                 <button type="button" class="caption-preset-toggle" id="captionPresetToggle" aria-expanded="false" aria-controls="captionPresetGrid">
                   <span class="caption-preset-toggle-copy"><small>PRESET SUBTITLE</small><b id="captionSelectedPresetName">Social</b><span>Pilih tampilan teks dan animasi sekaligus</span></span>
-                  <span class="caption-preset-toggle-action">Pilih preset⌄</span>
+                  <span class="caption-preset-toggle-action">Pilih preset</span>
                 </button>
                 <div class="caption-preset-grid" id="captionPresetGrid" hidden>
                   <button type="button" class="caption-preset-card" data-caption-preset="classic"><span class="caption-preset-thumb preset-thumb-classic"><b>Subtitle biasa</b></span><b>Classic</b><small>Putih · outline · statis</small></button>
@@ -273,12 +277,10 @@
                 </select>
                 <select id="captionAnimation" class="caption-native-select" aria-label="Animasi subtitle"><option value="static">Static</option><option value="typewriter">Typewriter</option><option value="word" selected>Word by word</option><option value="karaoke">Karaoke</option></select>
               </div>
-              <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam subtitle ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
-              <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
               <details class="caption-advanced-settings">
                 <summary><span><b>Pengaturan lanjutan</b><small>Font, ukuran, warna, posisi, dan background</small></span></summary>
                 <div class="caption-control-grid">
-                  <label>Font <select id="captionFont"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Verdana">Verdana</option></select></label>
+                  <label>Font <select id="captionFont"><option value="Arial">Arial</option><option value="Inter">Inter</option><option value="Roboto">Roboto</option><option value="Poppins">Poppins</option><option value="Montserrat">Montserrat</option><option value="Open Sans">Open Sans</option><option value="Lato">Lato</option><option value="Nunito">Nunito</option><option value="Oswald">Oswald</option><option value="Playfair Display">Playfair Display</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Verdana">Verdana</option></select></label>
                   <label>Ukuran <input id="captionFontSize" type="range" min="18" max="52" value="28"><output id="captionFontSizeValue">28 px</output></label>
                   <label>Warna teks <input id="captionTextColor" type="color" value="#ffffff"></label>
                   <label>Warna outline <input id="captionOutlineColor" type="color" value="#000000"></label>
@@ -287,7 +289,8 @@
                   <label>Transparansi <input id="captionBackgroundOpacity" type="range" min="0" max="100" value="76"></label>
                   <label>Posisi <select id="captionPosition"><option value="bottom">Bawah</option><option value="middle">Tengah</option><option value="top">Atas</option></select></label>
                 </div>
-              </details>
+              </details>              <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
+
             </div>
           </div>
         </section>

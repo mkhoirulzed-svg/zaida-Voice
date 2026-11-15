@@ -21,3 +21,19 @@ document.querySelector("[data-image-back-catalog]")?.addEventListener("click",()
 document.querySelector("[data-image-open-media]")?.addEventListener("click",()=>document.querySelector('[data-view="media"]')?.click());
 document.querySelector("[data-image-open-history]")?.addEventListener("click",()=>document.querySelector('[data-view="history"]')?.click());
 $("imageReferenceInput")?.addEventListener("change",e=>{const file=e.target.files?.[0];if(referenceUrl)URL.revokeObjectURL(referenceUrl);referenceUrl="";const preview=$("imageReferencePreview");preview.replaceChildren();if(!file){preview.hidden=true;return;}if(!["image/png","image/jpeg","image/webp"].includes(file.type)){e.target.value="";$("imageStudioStatus").textContent="Gunakan gambar PNG, JPEG, atau WebP.";return;}if(file.size>12*1024*1024){e.target.value="";$("imageStudioStatus").textContent="Ukuran gambar maksimal 12 MB.";return;}referenceUrl=URL.createObjectURL(file);const img=document.createElement("img");img.src=referenceUrl;img.alt="Preview foto referensi";preview.append(img);preview.hidden=false;});
+
+
+// Shared ZAIDA Voice sidebar controls for the standalone Image Studio page.
+const sidebar = $("sidebar");
+const backdrop = $("sidebarBackdrop");
+function setSidebarOpen(open) {
+  sidebar?.classList.toggle("open", open);
+  document.body.classList.toggle("sidebar-open", open);
+  if (backdrop) backdrop.hidden = !open;
+}
+$("mobileMenu")?.addEventListener("click", () => setSidebarOpen(true));
+$("sidebarClose")?.addEventListener("click", () => setSidebarOpen(false));
+backdrop?.addEventListener("click", () => setSidebarOpen(false));
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") setSidebarOpen(false);
+});

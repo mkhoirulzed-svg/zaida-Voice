@@ -1,4 +1,4 @@
-import { verifyFirebaseUser } from "../../../lib/firebase.js";
+import { verifyFirebaseUser } from "../../lib/firebase.js";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const ALLOWED_PREFIXES = ["image/", "video/", "audio/"];

@@ -176,7 +176,7 @@ async function loadVideoProjectHistory(){
     const result=await api("/api/video/projects",{authRequired:true});
     const projects=result.projects||[];
     box.replaceChildren();
-    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada proyek video</b><small>Proyek yang disimpan dari Video Studio akan muncul di sini.</small></div>';return;}
+    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada proyek video</b><small>Proyek yang disimpan dari AutoClip Studio akan muncul di sini.</small></div>';return;}
     projects.forEach(project=>{
       const row=document.createElement("div");row.className="history-item";
       const icon=document.createElement("span");icon.className="result-icon";icon.textContent="▶";
@@ -360,7 +360,7 @@ async function loadAdminDashboard(){
       ["ESTIMASI BIAYA PROVIDER",formatRupiah(data.providerCostIdr),"≈ $"+Number(data.providerCostUsd||0).toFixed(5)+" USD"],
       ["TRANSAKSI TERCATAT",Number(data.count||0).toLocaleString("id-ID"),"Maksimal 100 data terbaru"]
     ].map(x=>'<div class="admin-metric"><small>'+x[0]+'</small><b>'+x[1]+'</b><span>'+x[2]+'</span></div>').join("");
-    $("adminProviders").innerHTML=(data.byProvider||[]).map(p=>'<div class="panel admin-provider"><div class="admin-provider-head"><b>'+escapeHtml(p.provider==="elevenlabs"?"Pembuatan suara":p.provider==="openrouter"||p.provider==="kiosapi"?"Gambar Video Studio":p.provider==="deepseek"?"Penyusunan naskah":"Layanan AI")+'</b><span>'+Number(p.requests||0)+' proses</span></div><strong>'+formatRupiah(p.providerCostIdr)+'</strong><small>Biaya provider · '+Number(p.creditsCharged||0).toLocaleString("id-ID")+' kredit terpakai'+(p.estimatedCostTransactions?' · '+p.estimatedCostTransactions+' biaya estimasi':'')+'</small></div>').join("");
+    $("adminProviders").innerHTML=(data.byProvider||[]).map(p=>'<div class="panel admin-provider"><div class="admin-provider-head"><b>'+escapeHtml(p.provider==="elevenlabs"?"Pembuatan suara":p.provider==="openrouter"||p.provider==="kiosapi"?"Gambar AutoClip Studio":p.provider==="deepseek"?"Penyusunan naskah":"Layanan AI")+'</b><span>'+Number(p.requests||0)+' proses</span></div><strong>'+formatRupiah(p.providerCostIdr)+'</strong><small>Biaya provider · '+Number(p.creditsCharged||0).toLocaleString("id-ID")+' kredit terpakai'+(p.estimatedCostTransactions?' · '+p.estimatedCostTransactions+' biaya estimasi':'')+'</small></div>').join("");
     const transactions=data.transactions||[];
     $("adminTransactionList").innerHTML=transactions.length?transactions.map(t=>'<div class="admin-transaction"><div class="admin-tx-main"><b>'+escapeHtml(t.description||"Pemakaian layanan")+'</b><small>'+escapeHtml(formatAdminDate(t.createdAt))+'</small></div><div class="admin-tx-values"><b>'+Number(t.amount||0).toLocaleString("id-ID")+' kredit</b><small>'+formatRupiah(t.providerCostIdr||0)+'</small></div></div>').join(""):'<div class="empty-output"><b>Belum ada transaksi</b><p>Transaksi pemakaian akan muncul di sini.</p></div>';
     $("adminUpdated").textContent="Diperbarui "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
@@ -406,7 +406,7 @@ function showView(requestedView){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
-  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"Auto Video Studio"})[requestedView]||"Voice Studio";
+  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();}
   if(view==="assistant")renderStandaloneConversation();

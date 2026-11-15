@@ -661,7 +661,7 @@ $("includeMetadataTags").addEventListener("change",updateDownloadLink);
 $("addAudioTags").addEventListener("click",()=>closeStudioSettings());
 [["stability","stabilityValue"],["similarity","similarityValue"],["style","styleValue"]].forEach(([id,out])=>$(id).addEventListener("input",()=>$(out).textContent=$(id).value+"%"));
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
-const initialPage=new URLSearchParams(location.search).get("view");if(initialPage==="video")showView("video");
+const initialPage=new URLSearchParams(location.search).get("view");if(["video","media","history"].includes(initialPage))showView(initialPage);
 
 function renderVoiceScriptPreview(){
   const preview=$("voiceScriptPreview");

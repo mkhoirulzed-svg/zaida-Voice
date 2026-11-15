@@ -112,6 +112,24 @@ function setStatus(message, isError = false) {
   $("videoStatus").textContent = message;
   $("videoStatus").style.color = isError ? "#f0a3a3" : "#c6b8f5";
 }
+let zaidaProcessingCount = 0;
+function beginZaidaProcessing(message) {
+  zaidaProcessingCount++;
+  const overlay = $("zaidaProcessingOverlay");
+  if (overlay) {
+    $("zaidaProcessingMessage").textContent = message || "Mohon tunggu sebentar…";
+    overlay.hidden = false;
+  }
+}
+function endZaidaProcessing() {
+  zaidaProcessingCount = Math.max(0, zaidaProcessingCount - 1);
+  if (!zaidaProcessingCount && $("zaidaProcessingOverlay")) $("zaidaProcessingOverlay").hidden = true;
+}
+window.addEventListener("beforeunload", event => {
+  if (!zaidaProcessingCount) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
 function syncCredits(credits) {
   if (credits === undefined || credits === null) return;
   const value = Number(credits).toLocaleString("id-ID");
@@ -279,6 +297,7 @@ async function generateSceneImage(scene, button, imageArea) {
   if (scene.imageBusy) return;
   if (scene.generatedImage && !confirm("Buat ulang gambar adegan ini? Gambar baru akan dikenakan biaya lagi.")) return;
   scene.imageBusy = true;
+  beginZaidaProcessing("Sedang membuat gambar adegan " + scene.scene_number + ". Jangan tutup atau muat ulang halaman.");
   button.disabled = true;
   button.textContent = "Membuat gambar…";
   setStatus("Sedang membuat gambar adegan " + scene.scene_number + "… Mohon tunggu.");
@@ -308,6 +327,7 @@ async function generateSceneImage(scene, button, imageArea) {
     scene.imageBusy = false;
     button.disabled = false;
     button.textContent = scene.generatedImage ? "Buat ulang gambar" : "Buat gambar adegan";
+    endZaidaProcessing();
   }
 }
 function updateRenderAvailability() {
@@ -511,6 +531,7 @@ async function generateStoryboard() {
   const button = $("generateStoryboard");
   button.disabled = true;
   button.innerHTML = "<span>✧</span> Menyusun storyboard…";
+  beginZaidaProcessing("Sedang menyusun storyboard. Mohon tunggu dan jangan tinggalkan halaman.");
   setStatus("Sedang menyusun storyboard… Mohon tunggu.");
   try {
     const result = await api("/api/video/storyboard", {
@@ -540,6 +561,7 @@ async function generateStoryboard() {
   } finally {
     button.disabled = false;
     button.innerHTML = "<span>✧</span> Buat storyboard <b>→</b>";
+    endZaidaProcessing();
   }
 }
 async function generateAllSceneImages() {
@@ -769,6 +791,7 @@ async function generateVideoNarration() {
   const text=currentStoryboard.scenes.map(scene=>scene.narration.trim()).filter(Boolean).join("\n\n");
   if(!text||text.length>5000){setStatus("Gabungan narasi harus berisi 1–5.000 karakter.",true);return;}
   const button=$("generateVideoNarration");
+  beginZaidaProcessing("Sedang membuat audio narasi. Mohon tunggu hingga audio selesai disimpan.");
   button.disabled=true;button.textContent="Membuat narasi…";
   $("videoNarrationStatus").textContent="Mengirim narasi ke ElevenLabs. Biaya 3 kredit per karakter.";
   try {
@@ -832,6 +855,7 @@ async function generateVideoNarration() {
     setStatus(error.message,true);
   } finally {
     button.disabled=false;button.textContent="Buat ulang audio narasi";
+    endZaidaProcessing();
   }
 }
 function parsePreviewSrt(srt) {
@@ -885,6 +909,7 @@ async function startDualRender(isExport = false) {
     downloads.replaceChildren();
     downloads.hidden = true;
   }
+  beginZaidaProcessing(isExport ? "Sedang mengekspor video final. Jangan tutup atau muat ulang halaman." : "Sedang merender preview video. Mohon tunggu hingga selesai.");
   progress.hidden = false;
   button.disabled = true;
   button.textContent = isExport ? "Mengekspor video final…" : "Membuat preview…";
@@ -973,6 +998,7 @@ async function startDualRender(isExport = false) {
     else button.innerHTML="<span>▶</span> Buat Preview Video <b>→</b>";
     progress.hidden = true;
     updateRenderAvailability();
+    endZaidaProcessing();
   }
 }
 async function hydrateVideoProject(payload) {

@@ -24,7 +24,7 @@ export async function onRequestGet({ request, env }) {
   let cursor;
   let pages = 0;
   do {
-    const result = await env.VIDEO_MEDIA.list({ prefix, limit: 1000, cursor });
+    const result = await env.VIDEO_MEDIA.list({ prefix, limit: 1000, cursor, include: ["httpMetadata", "customMetadata"] });
     for (const object of result.objects || []) {
       const assetId = object.key.slice(prefix.length);
       if (!assetId || assetId.includes("/")) continue;

@@ -298,8 +298,7 @@ async function generateSceneImage(scene, button, imageArea) {
     updateStoryboardImageStrip();
     updateRenderAvailability();
     syncCredits(result.creditsRemaining);
-    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · terpakai " +
-      Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
+    setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat.");
   } catch (error) {
     scene.imageError = error?.message || "Kesalahan tidak diketahui saat meminta gambar ke provider AI.";
     setStatus("Gagal membuat gambar adegan " + scene.scene_number + ": " + scene.imageError, true);
@@ -554,8 +553,9 @@ async function generateAllSceneImages() {
     "Storyboard selesai dengan " + scenes.length + " adegan.\n\n" +
     "ZAIDA akan membuat otomatis " + pending.length + " gambar yang belum tersedia.\n" +
     "Mode: " + imageModeLabel + ".\n" +
-    "Estimasi pemakaian: " + estimateCredits.toLocaleString("id-ID") + " kredit ZAIDA (sekitar " + estimateCreditsPerImage.toLocaleString("id-ID") + " kredit per gambar).\n" +
-    "Pemotongan akhir mengikuti biaya aktual dan pengaturan tarif akun.\n\n" +
+    "ESTIMASI TOTAL untuk " + pending.length + " gambar: " + estimateCredits.toLocaleString("id-ID") + " kredit ZAIDA.\n" +
+    "Perkiraan batas per gambar: " + estimateCreditsPerImage.toLocaleString("id-ID") + " kredit.\n" +
+    "Biaya akhir dihitung dari biaya aktual setiap gambar; sisa estimasi akan dikembalikan.\n\n" +
     "Lanjutkan membuat semua gambar?"
   );
   if (!approved) {
@@ -576,7 +576,10 @@ async function generateAllSceneImages() {
       break;
     }
   }
-  $("storyboardQuickMeta").textContent = scenes.filter(scene => scene.generatedImage).length + "/" + scenes.length + " gambar selesai";
+  const completedScenes = scenes.filter(scene => scene.generatedImage);
+  const totalImageCredits = completedScenes.reduce((sum, scene) => sum + Math.max(0, Number(scene.generatedImage?.cost) || 0), 0);
+  $("storyboardQuickMeta").textContent = completedScenes.length + "/" + scenes.length + " gambar selesai · total " + totalImageCredits.toLocaleString("id-ID") + " kredit";
+  if (completedScenes.length) setStatus("Pembuatan gambar selesai · total " + totalImageCredits.toLocaleString("id-ID") + " kredit ZAIDA untuk " + completedScenes.length + " gambar.");
 }
 function getCaptionStyle() {
   return {

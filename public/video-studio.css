@@ -603,7 +603,7 @@
 .zaida-processing-spinner{grid-row:1/4;display:block;width:27px;height:27px;margin:0;border:3px solid #eee9f8;border-top-color:#7052c8;border-radius:50%;animation:zaida-processing-spin .85s linear infinite}
 .zaida-processing-card h2{margin:0 0 3px;font-size:14px;line-height:1.3}
 .zaida-processing-card p{margin:0;color:#706d79;font-size:12px;line-height:1.4}
-.zaida-processing-notice{grid-column:2;margin-top:6px;padding:0;background:transparent;color:#6247a9;font-size:11px;line-height:1.4;font-weight:650}
+
 @keyframes zaida-processing-spin{to{transform:rotate(360deg)}}
 @media(min-width:700px){.zaida-processing-overlay{bottom:24px}}
 @media(prefers-reduced-motion:reduce){.zaida-processing-spinner{animation:none;border-top-color:#7052c8}}

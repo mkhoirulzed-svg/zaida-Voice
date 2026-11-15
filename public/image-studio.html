@@ -26,11 +26,11 @@
       <a class="nav-item" href="/">Riwayat</a>
       <div class="sidebar-bottom">
         <nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav>
-        <div class="profile"><div class="avatar" id="profileAvatar">Z</div><div><b id="profileName">Pengunjung</b><small id="profileEmail">Belum masuk</small><span id="profileSpacer" hidden></span></div><a class="profile-settings-link" href="/#account" aria-label="Pengaturan akun">⚙</a></div>
+        <div class="profile"><div class="avatar" id="imageProfileAvatar">Z</div><div><b id="imageProfileName">Pengunjung</b><small id="imageProfileEmail">Belum masuk</small></div><a class="profile-settings-link" href="/" aria-label="Pengaturan akun">⚙</a></div>
       </div>
     </aside>
     <main class="main image-standalone-main">
-      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="breadcrumb">Ruang kerja <span>/</span> <b>Image Studio</b></div><div class="top-actions"><a class="auth-button" href="/">Masuk / Daftar</a><div class="top-avatar">Z</div></div></header>
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="breadcrumb">Ruang kerja <span>/</span> <b>Image Studio</b></div><div class="top-actions"><button class="auth-button" id="imageAuthButton" type="button">Masuk / Daftar</button><div class="top-avatar" id="imageTopAvatar">Z</div></div></header>
 
           <section class="page active image-studio-page" id="imageStudioPage">
             <div class="image-studio-heading"><div><span class="image-studio-eyebrow">ZAIDA CREATIVE TOOLS</span><h1>Image Studio</h1><p>Pilih studio sesuai kebutuhan. Template membantu menyiapkan visual tanpa harus menulis prompt dari awal.</p></div></div>
@@ -52,6 +52,24 @@
           </section>
     
     </main>
+  </div>
+  <div class="auth-overlay" id="imageAuthOverlay" hidden>
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="imageAuthTitle">
+      <button class="auth-close" id="imageAuthClose" aria-label="Tutup">×</button>
+      <div class="eyebrow"><span></span> AKUN ZAIDA VOICE</div>
+      <h2 id="imageAuthTitle">Selamat datang.</h2>
+      <p id="imageAuthDescription">Masuk untuk menggunakan Image Studio.</p>
+      <button class="google-auth-button" id="imageGoogleAuth" type="button"><span class="google-mark">G</span> Lanjutkan dengan Google</button>
+      <div class="auth-divider"><span>atau gunakan email</span></div>
+      <form id="imageAuthForm">
+        <label class="field-label" for="imageAuthEmail">EMAIL</label><input id="imageAuthEmail" type="email" autocomplete="email" required placeholder="nama@email.com">
+        <label class="field-label" for="imageAuthPassword">PASSWORD</label><input id="imageAuthPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="Minimal 6 karakter">
+        <button class="generate-button" id="imageAuthSubmit" type="submit">Masuk <b>→</b></button>
+      </form>
+      <button class="auth-switch" id="imageAuthSwitch" type="button">Belum punya akun? Daftar</button>
+      <button class="auth-resend" id="imageAuthResend" type="button" hidden>Kirim ulang email verifikasi</button>
+      <p class="auth-message" id="imageAuthMessage" role="status"></p>
+    </section>
   </div>
   <button class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Tutup menu" hidden></button>
   <script type="module" src="/image-studio.js"></script>

@@ -279,7 +279,7 @@ async function generateSceneImage(scene, button, imageArea) {
   scene.imageBusy = true;
   button.disabled = true;
   button.textContent = "Membuat gambar…";
-  setStatus("Mengirim permintaan gambar adegan " + scene.scene_number + " ke OpenRouter (KiosAPI hanya sebagai fallback jika diperlukan)…");
+  setStatus("Sedang membuat gambar adegan " + scene.scene_number + "… Mohon tunggu.");
   try {
     const result = await api("/api/video/image", {
       method: "POST",
@@ -510,7 +510,7 @@ async function generateStoryboard() {
   const button = $("generateStoryboard");
   button.disabled = true;
   button.innerHTML = "<span>✧</span> Menyusun storyboard…";
-  setStatus("Menghubungi Kiosapi dan menyusun adegan…");
+  setStatus("Sedang menyusun storyboard… Mohon tunggu.");
   try {
     const result = await api("/api/video/storyboard", {
       method: "POST",
@@ -532,7 +532,7 @@ async function generateStoryboard() {
       syncCredits(result.creditsRemaining);
       $("sidebarCreditBalance").textContent = Number(result.creditsRemaining).toLocaleString("id-ID") + " kredit";
     }
-    setStatus("Storyboard berhasil dibuat · " + (result.model || "Kiosapi") + " · biaya " + (result.creditsCharged ?? "—") + " kredit.");
+    setStatus("Storyboard berhasil dibuat · terpakai " + (result.creditsCharged ?? "—") + " kredit ZAIDA.");
     await generateAllSceneImages();
   } catch (error) {
     setStatus(error.message, true);

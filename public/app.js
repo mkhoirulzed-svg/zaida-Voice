@@ -68,16 +68,50 @@ async function addAudioTags(){const text=$("scriptText").value.trim();if(!curren
 function renderHistory(){
   const list=$("historyList");
   if(!state.history.length){list.innerHTML='<div class="empty-output"><b>Belum ada riwayat</b></div>';return;}
-  list.innerHTML="";
-  state.history.forEach(item=>{
+  list.replaceChildren();
+  state.history.forEach((item,index)=>{
     const row=document.createElement("div");row.className="history-item";
-    const icon=document.createElement("span");icon.className="result-icon";icon.innerHTML='<svg viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-16v20m4-14v8m4-11v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    const icon=document.createElement("span");icon.className="result-icon";icon.textContent="♫";
     const info=document.createElement("div"),title=document.createElement("b"),small=document.createElement("small");
     title.textContent=item.title;small.textContent=item.details;info.append(title,small);
+    const actions=document.createElement("div");actions.className="history-item-actions";
     const link=document.createElement("a");link.href=item.url;link.download="zaida-voice.mp3";link.textContent="Unduh";
-    row.append(icon,info,link);list.append(row);
+    const remove=document.createElement("button");remove.type="button";remove.className="history-delete-button";remove.textContent="Hapus";
+    remove.addEventListener("click",()=>{if(!confirm("Hapus riwayat audio ini?"))return;state.history.splice(index,1);renderHistory();toast("Riwayat audio dihapus.");});
+    actions.append(link,remove);row.append(icon,info,actions);list.append(row);
   });
 }
+async function deleteVoiceProjectById(id){
+  await api("/api/voice/projects?id="+encodeURIComponent(id),{method:"DELETE",authRequired:true});
+  if(activeVoiceProjectId===id){clearTimeout(voiceProjectSaveTimer);activeVoiceProjectId=crypto.randomUUID();}
+}
+async function deleteVideoProjectById(id){
+  await api("/api/video/projects/"+encodeURIComponent(id),{method:"DELETE",authRequired:true});
+}
+async function clearHistoryGroup(kind){
+  const config={
+    voice:{label:"semua proyek Voice Studio",url:"/api/voice/projects",load:loadVoiceProjectHistory},
+    video:{label:"semua proyek AutoClip Studio",url:"/api/video/projects",load:loadVideoProjectHistory}
+  };
+  if(kind==="audio"){
+    if(!state.history.length){toast("Tidak ada riwayat audio untuk dihapus.");return;}
+    if(!confirm("Hapus semua riwayat audio perangkat dari daftar ini? File proyek yang tersimpan di cloud tidak ikut dihapus."))return;
+    state.history=[];renderHistory();toast("Riwayat audio perangkat dibersihkan.");return;
+  }
+  const item=config[kind];
+  if(!item||!currentUser)return;
+  if(!confirm("Yakin ingin menghapus "+item.label+"? Tindakan ini tidak dapat dibatalkan."))return;
+  try{
+    const result=await api(item.url,{authRequired:true});
+    const records=result.projects||[];
+    for(const record of records){
+      if(kind==="voice")await deleteVoiceProjectById(record.id);
+      else await deleteVideoProjectById(record.id);
+    }
+    await item.load();toast(records.length?records.length+" proyek berhasil dihapus.":"Tidak ada proyek untuk dihapus.");
+  }catch(error){toast("Gagal menghapus riwayat: "+error.message);}
+}
+
 
 
 function voiceProjectPayload(){

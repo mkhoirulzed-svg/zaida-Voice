@@ -975,3 +975,22 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .studio-header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .studio-new-project{margin:0!important;height:42px!important;padding:0 14px!important;white-space:nowrap}
 @media(max-width:800px){.studio-header-actions{width:100%;justify-content:space-between}}
+
+/* Voice Studio header actions styled like AutoClip Studio */
+.studio-maker-header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.studio-maker-header .workflow-title h1{margin:0;font-size:clamp(25px,3vw,32px);letter-spacing:-.045em;font-weight:720}
+.studio-header-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.studio-save-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.studio-history-button,.studio-new-project{
+ min-height:72px!important;min-width:0;border-radius:18px!important;padding:0 22px!important;
+ font:inherit!important;font-size:18px!important;font-weight:700!important;cursor:pointer;
+}
+.studio-history-button{border:1px solid #e8e8ee!important;background:#fff!important;color:#5d5d69!important}
+.studio-new-project{border:1px solid #7656c9!important;background:#7656c9!important;color:#fff!important;box-shadow:0 3px 9px rgba(118,86,201,.13)!important}
+.studio-new-project svg{width:20px;height:20px;vertical-align:-4px;margin-right:5px}
+@media(max-width:800px){
+ .studio-maker-header{align-items:stretch!important;flex-direction:column;gap:18px!important}
+ .studio-maker-header .workflow-title h1{font-size:40px}
+ .studio-header-actions{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:12px}
+ .studio-history-button,.studio-new-project{width:100%;min-height:72px!important}
+}

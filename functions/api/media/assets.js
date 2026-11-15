@@ -63,7 +63,9 @@ export async function onRequestPost({ request, env }) {
   if (!bytes.byteLength) return jsonError("File kosong.", 400);
   if (bytes.byteLength > MAX_FILE_SIZE) return jsonError("Ukuran file maksimal 25 MB.", 413);
 
-  const id = crypto.randomUUID();\n  try { await ensureStorageCapacity(auth.user, env, bytes.byteLength); }\n  catch (error) { return jsonError(error.message, error.status || 500); }
+  const id = crypto.randomUUID();
+  try { await ensureStorageCapacity(auth.user, env, bytes.byteLength); }
+  catch (error) { return jsonError(error.message, error.status || 500); }
   const rawName = request.headers.get("X-File-Name") || "media";
   let fileName = "media";
   try { fileName = decodeURIComponent(rawName).replace(/[\\/\\0-\\x1f]/g, "").slice(0, 120) || "media"; } catch {}

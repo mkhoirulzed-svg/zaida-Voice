@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <title>ZAIDA Image Studio</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/apple-light.css">
+</head>
+<body class="in-studio">
+  <main class="main image-standalone-main">
+          <section class="page image-studio-page" id="imageStudioPage">
+            <div class="image-studio-heading"><div><span class="image-studio-eyebrow">ZAIDA CREATIVE TOOLS</span><h1>Image Studio</h1><p>Pilih studio sesuai kebutuhan. Template membantu menyiapkan visual tanpa harus menulis prompt dari awal.</p></div></div>
+            <div class="image-studio-hero"><div><span>AI CREATIVE WORKSPACE</span><h2>Apa yang ingin kamu buat hari ini?</h2><p>Mulai dari template siap pakai, lalu ZAIDA membantu menyiapkan proses kreatifnya.</p></div><div class="image-studio-hero-mark" aria-hidden="true">✳</div></div>
+            <div class="image-studio-section-head"><div><h2>Pilih studio</h2><p>Setiap studio punya template dan alur kerja khusus.</p></div></div>
+            <div class="image-studio-grid" id="imageStudioGrid">
+              <button class="image-studio-card" type="button" data-image-studio="edit"><span class="image-studio-card-art art-edit"><i>✦</i><b>EDIT</b></span><span class="image-studio-card-copy"><strong>Edit Foto</strong><small>Perbaiki, ubah, dan sempurnakan foto</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="product"><span class="image-studio-card-art art-product"><i>▣</i><b>PRODUCT</b></span><span class="image-studio-card-copy"><strong>Foto Produk</strong><small>Katalog, lifestyle, dan materi promosi</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="poster"><span class="image-studio-card-art art-poster"><i>▤</i><b>DESIGN</b></span><span class="image-studio-card-copy"><strong>Poster &amp; Konten</strong><small>Feed, story, banner, dan thumbnail</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="education"><span class="image-studio-card-art art-education"><i>✚</i><b>EDUCATION</b></span><span class="image-studio-card-copy"><strong>Ilustrasi &amp; Edukasi</strong><small>Ilustrasi medis dan infografis</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="portrait"><span class="image-studio-card-art art-portrait"><i>◉</i><b>PORTRAIT</b></span><span class="image-studio-card-copy"><strong>Portrait Studio</strong><small>Foto profil dan potret profesional</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="character"><span class="image-studio-card-art art-character"><i>☺</i><b>CHARACTER</b></span><span class="image-studio-card-copy"><strong>Karakter &amp; Avatar</strong><small>Maskot, karakter, dan sticker</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="brand"><span class="image-studio-card-art art-brand"><i>◇</i><b>BRANDING</b></span><span class="image-studio-card-copy"><strong>Logo &amp; Branding</strong><small>Identitas visual dan aset brand</small></span><span class="image-studio-card-arrow">→</span></button>
+              <button class="image-studio-card" type="button" data-image-studio="free"><span class="image-studio-card-art art-free"><i>✧</i><b>CREATE</b></span><span class="image-studio-card-copy"><strong>Generate Bebas</strong><small>Buat gambar dari ide sendiri</small></span><span class="image-studio-card-arrow">→</span></button>
+            </div>
+            <div class="image-studio-lower-links"><button type="button" data-image-open-media><span>▧</span><span><b>Media Library</b><small>Kelola semua aset kreatifmu</small></span><span>→</span></button><button type="button" data-image-open-history><span>◷</span><span><b>Riwayat Kreasi</b><small>Lihat hasil gambar sebelumnya</small></span><span>→</span></button></div>
+            <section class="image-studio-catalog" id="imageStudioCatalog" hidden><div class="image-studio-back-row"><button type="button" class="image-studio-back" data-image-back>← Semua studio</button><span id="imageStudioCatalogLabel"></span></div><div class="image-studio-section-head"><div><h2 id="imageStudioCatalogTitle">Pilih template</h2><p id="imageStudioCatalogDescription"></p></div></div><div class="image-template-grid" id="imageTemplateGrid"></div></section>
+            <section class="image-studio-workspace" id="imageStudioWorkspace" hidden><div class="image-studio-back-row"><button type="button" class="image-studio-back" data-image-back-catalog>← Kembali ke template</button><span id="imageTemplateSelectedLabel"></span></div><div class="image-workspace-layout"><div class="image-workspace-form panel"><div><span class="image-studio-eyebrow">TEMPLATE WORKFLOW</span><h2 id="imageWorkspaceTitle">Siapkan gambar</h2><p id="imageWorkspaceDescription"></p></div><label class="image-input-label" for="imageReferenceInput">Foto referensi <span id="imageReferenceRequired">Opsional</span></label><input id="imageReferenceInput" type="file" accept="image/png,image/jpeg,image/webp"><div class="image-reference-preview" id="imageReferencePreview" hidden></div><div id="imageTemplateFields" class="image-template-fields"></div><label class="image-input-label" for="imageOutputRatio">Rasio gambar</label><select id="imageOutputRatio"><option value="1:1">Persegi · 1:1</option><option value="4:5">Portrait · 4:5</option><option value="9:16">Story · 9:16</option><option value="16:9">Landscape · 16:9</option></select><div class="image-template-note"><b>ZAIDA menyiapkan prompt untukmu</b><span>Detail template akan otomatis diterapkan. Kamu tidak perlu menulis prompt teknis.</span></div><button type="button" class="generate-button image-generate-placeholder" id="imageStudioGenerate" disabled>Mesin generator segera dihubungkan</button><p class="image-studio-status" id="imageStudioStatus">Fondasi template siap. Integrasi generator menjadi tahap berikutnya.</p></div><aside class="image-workspace-preview panel"><div class="image-preview-placeholder"><span>✧</span><b>Hasil kreasi akan tampil di sini</b><small>Pilih template dan siapkan bahan untuk memulai.</small></div></aside></div></section>
+          </section>
+    
+  </main>
+  <script type="module" src="/image-studio.js"></script>
+</body>
+</html>

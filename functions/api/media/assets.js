@@ -1,4 +1,4 @@
-import { verifyFirebaseUser } from "../../lib/firebase.js";
+import { verifyFirebaseUser, getStorageUsage, ensureStorageCapacity } from "../../lib/firebase.js";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const ALLOWED_PREFIXES = ["image/", "video/", "audio/"];
@@ -19,7 +19,7 @@ export async function onRequestGet({ request, env }) {
   if (auth.error) return auth.error;
   if (!env.VIDEO_MEDIA) return jsonError("Penyimpanan media R2 belum tersedia.", 503);
 
-  const prefix = auth.user.uid + "/";
+  const storage = await getStorageUsage(auth.user, env);\n  const prefix = auth.user.uid + "/";
   const assets = [];
   let cursor;
   let pages = 0;
@@ -46,7 +46,7 @@ export async function onRequestGet({ request, env }) {
   } while (cursor && pages < 5);
 
   assets.sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
-  return Response.json({ assets, hasMore: Boolean(cursor) }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ assets, hasMore: Boolean(cursor), storage }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
   if (!bytes.byteLength) return jsonError("File kosong.", 400);
   if (bytes.byteLength > MAX_FILE_SIZE) return jsonError("Ukuran file maksimal 25 MB.", 413);
 
-  const id = crypto.randomUUID();
+  const id = crypto.randomUUID();\n  try { await ensureStorageCapacity(auth.user, env, bytes.byteLength); }\n  catch (error) { return jsonError(error.message, error.status || 500); }
   const rawName = request.headers.get("X-File-Name") || "media";
   let fileName = "media";
   try { fileName = decodeURIComponent(rawName).replace(/[\\/\\0-\\x1f]/g, "").slice(0, 120) || "media"; } catch {}

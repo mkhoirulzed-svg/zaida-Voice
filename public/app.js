@@ -394,6 +394,139 @@ function renderStandaloneConversation(){
   $("standaloneUseAssistantScript").disabled=!superChatState.draft;
   box.scrollTop=box.scrollHeight;updateSuperChatScrollbar();
 }
+
+let mediaLibraryItems = [];
+let mediaLibraryFilter = "all";
+let mediaLibraryObjectUrls = [];
+function mediaLibraryStatus(message, isError = false) {
+  const el = $("mediaLibraryStatus");
+  if (!el) return;
+  el.hidden = !message;
+  el.textContent = message || "";
+  el.classList.toggle("is-error", Boolean(isError));
+}
+function revokeMediaLibraryUrls() {
+  mediaLibraryObjectUrls.forEach(url => URL.revokeObjectURL(url));
+  mediaLibraryObjectUrls = [];
+}
+function formatMediaSize(bytes) {
+  const size = Number(bytes);
+  if (!Number.isFinite(size)) return "—";
+  return size < 1024 * 1024 ? Math.max(1, Math.round(size / 1024)) + " KB" : (size / (1024 * 1024)).toFixed(1) + " MB";
+}
+function formatMediaDate(value) {
+  if (!value) return "Tanggal tidak tersedia";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Tanggal tidak tersedia" : date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
+async function loadMediaLibrary() {
+  const grid = $("mediaLibraryGrid");
+  if (!grid) return;
+  if (!currentUser) {
+    revokeMediaLibraryUrls();
+    grid.innerHTML = '<div class="media-library-empty"><div class="media-library-empty-icon">⌑</div><h3>Masuk untuk melihat media</h3><p>Koleksi media tersimpan di akun ZAIDA kamu.</p></div>';
+    $("mediaLibraryCount").textContent = "Masuk untuk mengakses koleksi media.";
+    return;
+  }
+  mediaLibraryStatus("Memuat koleksi media…");
+  try {
+    const result = await api("/api/media/assets", { authRequired: true });
+    mediaLibraryItems = result.assets || [];
+    $("mediaLibraryCount").textContent = mediaLibraryItems.length + " aset tersimpan";
+    mediaLibraryStatus(result.hasMore ? "Menampilkan sebagian koleksi media terbaru." : "");
+    await renderMediaLibrary();
+  } catch (error) {
+    mediaLibraryStatus(error.message, true);
+    grid.innerHTML = '<div class="media-library-empty"><h3>Media belum dapat dimuat</h3><p>Periksa koneksi penyimpanan dan coba lagi.</p><button type="button" class="subtle-button" id="retryMediaLibrary">Coba lagi</button></div>';
+    $("retryMediaLibrary")?.addEventListener("click", loadMediaLibrary);
+  }
+}
+async function renderMediaLibrary() {
+  const grid = $("mediaLibraryGrid");
+  if (!grid) return;
+  revokeMediaLibraryUrls();
+  const items = mediaLibraryFilter === "all" ? mediaLibraryItems : mediaLibraryItems.filter(item => item.kind === mediaLibraryFilter);
+  document.querySelectorAll("[data-media-filter]").forEach(button => button.classList.toggle("active", button.dataset.mediaFilter === mediaLibraryFilter));
+  if (!items.length) {
+    const label = mediaLibraryFilter === "all" ? "media" : mediaLibraryFilter === "image" ? "gambar" : mediaLibraryFilter === "video" ? "video" : "audio";
+    grid.innerHTML = '<div class="media-library-empty"><div class="media-library-empty-icon">＋</div><h3>Belum ada ' + label + '</h3><p>Upload file atau hasilkan media dari studio ZAIDA. Aset yang tersimpan akan muncul di sini.</p></div>';
+    return;
+  }
+  grid.innerHTML = "";
+  for (const item of items) {
+    const card = document.createElement("article");
+    card.className = "media-library-card";
+    const preview = document.createElement("div");
+    preview.className = "media-library-preview";
+    preview.textContent = item.kind === "video" ? "▶" : item.kind === "audio" ? "♫" : "Memuat…";
+    const meta = document.createElement("div");
+    meta.className = "media-library-card-meta";
+    const name = document.createElement("b");
+    name.textContent = item.name || item.id;
+    name.title = item.name || item.id;
+    const details = document.createElement("small");
+    details.textContent = item.kind.toUpperCase() + " · " + formatMediaSize(item.size) + " · " + formatMediaDate(item.uploadedAt);
+    const actions = document.createElement("div");
+    actions.className = "media-library-card-actions";
+    const download = document.createElement("button");
+    download.type = "button"; download.className = "media-card-action"; download.textContent = "Unduh"; download.disabled = true;
+    const remove = document.createElement("button");
+    remove.type = "button"; remove.className = "media-card-action danger"; remove.textContent = "Hapus";
+    actions.append(download, remove); meta.append(name, details, actions); card.append(preview, meta); grid.append(card);
+    try {
+      const response = await fetch("/api/media/assets/" + encodeURIComponent(item.id), { headers: await authHeaders() });
+      if (!response.ok) throw new Error("Preview tidak tersedia");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      mediaLibraryObjectUrls.push(url);
+      if (item.kind === "image") {
+        const image = document.createElement("img"); image.src = url; image.alt = item.name || "Media gambar"; preview.replaceChildren(image);
+      } else if (item.kind === "video") {
+        const video = document.createElement("video"); video.src = url; video.controls = true; video.preload = "metadata"; preview.replaceChildren(video);
+      } else {
+        const audio = document.createElement("audio"); audio.src = url; audio.controls = true; preview.replaceChildren(audio);
+      }
+      download.disabled = false;
+      download.addEventListener("click", () => { const link = document.createElement("a"); link.href = url; link.download = item.name || item.id; link.click(); });
+    } catch { preview.textContent = "Preview tidak tersedia"; }
+    remove.addEventListener("click", async () => {
+      if (!confirm("Hapus aset ini dari Media Library? File akan dihapus permanen dari penyimpanan.")) return;
+      remove.disabled = true;
+      try {
+        await api("/api/media/assets/" + encodeURIComponent(item.id), { method: "DELETE", authRequired: true });
+        mediaLibraryItems = mediaLibraryItems.filter(asset => asset.id !== item.id);
+        $("mediaLibraryCount").textContent = mediaLibraryItems.length + " aset tersimpan";
+        await renderMediaLibrary(); toast("Media berhasil dihapus.");
+      } catch (error) { remove.disabled = false; toast(error.message); }
+    });
+  }
+}
+async function uploadMediaLibraryFile(file) {
+  if (!currentUser) { openAuth(); toast("Masuk terlebih dahulu untuk mengunggah media."); return; }
+  if (!file) return;
+  if (!/^(image|video|audio)\//i.test(file.type)) { toast("Format file tidak didukung."); return; }
+  if (file.size > 100 * 1024 * 1024) { toast("Ukuran file maksimal 100 MB."); return; }
+  const input = $("mediaLibraryUpload");
+  mediaLibraryStatus("Mengunggah " + file.name + "…");
+  const uploadButton = document.querySelector(".media-upload-button");
+  if (uploadButton) uploadButton.classList.add("is-loading");
+  try {
+    const headers = await authHeaders();
+    headers["Content-Type"] = file.type;
+    headers["X-File-Name"] = encodeURIComponent(file.name);
+    const response = await fetch("/api/media/assets", { method: "POST", headers, body: file });
+    let result = {}; try { result = await response.json(); } catch {}
+    if (!response.ok) throw new Error(result.error || "Upload gagal.");
+    mediaLibraryItems.unshift(result.asset);
+    $("mediaLibraryCount").textContent = mediaLibraryItems.length + " aset tersimpan";
+    mediaLibraryFilter = "all";
+    await renderMediaLibrary(); mediaLibraryStatus(""); toast("Media berhasil disimpan.");
+  } catch (error) { mediaLibraryStatus(error.message, true); }
+  finally { if (uploadButton) uploadButton.classList.remove("is-loading"); if (input) input.value = ""; }
+}
+document.querySelectorAll("[data-media-filter]").forEach(button => button.addEventListener("click", () => { mediaLibraryFilter = button.dataset.mediaFilter; renderMediaLibrary(); }));
+$("mediaLibraryUpload")?.addEventListener("change", event => uploadMediaLibraryFile(event.target.files?.[0]));
+
 function showView(requestedView){
   let view=requestedView;
   if(view==="subtitle"){
@@ -409,6 +542,7 @@ function showView(requestedView){
   $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",media:"Media Library"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();}
+  if(view==="media")loadMediaLibrary();
   if(view==="assistant")renderStandaloneConversation();
   if(view==="video")window.dispatchEvent(new Event("zaida:video-page-open"));
   if(view==="persona"&&!currentUser){openAuth();toast("Persona Saya hanya tersedia untuk pengguna yang sudah masuk.");showView("studio");return;}

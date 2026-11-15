@@ -662,3 +662,11 @@
 .caption-font-sample{font-family:inherit!important;font-size:clamp(17px,4.8vw,25px);font-weight:600;letter-spacing:-.025em}
 .caption-font-option{font-family:inherit}
 .caption-font-toggle #captionFontCurrent{font-size:16px}
+
+/* Audio Studio-style voice sample preview control */
+.video-voice-preview-picker{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:12px;align-items:stretch;margin-bottom:12px}
+.video-voice-preview-picker select{min-width:0;width:100%;margin:0}
+.video-voice-preview-button{display:grid;place-items:center;min-width:64px;min-height:58px;border:1px solid #e5def7;border-radius:16px;background:#f3effb;color:#6045b7;font-size:25px;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s}
+.video-voice-preview-button:disabled{opacity:.42;cursor:not-allowed}
+.video-voice-preview-button.is-playing{background:#e8e0fb;border-color:#8b70d0}
+@media(max-width:520px){.video-voice-preview-picker{grid-template-columns:minmax(0,1fr) 58px;gap:9px}.video-voice-preview-button{min-width:58px;min-height:56px}}

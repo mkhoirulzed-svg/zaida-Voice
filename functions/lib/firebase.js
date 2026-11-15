@@ -440,7 +440,7 @@ function voiceProjectFields(doc) {
   return {id:val(fields.projectId)||doc.name.split("/").pop(),title:val(fields.title)||"Proyek Voice Studio",payload,createdAt:val(fields.createdAt),updatedAt:val(fields.updatedAt)};
 }
 export async function listVoiceProjects(user, env) {
-  const response=await firestore(env,":runQuery",{method:"POST",body:JSON.stringify({structuredQuery:{from:[{collectionId:"voice_projects"}],where:{fieldFilter:{field:{fieldPath:"uid"},op:"EQUAL",value:{stringValue:user.uid}}},limit:50}})});
+  const response=await firestore(env,":runQuery",{method:"POST",body:JSON.stringify({structuredQuery:{from:[{collectionId:"voice_projects"}],where:{fieldFilter:{field:{fieldPath:"uid"},op:"EQUAL",value:{stringValue:user.uid}}},limit:500}})});
   return (Array.isArray(response)?response:[]).filter(row=>row.document).map(row=>voiceProjectFields(row.document)).sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")));
 }
 export async function getVoiceProject(user,env,projectId) {
@@ -476,7 +476,7 @@ export async function listVideoProjects(user, env) {
     structuredQuery: {
       from: [{ collectionId: "video_projects" }],
       where: { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: user.uid } } },
-      limit: 50
+      limit: 500
     }
   }) });
   return (Array.isArray(response) ? response : []).filter(row => row.document).map(row => videoProjectFields(row.document)).sort((a,b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));

@@ -485,7 +485,8 @@ async function loadMediaLibrary() {
   mediaLibraryStatus("Memuat koleksi media…");
   try {
     const result = await api("/api/media/assets", { authRequired: true });
-    mediaLibraryItems = result.assets || [];\n    renderMediaStorage(result.storage);
+    mediaLibraryItems = result.assets || [];
+    renderMediaStorage(result.storage);
     $("mediaLibraryCount").textContent = mediaLibraryItems.length + " aset tersimpan";
     mediaLibraryStatus(result.hasMore ? "Menampilkan sebagian koleksi media terbaru." : "");
     await renderMediaLibrary();

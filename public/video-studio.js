@@ -270,6 +270,56 @@ function createField(labelText, value, className, onInput) {
   wrap.append(label, area);
   return wrap;
 }
+let activeMediaPickerScene = null;
+async function openSceneMediaPicker(scene, previewArea) {
+  activeMediaPickerScene = { scene, previewArea };
+  const modal = $("sceneMediaPicker"), grid = $("sceneMediaPickerGrid");
+  modal.hidden = false;
+  grid.replaceChildren();
+  const loading = document.createElement("p"); loading.textContent = "Memuat koleksi gambar…"; grid.append(loading);
+  try {
+    const result = await api("/api/media/assets");
+    const images = (result.assets || []).filter(item => item.kind === "image");
+    grid.replaceChildren();
+    if (!images.length) {
+      const empty = document.createElement("p"); empty.textContent = "Belum ada gambar. Upload gambar melalui Media Library terlebih dahulu."; grid.append(empty); return;
+    }
+    for (const item of images) {
+      const card = document.createElement("button"); card.type = "button"; card.className = "media-picker-item";
+      const img = document.createElement("img"); img.alt = item.name || "Gambar media"; img.loading = "lazy";
+      const name = document.createElement("span"); name.textContent = item.name || item.id;
+      const size = document.createElement("small"); size.textContent = formatPickerSize(item.size);
+      card.append(img, name, size); grid.append(card);
+      card.addEventListener("click", async () => {
+        card.disabled = true; name.textContent = "Memuat gambar…";
+        try {
+          const token = await auth.currentUser.getIdToken();
+          const response = await fetch("/api/media/assets/" + encodeURIComponent(item.id), { headers: { Authorization: "Bearer " + token } });
+          if (!response.ok) throw new Error("Gambar tidak dapat dibuka.");
+          const blob = await response.blob();
+          if (!blob.type.startsWith("image/")) throw new Error("Aset ini bukan gambar.");
+          if (blob.size > 12 * 1024 * 1024) throw new Error("Gambar terlalu besar untuk dipakai di storyboard (maksimal 12 MB).");
+          const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = () => reject(new Error("Gambar gagal dibaca.")); reader.readAsDataURL(blob); });
+          activeMediaPickerScene.scene.uploadedImageDataUrl = dataUrl;
+          activeMediaPickerScene.scene.selectedMediaAssetId = item.id;
+          renderGeneratedImage(activeMediaPickerScene.scene, activeMediaPickerScene.previewArea);
+          updateStoryboardImageStrip(); updateRenderAvailability(); saveDraft();
+          closeSceneMediaPicker();
+          setStatus("Gambar dari Media Library dipakai untuk adegan " + activeMediaPickerScene?.scene?.scene_number + ".");
+        } catch (error) { setStatus(error.message, true); card.disabled = false; name.textContent = item.name || item.id; }
+      });
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch("/api/media/assets/" + encodeURIComponent(item.id), { headers: { Authorization: "Bearer " + token } });
+        if (response.ok) img.src = URL.createObjectURL(await response.blob());
+      } catch {}
+    }
+  } catch (error) { grid.replaceChildren(); const msg = document.createElement("p"); msg.textContent = error.message || "Media Library tidak dapat dimuat."; grid.append(msg); }
+}
+function formatPickerSize(bytes) { const n=Number(bytes)||0; return n<1048576?Math.round(n/1024)+" KB":(n/1048576).toFixed(1)+" MB"; }
+function closeSceneMediaPicker() { $("sceneMediaPicker").hidden = true; activeMediaPickerScene = null; }
+document.querySelectorAll("[data-media-picker-close]").forEach(button => button.addEventListener("click", closeSceneMediaPicker));
+
 function renderGeneratedImage(scene, previewArea) {
   previewArea.replaceChildren();
   const source = scene.uploadedImageDataUrl || (scene.generatedImage ? "data:" + scene.generatedImage.mime + ";base64," + scene.generatedImage.b64 : "");
@@ -459,7 +509,13 @@ function renderStoryboard(data) {
     imageButton.addEventListener("click", () => generateSceneImage(scene, imageButton, previewArea));
     renderGeneratedImage(scene, previewArea);
     uploadLabel.append(uploadInput);
-    imageArea.append(imageNote, uploadLabel, previewArea, imageButton);
+    const imageSourceActions = document.createElement("div");
+    imageSourceActions.className = "scene-image-source-actions";
+    const libraryButton = document.createElement("button");
+    libraryButton.type = "button"; libraryButton.className = "secondary-button scene-library-button"; libraryButton.textContent = "Pilih dari Media Library";
+    libraryButton.addEventListener("click", () => openSceneMediaPicker(scene, previewArea));
+    imageSourceActions.append(libraryButton, uploadLabel);
+    imageArea.append(imageNote, imageSourceActions, previewArea, imageButton);
 
     const meta = document.createElement("div");
     meta.className = "scene-meta";

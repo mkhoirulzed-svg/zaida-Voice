@@ -229,7 +229,10 @@
           <div class="audio-choice-card">
             <div class="audio-choice-heading"><span class="audio-choice-number">1</span><div><b>Pilih suara ZAIDA Voice</b><small>Tentukan karakter suara untuk narasimu.</small></div></div>
             <label class="field-label" for="videoVoiceSelect">KARAKTER SUARA</label>
-            <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
+            <div class="video-voice-preview-picker">
+              <select id="videoVoiceSelect"><option value="">Memuat katalog suara…</option></select>
+              <button type="button" id="videoVoicePreviewButton" class="video-voice-preview-button" aria-label="Pratinjau suara" title="Pratinjau suara" disabled>▶</button>
+            </div>
             <details class="video-advanced-settings">
               <summary>Pengaturan lanjutan <span>Stabilitas & kemiripan</span></summary>
               <div class="render-voice-settings">

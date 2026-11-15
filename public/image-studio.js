@@ -18,8 +18,8 @@ $("imageStudioGrid")?.addEventListener("click",e=>{const b=e.target.closest("[da
 $("imageTemplateGrid")?.addEventListener("click",e=>{const b=e.target.closest("[data-image-template]");if(b)openTemplate(b.dataset.imageTemplate);});
 document.querySelector("[data-image-back]")?.addEventListener("click",backToHome);
 document.querySelector("[data-image-back-catalog]")?.addEventListener("click",()=>openCatalog(activeStudio));
-document.querySelector("[data-image-open-media]")?.addEventListener("click",()=>document.querySelector('[data-view="media"]')?.click());
-document.querySelector("[data-image-open-history]")?.addEventListener("click",()=>document.querySelector('[data-view="history"]')?.click());
+document.querySelector("[data-image-open-media]")?.addEventListener("click",()=>{window.location.href="/?view=media";});
+document.querySelector("[data-image-open-history]")?.addEventListener("click",()=>{window.location.href="/?view=history";});
 $("imageReferenceInput")?.addEventListener("change",e=>{const file=e.target.files?.[0];if(referenceUrl)URL.revokeObjectURL(referenceUrl);referenceUrl="";const preview=$("imageReferencePreview");preview.replaceChildren();if(!file){preview.hidden=true;return;}if(!["image/png","image/jpeg","image/webp"].includes(file.type)){e.target.value="";$("imageStudioStatus").textContent="Gunakan gambar PNG, JPEG, atau WebP.";return;}if(file.size>12*1024*1024){e.target.value="";$("imageStudioStatus").textContent="Ukuran gambar maksimal 12 MB.";return;}referenceUrl=URL.createObjectURL(file);const img=document.createElement("img");img.src=referenceUrl;img.alt="Preview foto referensi";preview.append(img);preview.hidden=false;});
 
 
@@ -119,6 +119,7 @@ onAuthStateChanged(imageAuth, async user => {
   $("imageAuthResend").hidden = !(user && !user.emailVerified);
   if (!allowed) {
     $("sidebarCreditBalance").textContent = "Masuk untuk melihat saldo";
+    $("imageCreditBalance").textContent = "Kredit: —";
     return;
   }
   try {
@@ -126,9 +127,12 @@ onAuthStateChanged(imageAuth, async user => {
     const response = await fetch("/api/account", {headers:{Authorization:"Bearer "+token}});
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Saldo tidak dapat dimuat.");
-    $("sidebarCreditBalance").textContent = Number(data.credits).toLocaleString("id-ID") + " kredit";
+    const formattedCredits = Number(data.credits).toLocaleString("id-ID");
+    $("sidebarCreditBalance").textContent = formattedCredits + " kredit";
+    $("imageCreditBalance").textContent = "Kredit: " + formattedCredits;
   } catch (error) {
     $("sidebarCreditBalance").textContent = "Saldo tidak tersedia";
+    $("imageCreditBalance").textContent = "Kredit: —";
     console.warn("Image Studio account refresh:", error);
   }
 });

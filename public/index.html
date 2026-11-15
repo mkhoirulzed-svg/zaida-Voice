@@ -27,6 +27,7 @@
       
       <div class="nav-label">WORKSPACE</div><button class="nav-item active" data-view="studio">Voice Studio</button>
       <button class="nav-item" data-view="video">AutoClip Studio</button>
+      <button class="nav-item" data-view="media">Media Library</button>
       <button class="nav-item" data-view="voices">Voices</button>
       <button class="nav-item" data-view="assistant">AI Super Chat</button>
       <button class="nav-item" id="personaNav" data-view="persona" hidden>Persona Saya</button>
@@ -113,6 +114,24 @@
           <div class="chat-compose studio-chat-compose"><textarea id="standaloneAssistantInput" rows="1" maxlength="3000" placeholder="Tanyakan sesuatu…"></textarea><button id="standaloneSendAssistant" class="primary-button" aria-label="Kirim pesan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="script-export"><button id="standaloneUseAssistantScript" class="subtle-button" disabled>Gunakan naskah</button></div>
         </div></section>
+      <section class="page" id="mediaPage">
+        <div class="history-heading media-library-heading">
+          <div><h1>Media Library</h1><p>Simpan dan kelola semua aset kreatif ZAIDA di satu tempat.</p></div>
+        </div>
+        <div class="media-library-summary">
+          <div class="media-library-summary-item"><span class="media-library-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="m21 15-5-5L5 21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Gambar</b><small>Aset gambar</small></div></div>
+          <div class="media-library-summary-item"><span class="media-library-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m10 9 5 3-5 3Z" fill="currentColor"/></svg></span><div><b>Video</b><small>Aset video</small></div></div>
+          <div class="media-library-summary-item"><span class="media-library-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span><div><b>Audio</b><small>Aset audio</small></div></div>
+        </div>
+        <section class="panel media-library-panel">
+          <div class="media-library-toolbar"><div><h2>Semua media</h2><p>Koleksi aset dari studio ZAIDA kamu.</p></div></div>
+          <div class="media-library-empty">
+            <div class="media-library-empty-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="7" width="34" height="34" rx="8" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m9 34 10-10 7 7 5-5 8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Belum ada media</h3>
+            <p>Gambar, video, dan audio yang kamu hasilkan nantinya akan tersimpan dan terkumpul di sini.</p>
+          </div>
+        </section>
+      </section>
       <section class="page" id="historyPage"><div class="history-heading"><h1>Riwayat</h1></div><div class="history-heading"><h2>Proyek Voice Studio</h2><p>Naskah, pengaturan, dan audio yang tersimpan di akun kamu.</p></div><div class="panel history-panel" id="voiceProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div><div class="history-heading" style="margin-top:28px"><h2>Riwayat audio perangkat</h2></div><div class="panel history-panel" id="historyList"><div class="empty-output"><b>Belum ada riwayat</b></div></div><div class="history-heading" style="margin-top:28px"><h2>Proyek AutoClip Studio</h2></div><div class="panel history-panel" id="videoProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div></section>
         <section class="page" id="adminPage"><div class="history-heading"><h1>Dashboard admin</h1></div>
           <div class="admin-toolbar"><span id="adminUpdated">Data belum dimuat</span><button class="subtle-button" id="refreshAdmin">Perbarui data</button></div><div class="admin-metrics" id="adminMetrics"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div>

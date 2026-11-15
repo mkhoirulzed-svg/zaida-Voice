@@ -59,7 +59,8 @@ export async function onRequestPost({ request, env }) {
       requestId, provider: useOpenRouter ? "openrouter" : "kiosapi", model
     });
 
-    const basePrompt = prompt + (useEdits
+    const visualSafetyRules = "\n\nVISUAL MODESTY AND PROFESSIONAL MEDICAL EDUCATION RULES: Depict all people respectfully and modestly, with non-revealing clothing. Whenever an adult woman appears, portray her wearing a neat hijab that covers her hair, neck and chest, along with loose, modest clothing. Do not depict nudity, exposed breasts, cleavage, genitalia, underwear, sensual poses, or unnecessary exposed skin. For medical procedures, expose only the specific treatment site that must be visible for accurate education; keep all other body areas covered with a clean medical drape or clothing. Prefer professional medical illustrations or tasteful 3D educational visuals over photorealistic exposed bodies. Keep the image clinical, respectful, non-sexual, and suitable for a broad audience. These modesty rules apply to every scene, including reference-image edits; do not reproduce revealing elements from references.";
+    const basePrompt = prompt + visualSafetyRules + (useEdits
       ? "\n\nUse the supplied reference images as visual identity references. Preserve the exact real-world product design, shape, colors, packaging and visible brand identity. Integrate the product naturally into the scene as an object being used or displayed in context, not as a pasted banner, floating card, collage panel or separate inset. Reproduce the supplied brand logo faithfully if visible; do not invent, redesign or misspell it. Keep the scene composition natural, coherent and suitable for a professional product advertisement."
       : "\n\nDo not add text, watermark, or unrelated logos.");
     const imageRequest = useOpenRouter

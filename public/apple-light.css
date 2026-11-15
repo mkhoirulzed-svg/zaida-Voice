@@ -970,3 +970,8 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   .sidebar-backdrop:not([hidden]){z-index:999!important}
   .video-studio-page .video-workflow-nav{z-index:1!important}
 }
+
+/* Voice Studio: new project action lives in the studio header */
+.studio-header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.studio-new-project{margin:0!important;height:42px!important;padding:0 14px!important;white-space:nowrap}
+@media(max-width:800px){.studio-header-actions{width:100%;justify-content:space-between}}

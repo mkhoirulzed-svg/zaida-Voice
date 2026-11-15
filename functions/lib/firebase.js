@@ -449,6 +449,14 @@ export async function getVoiceProject(user,env,projectId) {
   if(val(doc.fields?.uid)!==user.uid){const e=new Error("Proyek tidak ditemukan.");e.status=404;throw e;}
   return voiceProjectFields(doc);
 }
+export async function deleteVoiceProject(user,env,projectId) {
+  if(!/^[a-zA-Z0-9_-]{8,80}$/.test(projectId)){const e=new Error("ID proyek tidak valid.");e.status=400;throw e;}
+  const doc=await firestore(env,"/voice_projects/"+encodeURIComponent(projectId));
+  if(val(doc.fields?.uid)!==user.uid){const e=new Error("Proyek tidak ditemukan.");e.status=404;throw e;}
+  let payload={};try{payload=JSON.parse(val(doc.fields?.payload)||"{}");}catch{}
+  await firestore(env,":commit",{method:"POST",body:JSON.stringify({writes:[{delete:doc.name,currentDocument:{updateTime:doc.updateTime}}]})});
+  return {audioAssetId:payload.audioAsset?.assetId||null};
+}
 export async function saveVoiceProject(user,env,project) {
   const id=String(project.id||"");
   if(!/^[a-zA-Z0-9_-]{8,80}$/.test(id)){const e=new Error("ID proyek tidak valid.");e.status=400;throw e;}

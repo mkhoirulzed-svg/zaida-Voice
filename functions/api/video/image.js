@@ -109,14 +109,22 @@ export async function onRequestPost({ request, env }) {
 
     providerResponded = true;
     const image = data.data?.[0];
-    const providerCostIdr = providerUsed === "openrouter"
-      ? Math.max(0, Number(data.usage?.cost) * Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000) || OPENROUTER_IMAGE_PRICE_IDR)
-      : Math.max(0, Number(data.kiosapi?.cost_rupiah) || (providerUsed === "kiosapi" ? (useEdits ? EDIT_PRICE_IDR : GENERATION_PRICE_IDR) : providerPriceIdr));
+    const openRouterCostUsd = Number(data.usage?.cost);
+    const kiosapiCostIdr = Number(data.kiosapi?.cost_rupiah);
+    const hasOpenRouterActualCost = providerUsed === "openrouter" && Number.isFinite(openRouterCostUsd) && openRouterCostUsd > 0;
+    const hasKiosapiActualCost = providerUsed === "kiosapi" && Number.isFinite(kiosapiCostIdr) && kiosapiCostIdr > 0;
+    const providerCostUsd = hasOpenRouterActualCost ? openRouterCostUsd : 0;
+    const providerCostEstimated = !(hasOpenRouterActualCost || hasKiosapiActualCost);
+    const providerCostIdr = hasOpenRouterActualCost
+      ? Math.ceil(openRouterCostUsd * Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000))
+      : hasKiosapiActualCost
+        ? Math.ceil(kiosapiCostIdr)
+        : (providerUsed === "openrouter" ? OPENROUTER_IMAGE_PRICE_IDR : (useEdits ? EDIT_PRICE_IDR : GENERATION_PRICE_IDR));
     const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
     const charge = await settleReservedCredits(
       auth.user, env, reservation.reservationId, billing.credits,
       "video-image:" + providerUsed + ":" + modelUsed,
-      { provider: providerUsed, model: modelUsed, providerCostIdr, requestId, imageMode: useEdits ? "reference-edit" : "text-to-image" }
+      { provider: providerUsed, model: modelUsed, providerCostIdr, providerCostUsd, providerCostEstimated, requestId, imageMode: useEdits ? "reference-edit" : "text-to-image" }
     );
     settled = true;
 

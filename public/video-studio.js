@@ -279,7 +279,7 @@ async function generateSceneImage(scene, button, imageArea) {
   scene.imageBusy = true;
   button.disabled = true;
   button.textContent = "Membuat gambar…";
-  setStatus("Mengirim prompt dan foto referensi produk/brand adegan " + scene.scene_number + " ke KiosAPI Image Editing…");
+  setStatus("Mengirim permintaan gambar adegan " + scene.scene_number + " ke OpenRouter (KiosAPI hanya sebagai fallback jika diperlukan)…");
   try {
     const result = await api("/api/video/image", {
       method: "POST",
@@ -301,7 +301,7 @@ async function generateSceneImage(scene, button, imageArea) {
     setStatus("Gambar adegan " + scene.scene_number + " berhasil dibuat · terpakai " +
       Number(result.creditsCharged).toLocaleString("id-ID") + " kredit ZAIDA.");
   } catch (error) {
-    scene.imageError = error?.message || "Kesalahan tidak diketahui saat meminta gambar ke KiosAPI.";
+    scene.imageError = error?.message || "Kesalahan tidak diketahui saat meminta gambar ke provider AI.";
     setStatus("Gagal membuat gambar adegan " + scene.scene_number + ": " + scene.imageError, true);
   } finally {
     scene.imageBusy = false;

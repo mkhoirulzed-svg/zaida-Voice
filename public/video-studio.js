@@ -21,6 +21,8 @@ let videoAudioAsset = null;
 let generatedSubtitleText = "";
 let videoVoicesLoadedFor = null;
 let videoDraftRestoredFor = null;
+let videoProjectSessionActive = false;
+let videoChooserLoading = false;
 let videoBrandAssets = { product: null, logo: null };
 let videoBrandAssetsKey = null;
 function renderVideoBrandAsset(kind) {
@@ -1017,40 +1019,106 @@ async function hydrateVideoProject(payload) {
 }
 
 async function restoreDraft() {
-  if (!storageKey || !currentUser) return;
+  if (!storageKey || !currentUser) return false;
   let localDraft = null;
   try { localDraft = JSON.parse(localStorage.getItem(storageKey) || "null"); } catch {}
   activeVideoProjectId = projectIdKey ? localStorage.getItem(projectIdKey) : null;
   let lastError = null;
+  // Local draft is saved synchronously before cloud autosave, so it may contain
+  // newer edits when a connection was interrupted.
+  if (localDraft?.scenes?.length) {
+    try {
+      if (localDraft.sourceScript) $("videoTopic").value = localDraft.sourceScript;
+      renderStoryboard(await hydrateVideoProject(localDraft));
+      if (activeVideoProjectId) await flushVideoDraft();
+      setStatus("Draft terakhir dipulihkan dari perangkat" + (activeVideoProjectId ? " dan disinkronkan ke cloud." : "."));
+      return true;
+    } catch (error) { lastError = error; }
+  }
+  // Restore only the explicitly remembered project; never auto-open latest history.
   if (activeVideoProjectId) {
     try {
       const remote = await api("/api/video/projects/" + encodeURIComponent(activeVideoProjectId));
       if (remote.project?.payload?.scenes?.length) {
         if (remote.project.payload.sourceScript) $("videoTopic").value = remote.project.payload.sourceScript;
         renderStoryboard(await hydrateVideoProject(remote.project.payload));
-        setStatus("Proyek dipulihkan dari penyimpanan cloud.");
-        return;
+        setStatus("Proyek terakhir berhasil dipulihkan dari penyimpanan cloud.");
+        try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {}
+        return true;
       }
     } catch (error) { lastError = error; }
   }
+  if (lastError) setStatus("Draft belum dapat dipulihkan: " + lastError.message, true);
+  return false;
+}
+function hideVideoProjectChooser() {
+  const chooser = $("videoProjectChooser");
+  if (chooser) chooser.hidden = true;
+  videoProjectSessionActive = true;
+}
+function showVideoProjectChooser() {
+  const chooser = $("videoProjectChooser");
+  if (!chooser || !currentUser) return;
+  chooser.hidden = false;
+  let hasLocalDraft = false;
+  try { hasLocalDraft = Boolean(JSON.parse(localStorage.getItem(storageKey) || "null")?.scenes?.length); } catch {}
+  const hasActiveProject = Boolean(projectIdKey && localStorage.getItem(projectIdKey));
+  $("videoChooserContinue").disabled = !(hasLocalDraft || hasActiveProject);
+  $("videoChooserHistoryStatus").textContent = "Memuat proyek…";
+  const list = $("videoChooserProjectList");
+  list.replaceChildren();
+  if (videoChooserLoading) return;
+  videoChooserLoading = true;
+  api("/api/video/projects").then(result => {
+    const projects = result.projects || [];
+    list.replaceChildren();
+    if (!projects.length) {
+      const empty = document.createElement("div");
+      empty.className = "video-chooser-empty";
+      empty.textContent = "Belum ada proyek tersimpan. Mulai dengan membuat proyek baru.";
+      list.append(empty);
+    } else projects.forEach(project => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "video-chooser-project";
+      const icon = document.createElement("span");
+      icon.className = "video-chooser-project-icon";
+      icon.textContent = "▶";
+      const info = document.createElement("span");
+      info.className = "video-chooser-project-info";
+      const title = document.createElement("b");
+      title.textContent = project.title || "Proyek video";
+      const meta = document.createElement("small");
+      meta.textContent = (project.payload?.scenes?.length || 0) + " adegan · " + (project.updatedAt ? new Date(project.updatedAt).toLocaleString("id-ID") : "Tanggal tidak tersedia");
+      const arrow = document.createElement("span");
+      arrow.className = "video-chooser-project-arrow";
+      arrow.textContent = "›";
+      info.append(title, meta);
+      button.append(icon, info, arrow);
+      button.addEventListener("click", async () => { hideVideoProjectChooser(); await openVideoProjectById(project.id); });
+      list.append(button);
+    });
+    $("videoChooserHistoryStatus").textContent = projects.length + " proyek";
+  }).catch(error => {
+    $("videoChooserHistoryStatus").textContent = "Gagal memuat";
+    const message = document.createElement("div");
+    message.className = "video-chooser-empty";
+    message.textContent = "Riwayat belum dapat dimuat: " + error.message;
+    list.replaceChildren(message);
+  }).finally(() => { videoChooserLoading = false; });
+}
+async function openVideoProjectById(id) {
+  if (!id || !auth.currentUser) return;
   try {
-    const history = await api("/api/video/projects");
-    const latest = history.projects?.[0];
-    if (latest?.payload?.scenes?.length) {
-      activeVideoProjectId = latest.id;
-      if (projectIdKey) localStorage.setItem(projectIdKey, activeVideoProjectId);
-      if (latest.payload.sourceScript) $("videoTopic").value = latest.payload.sourceScript;
-      renderStoryboard(await hydrateVideoProject(latest.payload));
-      setStatus("Proyek terakhir dipulihkan dari riwayat cloud.");
-      return;
-    }
-  } catch (error) { lastError = error; }
-  if (localDraft?.scenes?.length) {
-    renderStoryboard(localDraft);
-    activeVideoProjectId = activeVideoProjectId || crypto.randomUUID();
-    await flushVideoDraft();
-    setStatus(lastError ? "Draft lokal dipulihkan. Cloud belum dapat diakses: " + lastError.message : "Draft lokal dipulihkan dan disinkronkan.");
-  } else if (lastError) setStatus("Belum dapat memuat proyek cloud: " + lastError.message, true);
+    const result = await api("/api/video/projects/" + encodeURIComponent(id));
+    if (!result.project?.payload?.scenes?.length) throw new Error("Proyek tidak memiliki storyboard.");
+    activeVideoProjectId = id;
+    if (projectIdKey) localStorage.setItem(projectIdKey, id);
+    if (result.project.payload.sourceScript) $("videoTopic").value = result.project.payload.sourceScript;
+    renderStoryboard(await hydrateVideoProject(result.project.payload));
+    try { localStorage.setItem(storageKey, JSON.stringify(buildPayload())); } catch {}
+    setStatus("Proyek berhasil dibuka. Perubahan berikutnya akan tersimpan pada proyek ini.");
+  } catch (error) { setStatus("Gagal membuka proyek: " + error.message, true); }
 }
 
 const videoAssistantMessages=[];
@@ -1111,8 +1179,9 @@ $("visualStyleGrid")?.addEventListener("click", event => {
 updateVisualStyleDescription();
 $("videoDurationMode")?.addEventListener("change", syncVideoDurationMode);
 syncVideoDurationMode();
-function createNewVideoProject() {
-  // A new UUID isolates this draft from every previously saved project.
+async function createNewVideoProject() {
+  // Save the currently open project before switching to a fresh ID.
+  if (currentStoryboard) await flushVideoDraft();
   activeVideoProjectId = crypto.randomUUID();
   if (projectIdKey) localStorage.setItem(projectIdKey, activeVideoProjectId);
   if (storageKey) localStorage.removeItem(storageKey);
@@ -1139,6 +1208,7 @@ function createNewVideoProject() {
   $("videoRenderDownloads").replaceChildren();
   $("videoStatus").textContent = "Proyek baru siap. Proyek sebelumnya tetap tersimpan di riwayat.";
   $("videoTopic").focus();
+  hideVideoProjectChooser();
 }
 document.querySelectorAll("[data-video-step]").forEach(button => {
   button.addEventListener("click", () => {
@@ -1154,6 +1224,18 @@ document.querySelectorAll("[data-video-step]").forEach(button => {
   });
 });
 $("videoNewProjectButton")?.addEventListener("click", createNewVideoProject);
+$("videoChooserNew")?.addEventListener("click", createNewVideoProject);
+$("videoChooserContinue")?.addEventListener("click", async () => {
+  const button = $("videoChooserContinue");
+  button.disabled = true;
+  button.textContent = "Memulihkan draft…";
+  const restored = await restoreDraft();
+  if (restored) hideVideoProjectChooser();
+  else {
+    button.textContent = "Draft tidak ditemukan";
+    setTimeout(() => { if ($("videoProjectChooser") && !$("videoProjectChooser").hidden) { button.textContent = "Lanjutkan draft terakhir"; button.disabled = false; } }, 1600);
+  }
+});
 $("videoProjectHistoryButton")?.addEventListener("click", () => {
   document.querySelector('[data-view="history"]')?.click();
 });
@@ -1229,8 +1311,9 @@ function activateVideoStudio() {
   }
   if (videoDraftRestoredFor !== currentUser.uid) {
     videoDraftRestoredFor = currentUser.uid;
-    restoreDraft();
+    videoProjectSessionActive = false;
   }
+  if (!videoProjectSessionActive) showVideoProjectChooser();
 }
 onAuthStateChanged(auth, user => {
   currentUser = user && user.emailVerified ? user : null;
@@ -1244,6 +1327,7 @@ onAuthStateChanged(auth, user => {
   if (!allowed) {
     videoVoicesLoadedFor = null;
     videoDraftRestoredFor = null;
+    videoProjectSessionActive = false;
     updateRenderAvailability();
     if (user && !user.emailVerified) setStatus("Verifikasi email akun ZAIDA Voice terlebih dahulu untuk menggunakan fitur AI.", true);
     return;
@@ -1270,16 +1354,7 @@ window.addEventListener("pagehide", () => {
 });
 
 window.addEventListener("zaida:open-video-project", async event => {
-  const id = event.detail?.id;
-  if (!id || !auth.currentUser) return;
-  try {
-    const result = await api("/api/video/projects/" + encodeURIComponent(id));
-    if (!result.project?.payload?.scenes?.length) throw new Error("Proyek tidak memiliki storyboard.");
-    activeVideoProjectId = id;
-    if (projectIdKey) localStorage.setItem(projectIdKey, id);
-    if (result.project.payload.sourceScript) $("videoTopic").value = result.project.payload.sourceScript;
-    renderStoryboard(await hydrateVideoProject(result.project.payload));
-    setStatus("Proyek berhasil dibuka dari riwayat cloud.");
-  } catch (error) { setStatus("Gagal membuka proyek: " + error.message, true); }
+  hideVideoProjectChooser();
+  await openVideoProjectById(event.detail?.id);
 });
 

@@ -124,12 +124,10 @@
           <div class="media-library-summary-item"><span class="media-library-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span><div><b>Audio</b><small>Aset audio</small></div></div>
         </div>
         <section class="panel media-library-panel">
-          <div class="media-library-toolbar"><div><h2>Semua media</h2><p>Koleksi aset dari studio ZAIDA kamu.</p></div></div>
-          <div class="media-library-empty">
-            <div class="media-library-empty-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="7" width="34" height="34" rx="8" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m9 34 10-10 7 7 5-5 8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <h3>Belum ada media</h3>
-            <p>Gambar, video, dan audio yang kamu hasilkan nantinya akan tersimpan dan terkumpul di sini.</p>
-          </div>
+          <div class="media-library-toolbar"><div><h2>Semua media</h2><p id="mediaLibraryCount">Koleksi aset dari studio ZAIDA kamu.</p></div><label class="media-upload-button" for="mediaLibraryUpload">＋ Upload media</label><input id="mediaLibraryUpload" type="file" accept="image/*,video/*,audio/*" hidden></div>
+          <div class="media-library-filters" role="group" aria-label="Filter media"><button class="media-filter active" type="button" data-media-filter="all">Semua</button><button class="media-filter" type="button" data-media-filter="image">Gambar</button><button class="media-filter" type="button" data-media-filter="video">Video</button><button class="media-filter" type="button" data-media-filter="audio">Audio</button></div>
+          <div class="media-library-status" id="mediaLibraryStatus" role="status" hidden></div>
+          <div class="media-library-grid" id="mediaLibraryGrid"><div class="media-library-empty"><div class="media-library-empty-icon">＋</div><h3>Memuat media…</h3><p>Menyiapkan koleksi aset kamu.</p></div></div>
         </section>
       </section>
       <section class="page" id="historyPage"><div class="history-heading"><h1>Riwayat</h1></div><div class="history-heading"><h2>Proyek Voice Studio</h2><p>Naskah, pengaturan, dan audio yang tersimpan di akun kamu.</p></div><div class="panel history-panel" id="voiceProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div><div class="history-heading" style="margin-top:28px"><h2>Riwayat audio perangkat</h2></div><div class="panel history-panel" id="historyList"><div class="empty-output"><b>Belum ada riwayat</b></div></div><div class="history-heading" style="margin-top:28px"><h2>Proyek AutoClip Studio</h2></div><div class="panel history-panel" id="videoProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div></section>

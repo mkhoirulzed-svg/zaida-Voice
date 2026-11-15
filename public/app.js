@@ -547,7 +547,7 @@ async function uploadMediaLibraryFile(file) {
   if (!currentUser) { openAuth(); toast("Masuk terlebih dahulu untuk mengunggah media."); return; }
   if (!file) return;
   if (!/^(image|video|audio)\//i.test(file.type)) { toast("Format file tidak didukung."); return; }
-  if (file.size > 100 * 1024 * 1024) { toast("Ukuran file maksimal 100 MB."); return; }
+  if (file.size > 25 * 1024 * 1024) { toast("Ukuran file maksimal 25 MB."); return; }
   const input = $("mediaLibraryUpload");
   mediaLibraryStatus("Mengunggah " + file.name + "…");
   const uploadButton = document.querySelector(".media-upload-button");

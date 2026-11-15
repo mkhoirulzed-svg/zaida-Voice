@@ -257,28 +257,24 @@
               <button class="caption-preview-play" id="captionPreviewPlay" type="button" aria-label="Putar video" hidden>▶</button>
             </div>
             <div class="caption-controls">
-              <div class="caption-quick-control">
-                <label class="field-label" for="captionPreset">PILIH GAYA SUBTITLE</label>
-                <select id="captionPreset">
-                  <option value="classic">Classic · putih dengan outline</option>
-                  <option value="capcut" selected>Social · kotak lembut</option>
-                  <option value="cinematic">Cinematic · elegan</option>
-                  <option value="karaoke">Highlight · kuning</option>
+              <div class="caption-preset-picker" id="captionPresetPicker">
+                <button type="button" class="caption-preset-toggle" id="captionPresetToggle" aria-expanded="false" aria-controls="captionPresetGrid">
+                  <span class="caption-preset-toggle-copy"><small>PRESET SUBTITLE</small><b id="captionSelectedPresetName">Social</b><span>Pilih tampilan teks dan animasi sekaligus</span></span>
+                  <span class="caption-preset-toggle-action">Pilih preset⌄</span>
+                </button>
+                <div class="caption-preset-grid" id="captionPresetGrid" hidden>
+                  <button type="button" class="caption-preset-card" data-caption-preset="classic"><span class="caption-preset-thumb preset-thumb-classic"><b>Subtitle biasa</b></span><b>Classic</b><small>Putih · outline · statis</small></button>
+                  <button type="button" class="caption-preset-card is-selected" data-caption-preset="capcut"><span class="caption-preset-thumb preset-thumb-social"><b>Halo semuanya!</b></span><b>Social</b><small>Kotak lembut · kata bergantian</small></button>
+                  <button type="button" class="caption-preset-card" data-caption-preset="cinematic"><span class="caption-preset-thumb preset-thumb-cinematic"><b>Sebuah cerita</b></span><b>Cinematic</b><small>Elegan · fade / statis</small></button>
+                  <button type="button" class="caption-preset-card" data-caption-preset="karaoke"><span class="caption-preset-thumb preset-thumb-karaoke"><b>KATA AKTIF</b></span><b>Highlight</b><small>Kuning · karaoke</small></button>
+                </div>
+                <select id="captionPreset" class="caption-native-select" aria-label="Preset subtitle">
+                  <option value="classic">Classic</option><option value="capcut" selected>Social</option><option value="cinematic">Cinematic</option><option value="karaoke">Highlight</option>
                 </select>
-                <p class="caption-quick-hint">Pilih preset untuk langsung menerapkan tampilan subtitle. Kamu bisa melihat hasilnya di preview.</p>
+                <select id="captionAnimation" class="caption-native-select" aria-label="Animasi subtitle"><option value="static">Static</option><option value="typewriter">Typewriter</option><option value="word" selected>Word by word</option><option value="karaoke">Karaoke</option></select>
               </div>
               <label class="subtitle-option video-subtitle-option"><input type="checkbox" id="videoIncludeSubtitles" checked><span><b>Tanam subtitle ke video</b><small>Nonaktifkan jika ingin video tanpa teks. File subtitle SRT tetap bisa diunduh terpisah jika tersedia.</small></span></label>
               <a id="videoSubtitleDownload" class="render-download-link" hidden download="zaida-video-subtitle.srt">Unduh subtitle SRT</a>
-              <div class="caption-quick-control caption-animation-control">
-                <label class="field-label" for="captionAnimation">GAYA ANIMASI</label>
-                <select id="captionAnimation">
-                  <option value="static">Static · kalimat utuh</option>
-                  <option value="typewriter">Typewriter · huruf muncul bertahap</option>
-                  <option value="word" selected>Word by word · kata bergantian</option>
-                  <option value="karaoke">Karaoke · sorot kata aktif</option>
-                </select>
-                <p class="caption-quick-hint">Animasi mengikuti timestamp suara ZAIDA Voice. Untuk audio upload, caption tetap tampil normal.</p>
-              </div>
               <details class="caption-advanced-settings">
                 <summary><span><b>Pengaturan lanjutan</b><small>Font, ukuran, warna, posisi, dan background</small></span></summary>
                 <div class="caption-control-grid">
@@ -287,7 +283,7 @@
                   <label>Warna teks <input id="captionTextColor" type="color" value="#ffffff"></label>
                   <label>Warna outline <input id="captionOutlineColor" type="color" value="#000000"></label>
                   <label>Ketebalan outline <input id="captionOutlineWidth" type="range" min="0" max="6" value="2"></label>
-                  <label>Background <select id="captionBackground"><option value="soft">Kotak lembut</option><option value="none">Tanpa background</option><option value="solid">Kotak solid</option></select></label>
+                  <label>Background <select id="captionBackground"><option value="none" selected>Tanpa background</option><option value="soft">Kotak lembut</option><option value="solid">Kotak solid</option></select></label>
                   <label>Transparansi <input id="captionBackgroundOpacity" type="range" min="0" max="100" value="76"></label>
                   <label>Posisi <select id="captionPosition"><option value="bottom">Bawah</option><option value="middle">Tengah</option><option value="top">Atas</option></select></label>
                 </div>

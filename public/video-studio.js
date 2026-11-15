@@ -645,7 +645,7 @@ function updateCaptionPreview() {
   $("captionFontSizeValue").textContent = style.fontSize + " px";
   preview.style.fontFamily = style.font + ", sans-serif";
   preview.style.fontSize = Math.max(12, style.fontSize * 0.62) + "px";
-  preview.style.color = style.preset === "karaoke" ? "#ffe45e" : style.textColor;
+  preview.style.color = style.textColor || (style.preset === "karaoke" ? "#ffe45e" : "#ffffff");
   preview.style.textShadow = style.outlineWidth ? "0 1px " + style.outlineWidth + "px " + style.outlineColor + ", 1px 0 " + style.outlineWidth + "px " + style.outlineColor + ", -1px 0 " + style.outlineWidth + "px " + style.outlineColor : "none";
   preview.style.background = style.background === "none" ? "transparent" : (style.background === "solid" ? "rgba(0,0,0,1)" : "rgba(0,0,0," + style.backgroundOpacity + ")");
   preview.style.padding = style.background === "none" ? "4px 0" : "10px 16px";

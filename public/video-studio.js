@@ -647,12 +647,15 @@ function updateCaptionPreview() {
 function applyCaptionPreset() {
   const preset=$("captionPreset").value;
   const values={
-    classic:{captionBackground:"none",captionTextColor:"#ffffff",captionOutlineColor:"#000000",captionOutlineWidth:4,captionFont:"Arial",captionFontSize:30},
-    capcut:{captionBackground:"soft",captionTextColor:"#ffffff",captionOutlineColor:"#000000",captionOutlineWidth:2,captionFont:"Arial",captionFontSize:28},
-    cinematic:{captionBackground:"none",captionTextColor:"#ffffff",captionOutlineColor:"#000000",captionOutlineWidth:1,captionFont:"Georgia",captionFontSize:30},
-    karaoke:{captionBackground:"none",captionTextColor:"#ffe45e",captionOutlineColor:"#000000",captionOutlineWidth:3,captionFont:"Arial",captionFontSize:30}
+    classic:{captionBackground:"none",captionTextColor:"#ffffff",captionOutlineColor:"#000000",captionOutlineWidth:4,captionFont:"Arial",captionFontSize:30,captionAnimation:"static"},
+    capcut:{captionBackground:"none",captionTextColor:"#ffffff",captionOutlineColor:"#000000",captionOutlineWidth:2,captionFont:"Arial",captionFontSize:28,captionAnimation:"word"},
+    cinematic:{captionBackground:"none",captionTextColor:"#ffffff",captionOutlineColor:"#000000",captionOutlineWidth:1,captionFont:"Georgia",captionFontSize:30,captionAnimation:"static"},
+    karaoke:{captionBackground:"none",captionTextColor:"#ffe45e",captionOutlineColor:"#000000",captionOutlineWidth:3,captionFont:"Arial",captionFontSize:30,captionAnimation:"karaoke"}
   }[preset];
   Object.entries(values).forEach(([id,value])=>$(id).value=value);
+  const names={classic:"Classic",capcut:"Social",cinematic:"Cinematic",karaoke:"Highlight"};
+  $("captionSelectedPresetName").textContent=names[preset]||"Custom";
+  $("captionPresetGrid").querySelectorAll("[data-caption-preset]").forEach(card=>card.classList.toggle("is-selected",card.dataset.captionPreset===preset));
   updateCaptionPreview();
 }
 function updateStoryboardImageStrip() {
@@ -1186,6 +1189,19 @@ $("toggleStoryboardEditor").addEventListener("click",()=>{
 ["captionFont","captionBackground","captionPosition"].forEach(id=>$(id).addEventListener("change",updateCaptionPreview));
 ["captionFontSize","captionTextColor","captionOutlineColor","captionOutlineWidth","captionBackgroundOpacity"].forEach(id=>$(id).addEventListener("input",updateCaptionPreview));
 $("captionPreset").addEventListener("change",applyCaptionPreset);
+$("captionPresetToggle").addEventListener("click",()=>{
+  const grid=$("captionPresetGrid"),open=grid.hidden;
+  grid.hidden=!open;
+  $("captionPresetToggle").setAttribute("aria-expanded",String(open));
+});
+$("captionPresetGrid").addEventListener("click",event=>{
+  const card=event.target.closest("[data-caption-preset]");
+  if(!card)return;
+  $("captionPreset").value=card.dataset.captionPreset;
+  applyCaptionPreset();
+  $("captionPresetGrid").hidden=true;
+  $("captionPresetToggle").setAttribute("aria-expanded","false");
+});
 $("captionAnimation").addEventListener("change",syncCaptionPreview);
 applyCaptionPreset();
 $("videoProductImage").addEventListener("change",e=>uploadVideoBrandAsset("product",e.target.files?.[0]));

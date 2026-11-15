@@ -37,3 +37,98 @@ backdrop?.addEventListener("click", () => setSidebarOpen(false));
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") setSidebarOpen(false);
 });
+
+
+// Use the same Firebase project and persistent login session as the main ZAIDA app.
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-aP8",
+  authDomain: "zaida-voice.firebaseapp.com",
+  projectId: "zaida-voice",
+  storageBucket: "zaida-voice.firebasestorage.app",
+  messagingSenderId: "146292786794",
+  appId: "1:146292786794:web:da865938c177b21d5d6c13"
+};
+const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const imageAuth = getAuth(firebaseApp);
+let imageAuthMode = "login";
+let imageCurrentUser = null;
+function showImageAuth(mode = "login") {
+  imageAuthMode = mode;
+  $("imageAuthTitle").textContent = mode === "login" ? "Selamat datang." : "Buat akun ZAIDA Voice.";
+  $("imageAuthDescription").textContent = mode === "login" ? "Masuk untuk menggunakan Image Studio." : "Daftar menggunakan email aktif.";
+  $("imageAuthSubmit").innerHTML = mode === "login" ? 'Masuk <b>→</b>' : 'Buat akun <b>→</b>';
+  $("imageAuthSwitch").textContent = mode === "login" ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
+  $("imageAuthMessage").textContent = "";
+  $("imageAuthOverlay").hidden = false;
+}
+function closeImageAuth() { $("imageAuthOverlay").hidden = true; }
+$("imageAuthButton")?.addEventListener("click", () => imageCurrentUser ? signOut(imageAuth) : showImageAuth());
+$("imageAuthClose")?.addEventListener("click", closeImageAuth);
+$("imageAuthOverlay")?.addEventListener("click", e => { if (e.target === $("imageAuthOverlay")) closeImageAuth(); });
+$("imageAuthSwitch")?.addEventListener("click", () => showImageAuth(imageAuthMode === "login" ? "register" : "login"));
+$("imageAuthForm")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("imageAuthEmail").value.trim();
+  const password = $("imageAuthPassword").value;
+  const button = $("imageAuthSubmit");
+  button.disabled = true;
+  $("imageAuthMessage").textContent = "Memproses…";
+  try {
+    if (imageAuthMode === "login") await signInWithEmailAndPassword(imageAuth, email, password);
+    else {
+      const credential = await createUserWithEmailAndPassword(imageAuth, email, password);
+      await sendEmailVerification(credential.user);
+      $("imageAuthMessage").textContent = "Akun dibuat. Silakan verifikasi email sebelum menggunakan fitur AI.";
+    }
+    closeImageAuth();
+  } catch (error) {
+    const messages = {"auth/invalid-credential":"Email atau password salah.","auth/email-already-in-use":"Email sudah terdaftar.","auth/invalid-email":"Format email tidak valid.","auth/weak-password":"Password minimal 6 karakter.","auth/too-many-requests":"Terlalu banyak percobaan. Coba lagi nanti."};
+    $("imageAuthMessage").textContent = messages[error.code] || error.message;
+  } finally { button.disabled = false; }
+});
+$("imageGoogleAuth")?.addEventListener("click", async () => {
+  const button = $("imageGoogleAuth");
+  button.disabled = true;
+  $("imageAuthMessage").textContent = "Menghubungkan ke Google…";
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({prompt:"select_account"});
+    await signInWithPopup(imageAuth, provider);
+    closeImageAuth();
+  } catch (error) { $("imageAuthMessage").textContent = error.message; }
+  finally { button.disabled = false; }
+});
+$("imageAuthResend")?.addEventListener("click", async () => {
+  try {
+    if (!imageAuth.currentUser) throw new Error("Masuk kembali menggunakan email dan password.");
+    await sendEmailVerification(imageAuth.currentUser);
+    $("imageAuthMessage").textContent = "Email verifikasi telah dikirim ulang.";
+  } catch (error) { $("imageAuthMessage").textContent = error.message; }
+});
+onAuthStateChanged(imageAuth, async user => {
+  imageCurrentUser = user && user.emailVerified ? user : null;
+  const allowed = Boolean(imageCurrentUser);
+  const display = allowed ? (user.displayName || user.email || "U").slice(0,1).toUpperCase() : "Z";
+  $("imageAuthButton").textContent = allowed ? (user.email || "Akun") + " · Keluar" : "Masuk / Daftar";
+  $("imageProfileName").textContent = allowed ? (user.displayName || "Pengguna") : "Pengunjung";
+  $("imageProfileEmail").textContent = allowed ? "Akun terverifikasi" : (user ? "Email belum diverifikasi" : "Belum masuk");
+  $("imageProfileAvatar").textContent = display;
+  $("imageTopAvatar").textContent = display;
+  $("imageAuthResend").hidden = !(user && !user.emailVerified);
+  if (!allowed) {
+    $("sidebarCreditBalance").textContent = "Masuk untuk melihat saldo";
+    return;
+  }
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch("/api/account", {headers:{Authorization:"Bearer "+token}});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Saldo tidak dapat dimuat.");
+    $("sidebarCreditBalance").textContent = Number(data.credits).toLocaleString("id-ID") + " kredit";
+  } catch (error) {
+    $("sidebarCreditBalance").textContent = "Saldo tidak tersedia";
+    console.warn("Image Studio account refresh:", error);
+  }
+});

@@ -510,10 +510,9 @@ document.querySelectorAll("[data-media-filter]").forEach(button => button.classL
     const download = document.createElement("button");
     download.type = "button"; download.className = "media-card-action"; download.textContent = "Unduh"; download.disabled = true;
     const remove = document.createElement("button");
-    const canDelete = item.source === "media-library-upload" || item.source === "zaida-media-library";
-    remove.type = "button"; remove.className = "media-card-action danger"; remove.textContent = canDelete ? "Hapus" : "Dipakai studio";
-    remove.disabled = !canDelete;
-    if (!canDelete) remove.title = "Aset ini dibuat oleh studio dan dilindungi agar proyek yang menggunakannya tidak rusak.";
+    const isStudioAsset = item.source !== "media-library-upload" && item.source !== "zaida-media-library";
+    remove.type = "button"; remove.className = "media-card-action danger"; remove.textContent = "Hapus";
+    if (isStudioAsset) remove.title = "Menghapus aset ini dapat membuat proyek Studio yang menggunakannya tidak dapat diputar atau dirender.";
     actions.append(download, remove); meta.append(name, details, actions); card.append(preview, meta); grid.append(card);
     try {
       const response = await fetch("/api/media/assets/" + encodeURIComponent(item.id), { headers: await authHeaders() });
@@ -532,7 +531,8 @@ document.querySelectorAll("[data-media-filter]").forEach(button => button.classL
       download.addEventListener("click", () => { const link = document.createElement("a"); link.href = url; link.download = item.name || item.id; link.click(); });
     } catch { preview.textContent = "Preview tidak tersedia"; }
     remove.addEventListener("click", async () => {
-      if (!confirm("Hapus aset ini dari Media Library? File akan dihapus permanen dari penyimpanan.")) return;
+      const warning = isStudioAsset ? "\\n\\nPerhatian: aset ini dibuat oleh Studio. Proyek yang menggunakannya mungkin tidak dapat diputar atau dirender lagi." : "";
+      if (!confirm("Hapus aset ini dari Media Library? File akan dihapus permanen dari penyimpanan." + warning)) return;
       remove.disabled = true;
       try {
         await api("/api/media/assets/" + encodeURIComponent(item.id), { method: "DELETE", authRequired: true });

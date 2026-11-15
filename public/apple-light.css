@@ -1085,3 +1085,35 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   margin-right:5px!important;
 }
 #studioPage .studio-header-actions{gap:10px!important}
+
+
+/* ZAIDA Media Library — initial page shell */
+.media-library-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+.media-library-heading h1{margin:0 0 7px!important;font-size:clamp(30px,4vw,40px)!important;letter-spacing:-.045em!important}
+.media-library-heading p{margin:0;color:#85858e;font-size:14px}
+.media-library-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.media-library-summary-item{display:flex;align-items:center;gap:12px;min-width:0;padding:18px;background:#fff;border:1px solid #e7e7ec;border-radius:16px}
+.media-library-icon{width:42px;height:42px;display:grid;place-items:center;flex-shrink:0;border-radius:12px;background:#f2effb;color:#7054bd}
+.media-library-icon svg{width:22px;height:22px}
+.media-library-summary-item b{display:block;color:#29292f;font-size:14px}
+.media-library-summary-item small{display:block;margin-top:3px;color:#898992;font-size:11px}
+.media-library-panel{padding:22px;background:#fff!important;border-color:#e7e7ec!important}
+.media-library-toolbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid #eeeeF2}
+.media-library-toolbar h2{margin:0;color:#29292f;font-size:17px}
+.media-library-toolbar p{margin:5px 0 0;color:#898992;font-size:12px}
+.media-library-empty{min-height:310px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 18px}
+.media-library-empty-icon{width:76px;height:76px;display:grid;place-items:center;border-radius:22px;background:#f4f1fb;color:#8065c5;margin-bottom:17px}
+.media-library-empty-icon svg{width:42px;height:42px}
+.media-library-empty h3{margin:0;color:#29292f;font-size:17px;font-weight:700}
+.media-library-empty p{max-width:360px;margin:8px 0 0;color:#85858e;font-size:13px;line-height:1.65}
+@media(max-width:600px){
+ .media-library-heading h1{font-size:32px!important}
+ .media-library-heading p{font-size:12px;line-height:1.5}
+ .media-library-summary{gap:8px}
+ .media-library-summary-item{padding:12px 9px;gap:8px;border-radius:13px;flex-direction:column;align-items:flex-start}
+ .media-library-icon{width:34px;height:34px;border-radius:10px}
+ .media-library-summary-item b{font-size:12px}
+ .media-library-summary-item small{font-size:10px}
+ .media-library-panel{padding:16px}
+ .media-library-empty{min-height:260px}
+}

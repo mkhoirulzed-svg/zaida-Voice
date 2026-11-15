@@ -1153,3 +1153,13 @@ button.media-upload-button:active{transform:translateY(1px)}
 .media-library-upload-row{display:flex;justify-content:flex-end;margin:-10px 0 22px}
 .media-library-upload-row .media-upload-button{min-width:170px;min-height:48px;font-size:14px!important}
 @media(max-width:600px){.media-library-upload-row{margin:0 0 18px}.media-library-upload-row .media-upload-button{width:100%;min-height:50px}}
+
+/* History deletion controls */
+.history-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.history-clear-button,.history-delete-button{border:1px solid #eadede;border-radius:9px;background:#fff;color:#b34b4b;padding:8px 12px;font:inherit;font-size:12px;font-weight:650;cursor:pointer;white-space:nowrap}
+.history-delete-button{padding:7px 11px}
+.history-clear-button:hover,.history-delete-button:hover{background:#fff5f5;border-color:#e8bcbc}
+.history-delete-button:disabled{opacity:.5;cursor:wait}
+.history-item-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.history-item-actions a{white-space:nowrap}
+@media(max-width:600px){.history-section-heading{align-items:flex-start}.history-item{flex-wrap:wrap}.history-item-actions{margin-left:auto}.history-clear-button{font-size:11px;padding:7px 9px}}

@@ -788,11 +788,39 @@ async function loadVideoVoices() {
       select.append(option);
     });
     if(!data.voices?.length)throw new Error("Belum ada suara yang tersedia.");
+    window.videoStudioVoiceCatalog = data.voices;
     $("generateVideoNarration").disabled=!auth.currentUser;
+    updateVideoVoicePreviewButton();
   } catch(error) {
     select.replaceChildren(new Option("Katalog suara tidak tersedia",""));
     $("videoNarrationStatus").textContent=error.message;
   }
+}
+let videoVoicePreviewAudio = null;
+function stopVideoVoicePreview() {
+  if(videoVoicePreviewAudio){videoVoicePreviewAudio.pause();videoVoicePreviewAudio.currentTime=0;videoVoicePreviewAudio=null;}
+  const button=$("videoVoicePreviewButton");
+  if(button){button.textContent="▶";button.classList.remove("is-playing");}
+}
+function updateVideoVoicePreviewButton() {
+  const button=$("videoVoicePreviewButton"),select=$("videoVoiceSelect");
+  if(!button||!select)return;
+  const voice=(window.videoStudioVoiceCatalog||[]).find(item=>item.voice_id===select.value);
+  button.disabled=!voice?.preview_url;
+  button.title=voice?.preview_url?"Putar pratinjau suara":"Pratinjau tidak tersedia untuk suara ini";
+  if(!voice?.preview_url)stopVideoVoicePreview();
+}
+function toggleVideoVoicePreview() {
+  const button=$("videoVoicePreviewButton"),select=$("videoVoiceSelect");
+  const voice=(window.videoStudioVoiceCatalog||[]).find(item=>item.voice_id===select.value);
+  if(!voice?.preview_url)return;
+  if(videoVoicePreviewAudio && !videoVoicePreviewAudio.paused){stopVideoVoicePreview();return;}
+  stopVideoVoicePreview();
+  const audio=new Audio(voice.preview_url);
+  videoVoicePreviewAudio=audio;
+  button.textContent="…";button.disabled=true;
+  audio.addEventListener("ended",()=>{if(videoVoicePreviewAudio===audio){videoVoicePreviewAudio=null;button.textContent="▶";button.disabled=false;button.classList.remove("is-playing");}},{once:true});
+  audio.play().then(()=>{if(videoVoicePreviewAudio===audio){button.textContent="Ⅱ";button.disabled=false;button.classList.add("is-playing");}}).catch(()=>{if(videoVoicePreviewAudio===audio){videoVoicePreviewAudio=null;button.textContent="▶";button.disabled=false;button.classList.remove("is-playing");}$("videoNarrationStatus").textContent="Pratinjau suara tidak dapat diputar.";});
 }
 async function generateVideoNarration() {
   if(!auth.currentUser){setStatus("Masuk ke akun ZAIDA Voice terlebih dahulu.",true);return;}
@@ -1321,6 +1349,8 @@ document.querySelectorAll('input[name="videoOutputFormat"]').forEach(input => in
 }));
 updateCaptionPreviewAspectRatio();
 $("generateVideoNarration").addEventListener("click", generateVideoNarration);
+$("videoVoiceSelect").addEventListener("change",()=>{stopVideoVoicePreview();updateVideoVoicePreviewButton();});
+$("videoVoicePreviewButton").addEventListener("click",toggleVideoVoicePreview);
 $("videoNarrationAudio").addEventListener("change", async () => {
   const file = $("videoNarrationAudio").files?.[0];
   const player = $("videoNarrationPreview");

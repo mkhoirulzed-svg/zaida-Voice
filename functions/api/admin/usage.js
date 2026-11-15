@@ -40,6 +40,7 @@ export async function onRequestGet({ request, env }) {
         description: read(f.description), provider: read(f.provider),
         model: read(f.model), providerCostIdr: read(f.providerCostIdr) || 0,
         providerCostUsd: Number(read(f.providerCostUsd) || 0),
+        providerCostEstimated: read(f.providerCostEstimated) === true,
         inputTokens: read(f.inputTokens) || 0, outputTokens: read(f.outputTokens) || 0,
         characters: read(f.characters) || 0, createdAt: read(f.createdAt)
       };
@@ -50,9 +51,10 @@ export async function onRequestGet({ request, env }) {
       creditsCharged: usage.reduce((sum, x) => sum + Math.abs(Number(x.amount) || 0), 0),
       providerCostIdr: usage.reduce((sum, x) => sum + (Number(x.providerCostIdr) || 0), 0),
       providerCostUsd: usage.reduce((sum, x) => sum + (Number(x.providerCostUsd) || 0), 0),
+      estimatedCostTransactions: usage.filter(x => x.providerCostEstimated).length,
       byProvider: ["deepseek", "elevenlabs", "openrouter", "kiosapi"].map(provider => {
         const items = usage.filter(x => x.provider === provider);
-        return { provider, requests: items.length, creditsCharged: items.reduce((sum,x)=>sum+Math.abs(Number(x.amount)||0),0), providerCostIdr: items.reduce((sum,x)=>sum+(Number(x.providerCostIdr)||0),0), providerCostUsd: items.reduce((sum,x)=>sum+(Number(x.providerCostUsd)||0),0) };
+        return { provider, requests: items.length, creditsCharged: items.reduce((sum,x)=>sum+Math.abs(Number(x.amount)||0),0), providerCostIdr: items.reduce((sum,x)=>sum+(Number(x.providerCostIdr)||0),0), providerCostUsd: items.reduce((sum,x)=>sum+(Number(x.providerCostUsd)||0),0), estimatedCostTransactions: items.filter(x=>x.providerCostEstimated).length };
       }),
       transactions
     });

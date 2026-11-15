@@ -962,3 +962,11 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
 .scene-brand-product-overlay{position:absolute;left:3%;top:4%;width:22%;max-height:32%;object-fit:contain;padding:3px;background:rgba(255,255,255,.9);border-radius:6px;box-shadow:0 2px 10px #0003}
 .scene-brand-logo-overlay{position:absolute;right:3%;top:4%;width:16%;max-height:17%;object-fit:contain;filter:drop-shadow(0 1px 3px #0008)}
 @media(max-width:560px){.storyboard-json-heading,.storyboard-json-actions{align-items:stretch;flex-direction:column}.storyboard-json-actions .primary-button{width:100%}#storyboardJson{min-height:220px}}
+
+
+/* Mobile sidebar must always sit above sticky Video Studio workflow navigation */
+@media(max-width:760px){
+  .sidebar{z-index:1000!important}
+  .sidebar-backdrop:not([hidden]){z-index:999!important}
+  .video-studio-page .video-workflow-nav{z-index:1!important}
+}

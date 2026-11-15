@@ -606,6 +606,12 @@ async function generateAllSceneImages() {
   $("storyboardQuickMeta").textContent = completedScenes.length + "/" + scenes.length + " gambar selesai · total " + totalImageCredits.toLocaleString("id-ID") + " kredit";
   if (completedScenes.length) setStatus("Pembuatan gambar selesai · total " + totalImageCredits.toLocaleString("id-ID") + " kredit ZAIDA untuk " + completedScenes.length + " gambar.");
 }
+function syncCaptionFontPicker() {
+  const font=$("captionFont")?.value||"Arial";
+  const current=$("captionFontCurrent");
+  if(current){current.textContent=font+" · Aa Bb 123";current.style.fontFamily="'"+font+"',sans-serif";}
+  $("captionFontOptions")?.querySelectorAll("[data-font]").forEach(button=>button.classList.toggle("is-selected",button.dataset.font===font));
+}
 function getCaptionStyle() {
   return {
     preset: $("captionPreset").value,
@@ -654,6 +660,7 @@ function applyCaptionPreset() {
     karaoke:{captionBackground:"none",captionTextColor:"#ffe45e",captionOutlineColor:"#000000",captionOutlineWidth:3,captionFont:"Arial",captionFontSize:30,captionAnimation:"karaoke"}
   }[preset];
   Object.entries(values).forEach(([id,value])=>$(id).value=value);
+  syncCaptionFontPicker();
   const names={classic:"Classic",capcut:"Social",cinematic:"Cinematic",karaoke:"Highlight"};
   $("captionSelectedPresetName").textContent=names[preset]||"Custom";
   $("captionPresetGrid").querySelectorAll("[data-caption-preset]").forEach(card=>card.classList.toggle("is-selected",card.dataset.captionPreset===preset));
@@ -1190,6 +1197,20 @@ $("toggleStoryboardEditor").addEventListener("click",()=>{
   $("toggleStoryboardEditor").textContent=editor.hidden?"✎ Edit storyboard, teks & gambar":"Tutup editor storyboard";
 });
 ["captionFont","captionBackground","captionPosition"].forEach(id=>$(id).addEventListener("change",updateCaptionPreview));
+$("captionFontToggle").addEventListener("click",()=>{
+  const options=$("captionFontOptions"),open=options.hidden;
+  options.hidden=!open;
+  $("captionFontToggle").setAttribute("aria-expanded",String(open));
+});
+$("captionFontOptions").addEventListener("click",event=>{
+  const option=event.target.closest("[data-font]");
+  if(!option)return;
+  $("captionFont").value=option.dataset.font;
+  syncCaptionFontPicker();
+  updateCaptionPreview();
+  $("captionFontOptions").hidden=true;
+  $("captionFontToggle").setAttribute("aria-expanded","false");
+});
 ["captionFontSize","captionTextColor","captionOutlineColor","captionOutlineWidth","captionBackgroundOpacity"].forEach(id=>$(id).addEventListener("input",updateCaptionPreview));
 $("captionPreset").addEventListener("change",applyCaptionPreset);
 $("captionPresetToggle").addEventListener("click",()=>{
@@ -1202,6 +1223,7 @@ $("captionPresetGrid").addEventListener("click",event=>{
   if(!card)return;
   $("captionPreset").value=card.dataset.captionPreset;
   applyCaptionPreset();
+syncCaptionFontPicker();
   $("captionPresetGrid").hidden=true;
   $("captionPresetToggle").setAttribute("aria-expanded","false");
 });

@@ -1,3 +1,34 @@
+const DEFAULT_STORAGE_QUOTA_BYTES = 1024 * 1024 * 1024;
+
+export async function getStorageUsage(user, env, replacingKey = "") {
+  if (!env.VIDEO_MEDIA) throw new Error("Penyimpanan media R2 belum tersedia.");
+  const prefix = user.uid + "/";
+  let usedBytes = 0, cursor, pages = 0;
+  do {
+    const result = await env.VIDEO_MEDIA.list({ prefix, limit: 1000, cursor });
+    for (const object of result.objects || []) {
+      if (object.key !== replacingKey) usedBytes += Number(object.size) || 0;
+    }
+    cursor = result.truncated ? result.cursor : undefined;
+    pages += 1;
+  } while (cursor && pages < 1000);
+  if (cursor) throw new Error("Koleksi penyimpanan terlalu besar untuk dihitung saat ini. Hubungi admin.");
+  const quotaBytes = Math.max(100 * 1024 * 1024, Number(env.ZAIDA_FREE_STORAGE_BYTES) || DEFAULT_STORAGE_QUOTA_BYTES);
+  return { usedBytes, quotaBytes, remainingBytes: Math.max(0, quotaBytes - usedBytes), usagePercent: Math.min(100, Math.round(usedBytes / quotaBytes * 100)) };
+}
+
+export async function ensureStorageCapacity(user, env, incomingBytes, replacingKey = "") {
+  const usage = await getStorageUsage(user, env, replacingKey);
+  const incoming = Math.max(0, Number(incomingBytes) || 0);
+  if (incoming > usage.remainingBytes) {
+    const error = new Error("Kuota penyimpanan ZAIDA tidak mencukupi. Terpakai " + usage.usedBytes + " byte dari " + usage.quotaBytes + " byte. Hapus media lama untuk melanjutkan.");
+    error.status = 413;
+    error.storage = usage;
+    throw error;
+  }
+  return { ...usage, remainingBytes: Math.max(0, usage.remainingBytes - incoming), usagePercent: Math.min(100, Math.round((usage.usedBytes + incoming) / usage.quotaBytes * 100)) };
+}
+
 export async function verifyFirebaseUser(request, env) {
   const header=request.headers.get("Authorization")||"",match=header.match(/^Bearer\s+(.+)$/i);
   if(!match)return {error:Response.json({error:"Silakan masuk terlebih dahulu."},{status:401})};

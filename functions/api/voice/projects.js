@@ -1,4 +1,4 @@
-import { verifyFirebaseUser, listVoiceProjects, getVoiceProject, saveVoiceProject } from "../../lib/firebase.js";
+import { verifyFirebaseUser, listVoiceProjects, getVoiceProject, saveVoiceProject, deleteVoiceProject } from "../../lib/firebase.js";
 export async function onRequestGet({ request, env }) {
   const auth=await verifyFirebaseUser(request,env);if(auth.error)return auth.error;
   const id=new URL(request.url).searchParams.get("id");
@@ -11,4 +11,10 @@ export async function onRequestPost({ request, env }) {
   if(!body||typeof body!=="object"||!body.payload||typeof body.payload!=="object"||Array.isArray(body.payload))return Response.json({error:"Data proyek tidak valid."},{status:400});
   try{return Response.json({ok:true,project:await saveVoiceProject(auth.user,env,body)});}
   catch(error){return Response.json({error:error.message||"Gagal menyimpan proyek."},{status:error.status||500});}
+}
+export async function onRequestDelete({ request, env }) {
+  const auth=await verifyFirebaseUser(request,env);if(auth.error)return auth.error;
+  const id=new URL(request.url).searchParams.get("id")||"";
+  try { const result=await deleteVoiceProject(auth.user,env,id); if(result.audioAssetId&&env.VIDEO_MEDIA) await env.VIDEO_MEDIA.delete(auth.user.uid+"/voice-"+result.audioAssetId); return Response.json({ok:true}); }
+  catch(error){return Response.json({error:error.message||"Gagal menghapus proyek."},{status:error.status||500});}
 }

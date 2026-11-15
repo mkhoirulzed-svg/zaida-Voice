@@ -1067,3 +1067,21 @@ textarea:focus,input:focus,select:focus{outline:none!important;border-color:#9a9
   margin:0 7px 0 0!important;
   vertical-align:middle!important;
 }
+
+
+/* Voice Studio compact header actions */
+#studioPage #voiceProjectHistoryButton,
+#studioPage #newProject.studio-new-project{
+  min-height:44px!important;
+  height:44px!important;
+  border-radius:12px!important;
+  padding:0 14px!important;
+  font-size:14px!important;
+  font-weight:650!important;
+}
+#studioPage #newProject.studio-new-project svg{
+  width:18px!important;
+  height:18px!important;
+  margin-right:5px!important;
+}
+#studioPage .studio-header-actions{gap:10px!important}

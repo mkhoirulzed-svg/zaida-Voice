@@ -657,3 +657,8 @@
 .caption-font-sample{display:block;width:100%;overflow:hidden;color:#f7f6fa;font-size:clamp(16px,4.7vw,24px);line-height:1.2;text-align:center;text-overflow:clip;white-space:nowrap}
 .caption-font-name{font-family:Inter,Arial,sans-serif!important;color:#d1ced8;font-size:11px;line-height:1.2;text-align:center;overflow-wrap:anywhere}
 @media(min-width:700px){.caption-font-options{left:calc(50% - 280px);right:auto;width:560px;grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Show each typeface by rendering its own name, without generic Aa samples */
+.caption-font-sample{font-family:inherit!important;font-size:clamp(17px,4.8vw,25px);font-weight:600;letter-spacing:-.025em}
+.caption-font-option{font-family:inherit}
+.caption-font-toggle #captionFontCurrent{font-size:16px}

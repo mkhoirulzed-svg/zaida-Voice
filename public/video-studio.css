@@ -545,7 +545,7 @@
 
 /* Floating workflow navigation: compact numbered tiles, always reachable */
 .video-studio-page .video-workflow-nav{
-  position:sticky;top:10px;z-index:20;
+  position:sticky;top:10px;z-index:4;
   display:flex;align-items:stretch;justify-content:space-between;gap:8px;
   overflow-x:auto;overscroll-behavior-x:contain;
   padding:8px;margin:0 0 20px;

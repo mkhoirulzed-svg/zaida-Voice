@@ -1,5 +1,5 @@
 import {
-  verifyFirebaseUser, getOrCreateAccount, reserveCredits, ensureStorageCapacity,
+  verifyFirebaseUser, getOrCreateAccount, reserveCredits, ensureStorageCapacity, getStorageUsage,
   releaseCredits, settleReservedCredits, calculateKiosapiCharge
 } from "../../lib/firebase.js";
 
@@ -52,6 +52,12 @@ export async function onRequestPost({ request, env }) {
   let reservation = null;
   let settled = false;
   let providerResponded = false;
+  try {
+    const storage = await getStorageUsage(auth.user, env);
+    if (storage.remainingBytes < 10 * 1024 * 1024) return jsonError("Penyimpanan hampir penuh. Sisakan minimal 10 MB atau hapus media lama sebelum membuat gambar baru.", 413);
+  } catch (storageError) {
+    return jsonError(storageError.message || "Tidak dapat memeriksa kuota penyimpanan.", 503);
+  }
 
   try {
     await getOrCreateAccount(auth.user, env);

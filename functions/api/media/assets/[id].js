@@ -25,6 +25,10 @@ export async function onRequestDelete({ request, env, params }) {
   const key = auth.user.uid + "/" + id;
   const object = await env.VIDEO_MEDIA.head(key);
   if (!object) return jsonError("Aset media tidak ditemukan.", 404);
+  const metadata = object.customMetadata || {};
+  if (metadata.source !== "media-library-upload" && metadata.project !== "zaida-media-library") {
+    return jsonError("Aset yang dibuat oleh studio belum dapat dihapus dari Media Library agar proyek yang menggunakannya tidak rusak.", 409);
+  }
   await env.VIDEO_MEDIA.delete(key);
   return Response.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

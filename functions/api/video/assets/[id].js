@@ -1,4 +1,4 @@
-import { verifyFirebaseUser } from "../../../lib/firebase.js";
+import { verifyFirebaseUser, ensureStorageCapacity } from "../../../lib/firebase.js";
 
 export async function onRequestPut({ request, env, params }) {
   const auth = await verifyFirebaseUser(request, env);
@@ -13,7 +13,7 @@ export async function onRequestPut({ request, env, params }) {
   const bytes = await request.arrayBuffer();
   if (!bytes.byteLength) return Response.json({ error: "File audio kosong." }, { status: 400 });
   if (bytes.byteLength > 100 * 1024 * 1024) return Response.json({ error: "Ukuran audio maksimal 100 MB." }, { status: 413 });
-  await env.VIDEO_MEDIA.put(auth.user.uid + "/" + id, bytes, {
+  const key = auth.user.uid + "/" + id;\n  try { await ensureStorageCapacity(auth.user, env, bytes.byteLength, key); } catch (error) { return Response.json({ error: error.message, storage: error.storage }, { status: error.status || 500 }); }\n  await env.VIDEO_MEDIA.put(key, bytes, {
     httpMetadata: { contentType: mime, cacheControl: "private, no-store" },
     customMetadata: { uid: auth.user.uid, project: "zaida-video-studio", kind: "audio", source: request.headers.get("X-Video-Audio-Source") || "unknown" }
   });

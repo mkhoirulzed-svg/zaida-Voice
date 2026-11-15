@@ -19,7 +19,8 @@ export async function onRequestGet({ request, env }) {
   if (auth.error) return auth.error;
   if (!env.VIDEO_MEDIA) return jsonError("Penyimpanan media R2 belum tersedia.", 503);
 
-  const storage = await getStorageUsage(auth.user, env);\n  const prefix = auth.user.uid + "/";
+  const storage = await getStorageUsage(auth.user, env);
+  const prefix = auth.user.uid + "/";
   const assets = [];
   let cursor;
   let pages = 0;

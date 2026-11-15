@@ -528,6 +528,7 @@ async function uploadMediaLibraryFile(file) {
   finally { if (uploadButton) uploadButton.classList.remove("is-loading"); if (input) input.value = ""; }
 }
 document.querySelectorAll("[data-media-filter]").forEach(button => button.addEventListener("click", () => { mediaLibraryFilter = button.dataset.mediaFilter; renderMediaLibrary(); }));
+$("mediaLibraryUploadTrigger")?.addEventListener("click", () => $("mediaLibraryUpload")?.click());
 $("mediaLibraryUpload")?.addEventListener("change", event => uploadMediaLibraryFile(event.target.files?.[0]));
 
 function showView(requestedView){

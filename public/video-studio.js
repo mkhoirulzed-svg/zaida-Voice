@@ -304,8 +304,9 @@ async function openSceneMediaPicker(scene, previewArea) {
           activeMediaPickerScene.scene.selectedMediaAssetId = item.id;
           renderGeneratedImage(activeMediaPickerScene.scene, activeMediaPickerScene.previewArea);
           updateStoryboardImageStrip(); updateRenderAvailability(); saveDraft();
+          const selectedSceneNumber = activeMediaPickerScene.scene.scene_number;
           closeSceneMediaPicker();
-          setStatus("Gambar dari Media Library dipakai untuk adegan " + activeMediaPickerScene?.scene?.scene_number + ".");
+          setStatus("Gambar dari Media Library dipakai untuk adegan " + selectedSceneNumber + ".");
         } catch (error) { setStatus(error.message, true); card.disabled = false; name.textContent = item.name || item.id; }
       });
       try {

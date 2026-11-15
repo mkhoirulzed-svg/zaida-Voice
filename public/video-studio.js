@@ -15,6 +15,7 @@ let videoSaveQueue = Promise.resolve();
 let renderedVideoUrls = [];
 let previewVideoUrl = null;
 let previewCaptionCues = [];
+let previewCaptionsBurned = false;
 let generatedWordCues = [];
 let generatedNarrationBlob = null;
 let videoAudioAsset = null;
@@ -874,6 +875,7 @@ function parsePreviewSrt(srt) {
 function syncCaptionPreview() {
   const video=$("videoPreviewPlayer"), text=$("captionPreviewText");
   if(!video || video.hidden) return;
+  if (previewCaptionsBurned) { text.textContent = ""; text.hidden = true; return; }
   const cue=previewCaptionCues.find(item=>video.currentTime>=item.start&&video.currentTime<=item.end);
   const enabled = $("videoIncludeSubtitles").checked && cue;
   const animation = $("captionAnimation")?.value || "static";
@@ -918,7 +920,7 @@ async function startDualRender(isExport = false) {
   button.textContent = isExport ? "Mengekspor video final…" : "Membuat preview…";
   progressBar.style.width = "0%";
   progressText.textContent = "Memuat mesin ekspor MP4…";
-  setStatus(isExport ? "Mengekspor video final dengan pengaturan caption…" : "Membuat video preview tanpa menanam caption permanen…");
+  setStatus(isExport ? "Mengekspor video final dengan pengaturan subtitle…" : (burnCaptions ? "Membuat preview video beserta subtitle…" : "Membuat preview video tanpa subtitle…"));
   try {
     const audioDuration = await getAudioDurationSeconds(audioFile);
     const result = await renderVideo({
@@ -926,8 +928,8 @@ async function startDualRender(isExport = false) {
       format: selectedFormat,
       audioFile,
       audioDuration,
-      subtitleText: isExport ? selectedSubtitleText : "",
-      burnCaptions: isExport ? burnCaptions : false,
+      subtitleText: burnCaptions ? selectedSubtitleText : "",
+      burnCaptions,
       captionStyle: { ...getCaptionStyle(), wordCues: generatedWordCues },
       onProgress: info => {
         if (info.phase === "loading") progressText.textContent = info.message || "Memuat mesin render…";
@@ -952,6 +954,7 @@ async function startDualRender(isExport = false) {
       $("captionPreviewPlay").hidden=true;
       player.currentTime=0;
       previewCaptionCues=parsePreviewSrt(generatedSubtitleText);
+      previewCaptionsBurned = burnCaptions && Boolean(selectedSubtitleText.trim());
       $("exportFinalVideo").hidden=false;
       $("exportFinalVideo").disabled=false;
       $("exportFinalVideo").textContent="Ekspor MP4 Final";
@@ -960,7 +963,7 @@ async function startDualRender(isExport = false) {
       player.onseeked=syncCaptionPreview;
       player.onplay=syncCaptionPreview;
       downloads.hidden=true;
-      setStatus("Preview video siap. Putar video, atur caption, lalu tekan Export Video Final.");
+      setStatus(previewCaptionsBurned ? "Preview video siap dengan subtitle. Periksa hasilnya sebelum ekspor final." : "Preview video siap tanpa subtitle. Aktifkan Tanam subtitle jika ingin menampilkannya.");
     } else {
       renderedVideoUrls.push(url);
       const link = document.createElement("a");

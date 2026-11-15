@@ -471,7 +471,10 @@ async function renderMediaLibrary() {
     const download = document.createElement("button");
     download.type = "button"; download.className = "media-card-action"; download.textContent = "Unduh"; download.disabled = true;
     const remove = document.createElement("button");
-    remove.type = "button"; remove.className = "media-card-action danger"; remove.textContent = "Hapus";
+    const canDelete = item.source === "media-library-upload" || item.source === "zaida-media-library";
+    remove.type = "button"; remove.className = "media-card-action danger"; remove.textContent = canDelete ? "Hapus" : "Dipakai studio";
+    remove.disabled = !canDelete;
+    if (!canDelete) remove.title = "Aset ini dibuat oleh studio dan dilindungi agar proyek yang menggunakannya tidak rusak.";
     actions.append(download, remove); meta.append(name, details, actions); card.append(preview, meta); grid.append(card);
     try {
       const response = await fetch("/api/media/assets/" + encodeURIComponent(item.id), { headers: await authHeaders() });

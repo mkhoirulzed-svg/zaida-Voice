@@ -131,6 +131,13 @@ async function loadImageEditQuote() {
     return null;
   }
 }
+async function getImageDimensions(file) {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const dimensions = { width: bitmap.width, height: bitmap.height };
+  bitmap.close();
+  return dimensions;
+}
+
 async function imageFileToDataUrl(file) {
   if (!file || !["image/png","image/jpeg","image/webp"].includes(file.type)) throw new Error("Gunakan foto PNG, JPEG, atau WebP.");
   if (file.size > 12 * 1024 * 1024) throw new Error("Ukuran foto maksimal 12 MB.");
@@ -175,6 +182,7 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
   button.textContent = "Menyiapkan foto…";
   $("imageStudioStatus").textContent = "Mengompres foto dan memeriksa sesi akun…";
   try {
+    const sourceDimensions = await getImageDimensions(file);
     const referenceImage = await imageFileToDataUrl(file);
     const token = await imageAuth.currentUser.getIdToken(true);
     const requestId = crypto.randomUUID();
@@ -183,7 +191,7 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
     const response = await fetch("/api/image-studio/edit", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({ requestId, templateId: activeTemplate?.[0] || "free", prompt: extraPrompt, referenceImage })
+      body: JSON.stringify({ requestId, templateId: activeTemplate?.[0] || "free", prompt: extraPrompt, referenceImage, sourceDimensions })
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "Proses edit foto gagal (" + response.status + ").");

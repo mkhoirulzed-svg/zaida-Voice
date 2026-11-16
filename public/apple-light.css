@@ -1249,3 +1249,17 @@ button.media-upload-button:active{transform:translateY(1px)}
 .image-studio-card-art-overlay{position:absolute;inset:45% 0 0;z-index:1;background:linear-gradient(180deg,transparent,rgba(20,16,35,.20));pointer-events:none}
 .image-studio-card-arrow{z-index:2;top:13px;bottom:auto;right:12px;background:rgba(255,255,255,.78);color:#51477c;backdrop-filter:blur(8px)}
 
+
+
+/* Image Studio Edit Photo workflow */
+.image-security-note{margin-top:4px}
+.image-studio-result{display:flex;flex-direction:column;gap:14px;width:100%}
+.image-studio-result-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.image-studio-result-head b{font-size:16px}
+.image-studio-result-head span{font-size:11px;color:#777483}
+.image-studio-result img{display:block;width:100%;height:auto;max-height:680px;object-fit:contain;border-radius:16px;background:#f0eff4}
+.image-result-download{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-radius:12px;background:#f0edfa;color:#51469a;text-decoration:none;font-weight:700}
+.image-result-download:hover{text-decoration:none;background:#e9e4f8}
+.image-studio-status{min-height:22px;line-height:1.5}
+.image-generate-placeholder{cursor:pointer}
+@media(max-width:760px){.image-studio-result img{max-height:55vh}}

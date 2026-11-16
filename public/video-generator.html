@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta name="description" content="ZAIDA Video Generator — ubah naskah menjadi video pendek dengan AI.">
+  <title>Video Generator — ZAIDA Voice</title>
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/apple-light.css">
+  <link rel="stylesheet" href="/video-generator.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="in-studio">
+  <div class="vg-shell">
+    <header class="vg-topbar">
+      <a class="vg-brand" href="/" aria-label="Kembali ke ZAIDA Voice"><span class="vg-mark">Z</span><span><b>ZAIDA <i>Voice</i></b><small>CREATIVE STUDIO</small></span></a>
+      <nav><a href="/">Workspace</a><a href="/#videoStudioPage">Video Studio</a></nav>
+      <div class="vg-account"><span id="vgCredit">Kredit: —</span><span id="vgUser">Memeriksa akun…</span></div>
+    </header>
+    <main class="vg-main">
+      <section class="vg-hero">
+        <div><div class="vg-eyebrow"><span></span> ZAIDA CREATIVE TOOLS</div><h1>Video <em>Generator.</em></h1><p>Ubah naskah menjadi rangkaian adegan visual dan ekspor menjadi video MP4.</p></div>
+        <a class="vg-back" href="/">← Kembali ke workspace</a>
+      </section>
+      <div class="vg-workflow"><span class="active">01 <b>Naskah</b></span><span>02 <b>Storyboard</b></span><span>03 <b>Visual</b></span><span>04 <b>Ekspor</b></span></div>
+      <div class="vg-grid">
+        <section class="vg-panel vg-input-panel">
+          <div class="vg-panel-head"><div><small>LANGKAH 01</small><h2>Ide & naskah video</h2></div><span class="vg-tag">AI STORYBOARD</span></div>
+          <label for="vgScript">NASKAH / TOPIK VIDEO</label>
+          <textarea id="vgScript" maxlength="8000" rows="10" placeholder="Tempel naskah video di sini. Contoh: Buat video edukasi tentang pentingnya mencuci tangan sebelum tindakan medis…"></textarea>
+          <div class="vg-field-row">
+            <div><label for="vgAudience">TARGET PENONTON</label><input id="vgAudience" maxlength="160" value="Audiens umum" placeholder="Contoh: Perawat dan tenaga kesehatan"></div>
+            <div><label for="vgTone">GAYA PENYAMPAIAN</label><select id="vgTone"><option value="edukatif">Edukatif</option><option value="santai">Santai</option><option value="profesional">Profesional</option><option value="dramatis">Dramatis</option><option value="humoris">Humoris</option><option value="promosi">Promosi</option></select></div>
+          </div>
+          <div class="vg-field-row">
+            <div><label for="vgDuration">DURASI</label><select id="vgDuration"><option value="auto">Otomatis mengikuti naskah/audio</option><option value="30">30 detik</option><option value="60">1 menit</option><option value="90">1,5 menit</option><option value="120">2 menit</option><option value="180">3 menit</option><option value="300">5 menit</option></select></div>
+            <div><label for="vgScenes">JUMLAH ADEGAN</label><select id="vgScenes"><option value="auto">Otomatis</option><option value="4">4 adegan</option><option value="6">6 adegan</option><option value="8">8 adegan</option><option value="10">10 adegan</option><option value="12">12 adegan</option><option value="16">16 adegan</option><option value="20">20 adegan</option></select></div>
+          </div>
+          <div class="vg-field-row">
+            <div><label for="vgStyle">GAYA VISUAL</label><select id="vgStyle"><option value="stickman">Stickman</option><option value="2d">Ilustrasi 2D</option><option value="3d">Animasi 3D</option><option value="anime">Anime</option><option value="realistic">Realistis</option><option value="cinematic" selected>Cinematic</option><option value="watercolor">Watercolor</option><option value="comic">Komik</option></select></div>
+            <div><label for="vgFormat">FORMAT VIDEO</label><select id="vgFormat"><option value="9:16">Vertikal 9:16 · Reels/TikTok</option><option value="16:9">Horizontal 16:9 · YouTube</option></select></div>
+          </div>
+          <label for="vgAudio">AUDIO NARASI (OPSIONAL)</label>
+          <input id="vgAudio" class="vg-file" type="file" accept="audio/*">
+          <small class="vg-help">Jika audio diunggah, durasi video akan mengikuti durasi audio. Audio juga akan disertakan pada MP4.</small>
+          <button class="vg-primary" id="vgCreateStoryboard">✦ Buat storyboard <span>→</span></button>
+          <p class="vg-status" id="vgStatus" role="status" aria-live="polite">Masuk ke akun ZAIDA Voice untuk mulai membuat video.</p>
+        </section>
+        <section class="vg-panel vg-scenes-panel">
+          <div class="vg-panel-head"><div><small>LANGKAH 02–03</small><h2>Storyboard & visual</h2></div><span class="vg-count" id="vgSceneCount">0 adegan</span></div>
+          <div class="vg-empty" id="vgEmpty"><span>✧</span><b>Storyboard akan muncul di sini</b><p>Tulis naskah, lalu buat storyboard. Setiap adegan dapat dibuatkan visual AI.</p></div>
+          <div class="vg-scenes" id="vgScenesList"></div>
+          <button class="vg-secondary" id="vgGenerateAll" hidden>Buat semua visual AI</button>
+        </section>
+      </div>
+      <section class="vg-panel vg-export-panel">
+        <div class="vg-panel-head"><div><small>LANGKAH 04</small><h2>Preview & ekspor video</h2></div><span class="vg-tag">MP4 · 30 FPS</span></div>
+        <div class="vg-export-grid">
+          <div class="vg-export-info"><b>Siap menjadi video?</b><p>ZAIDA merender video langsung di browser menggunakan WebCodecs. Gunakan Chrome versi terbaru dan tutup tab lain saat mengekspor video panjang.</p><div class="vg-render-progress" id="vgProgress" hidden><div><span id="vgProgressBar"></span></div><small id="vgProgressText">Menyiapkan render…</small></div><button class="vg-primary" id="vgRender" disabled>Render & ekspor MP4 <span>→</span></button></div>
+          <div class="vg-result" id="vgResult"><div class="vg-result-empty">Preview video akan tampil setelah proses render selesai.</div></div>
+        </div>
+      </section>
+      <footer class="vg-footer">ZAIDA Voice · Video Generator <span>Proses render dilakukan di perangkatmu.</span></footer>
+    </main>
+  </div>
+  <script type="module" src="/video-generator.js"></script>
+</body>
+</html>

@@ -405,6 +405,11 @@ async function loadAdminDashboard(){
       formatAdminUsageCard("BULAN INI",periods.month),
       formatAdminUsageCard("TOTAL SEPANJANG WAKTU",periods.total,data.complete?"Seluruh ledger":"Data belum lengkap")
     ].join("");
+    const revenue=data.revenue||{};
+    $("adminRevenueSummaries").innerHTML=[
+      ["HARI INI",revenue.day],["MINGGU INI",revenue.week],["BULAN INI",revenue.month],["TOTAL PENDAPATAN",revenue.total]
+    ].map(([label,item])=>'<div class="admin-metric admin-revenue-metric"><small>'+label+'</small><b>'+formatRupiah(item?.grossRevenueIdr||0)+'</b><span>'+Number(item?.orders||0).toLocaleString("id-ID")+' pembayaran lunas</span></div>').join("");
+    if(data.revenueComplete===false)$("adminUpdated").textContent+=" · data pendapatan belum lengkap";
     renderAdminProviders(periods[$("adminProviderPeriod")?.value||"month"]);
     const transactions=data.transactions||[];
     $("adminTransactionList").innerHTML=transactions.length?transactions.map(t=>'<div class="admin-transaction"><div class="admin-tx-main"><b>'+escapeHtml(t.description||"Pemakaian layanan")+'</b><small>'+escapeHtml(formatAdminDate(t.createdAt))+' · '+escapeHtml(t.provider||"provider tidak diketahui")+'</small></div><div class="admin-tx-values"><b>'+Number(t.amount||0).toLocaleString("id-ID")+' kredit</b><small>'+formatRupiah(t.providerCostIdr||0)+'</small></div></div>').join(""):'<div class="empty-output"><b>Belum ada transaksi</b><p>Transaksi pemakaian akan muncul di sini.</p></div>';

@@ -1263,3 +1263,10 @@ button.media-upload-button:active{transform:translateY(1px)}
 .image-studio-status{min-height:22px;line-height:1.5}
 .image-generate-placeholder{cursor:pointer}
 @media(max-width:760px){.image-studio-result img{max-height:55vh}}
+
+
+/* Image Studio price disclosure and explicit photo-processing consent */
+.image-edit-consent{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;border:1px solid #e8e4f1;border-radius:13px;background:#faf9fd;color:#5f5a69;font-size:12px;line-height:1.55;cursor:pointer}
+.image-edit-consent input{width:18px;height:18px;flex:0 0 18px;margin:1px 0 0;accent-color:#6556b5}
+.image-security-note small{display:block;margin-top:7px;color:#777382;font-size:11px;line-height:1.5}
+.image-security-note[hidden],.image-edit-consent[hidden]{display:none!important}

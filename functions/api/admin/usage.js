@@ -59,6 +59,35 @@ export async function onRequestGet({ request, env }) {
         characters: read(f.characters) || 0, createdAt: read(f.createdAt)
       };
     });
+    // Revenue is counted only from successfully paid Midtrans orders, using paidAt.
+    const paidDocuments = [];
+    let paymentCursor = null, paymentPages = 0;
+    do {
+      const paymentQuery = {
+        from: [{ collectionId: "payments" }],
+        orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }, { field: { fieldPath: "__name__" }, direction: "DESCENDING" }],
+        limit: pageSize,
+        ...(paymentCursor ? { startAt: { values: [{ stringValue: paymentCursor.createdAt }, { referenceValue: paymentCursor.name }], before: false } } : {})
+      };
+      const paymentResponse = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + tokenData.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ structuredQuery: paymentQuery })
+      });
+      const paymentRows = await paymentResponse.json();
+      if (!paymentResponse.ok) throw new Error(paymentRows.error?.message || "Gagal membaca data pendapatan.");
+      const docs = (Array.isArray(paymentRows) ? paymentRows : []).filter(x => x.document).map(x => x.document);
+      paidDocuments.push(...docs);
+      paymentPages++;
+      const last = docs[docs.length - 1];
+      paymentCursor = docs.length === pageSize && last?.fields?.createdAt?.stringValue
+        ? { createdAt: last.fields.createdAt.stringValue, name: last.name }
+        : null;
+    } while (paymentCursor && paymentPages < maxPages);
+    const paidOrders = paidDocuments.map(doc => {
+      const f = doc.fields || {};
+      return { orderId: read(f.orderId) || doc.name.split("/").pop(), amount: Number(read(f.amount) || 0), status: read(f.status), paidAt: read(f.paidAt), createdAt: read(f.createdAt), packageName: read(f.packageName) };
+    }).filter(x => x.status === "paid" && x.amount > 0 && x.paidAt);
     const usage = transactions.filter(x => x.type === "usage");
     const now = new Date();
     const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
@@ -101,10 +130,19 @@ export async function onRequestGet({ request, env }) {
       const byService = [...new Set(items.map(serviceOf))].map(service => ({ service, ...summarize(items.filter(x => serviceOf(x) === service)) }));
       summaries[key] = { ...summarize(items), byProvider, byService };
     }
-    const complete = pages < maxPages || !cursor;
+    const revenueComplete = paymentPages < maxPages || !paymentCursor;
+    const revenueSummaries = {};
+    for (const [key, period] of Object.entries(periods)) {
+      const orders = paidOrders.filter(x => {
+        const time = Date.parse(x.paidAt || "");
+        return Number.isFinite(time) && (!period.start || time >= Date.parse(period.start)) && (!period.end || time < Date.parse(period.end));
+      });
+      revenueSummaries[key] = { orders: orders.length, grossRevenueIdr: orders.reduce((sum, x) => sum + x.amount, 0) };
+    }
+    const complete = (pages < maxPages || !cursor) && revenueComplete;
     return Response.json({
       count: transactions.length, scannedTransactions: transactions.length, complete,
-      truncated: !complete, periodTimezone: "Asia/Jakarta", periods: summaries,
+      truncated: !complete, periodTimezone: "Asia/Jakarta", periods: summaries, revenue: revenueSummaries, revenueComplete,
       creditsCharged: summaries.total.creditsCharged,
       providerCostIdr: summaries.total.providerCostIdr,
       providerCostUsd: summaries.total.providerCostUsd,

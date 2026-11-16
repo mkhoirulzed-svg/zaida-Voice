@@ -413,7 +413,8 @@ async function loadAdminDashboard(){
   finally{button.disabled=false;button.textContent="Perbarui data";}
 }
 
-$("refreshAdmin").addEventListener("click",loadAdminDashboard);\n$("adminProviderPeriod")?.addEventListener("change",async()=>{try{const data=await api("/api/admin/usage",{authRequired:true});renderAdminProviders(data.periods?.[$("adminProviderPeriod").value]);}catch(error){toast(error.message);}});
+$("refreshAdmin").addEventListener("click",loadAdminDashboard);
+$("adminProviderPeriod")?.addEventListener("change",async()=>{try{const data=await api("/api/admin/usage",{authRequired:true});renderAdminProviders(data.periods?.[$("adminProviderPeriod").value]);}catch(error){toast(error.message);}});
 $("adminCreditForm").addEventListener("submit",async event=>{
   event.preventDefault();
   if(accountInfo?.role!=="admin"){toast("Akses admin diperlukan.");return;}

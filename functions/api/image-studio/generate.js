@@ -23,6 +23,11 @@ const TEMPLATE_IDS = {
   brand: ["logo","icon","identity"],
   free: ["prompt","reference"]
 };
+const REQUIRES_REFERENCE = {
+  product: ["clean","premium","lifestyle","advert","medical","marketplace"],
+  portrait: ["professional","profile","editorial","outdoor"],
+  free: ["reference"]
+};
 const STUDIO_LABELS = {
   product: "professional product photography",
   poster: "professional promotional graphic design",
@@ -81,7 +86,7 @@ export async function onRequestPost({ request, env }) {
   const reference = body.referenceImage ? decodeImageData(body.referenceImage) : null;
   if (body.referenceImage && !reference) return jsonError("Foto referensi harus berupa PNG, JPEG, atau WebP.", 400);
   if (reference && (reference.bytes.byteLength > 2 * 1024 * 1024 || body.referenceImage.length > 2_900_000)) return jsonError("Ukuran foto referensi setelah kompresi maksimal 2 MB.", 413);
-  if (body.requiresReference && !reference) return jsonError("Template ini memerlukan foto referensi. Silakan unggah gambar terlebih dahulu.", 400);
+  if (REQUIRES_REFERENCE[studio]?.includes(templateId) && !reference) return jsonError("Template ini memerlukan foto referensi. Silakan unggah gambar terlebih dahulu.", 400);
   const prompt = buildPrompt(body, studio, templateId);
   if (prompt.length < 20) return jsonError("Isi template atau instruksi gambar belum cukup.", 400);
   const aspectRatio = ["1:1","4:5","9:16","16:9"].includes(body.aspectRatio) ? body.aspectRatio : "1:1";

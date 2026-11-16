@@ -103,7 +103,7 @@ async function clearHistoryGroup(kind){
   if(!confirm("Yakin ingin menghapus "+item.label+"? Tindakan ini tidak dapat dibatalkan."))return;
   try{
     const result=await api(item.url,{authRequired:true});
-    const records=result.projects||[];
+    const records=(result.projects||[]).filter(record=>kind!=="video"||record.payload?.kind!=="text-to-video");
     for(const record of records){
       if(kind==="voice")await deleteVoiceProjectById(record.id);
       else await deleteVideoProjectById(record.id);

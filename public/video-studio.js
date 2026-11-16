@@ -354,9 +354,19 @@ async function generateSceneImage(scene, button, imageArea) {
   button.textContent = "Membuat gambar…";
   setStatus("Sedang membuat gambar adegan " + scene.scene_number + "… Mohon tunggu.");
   try {
+    const sceneContext = [scene.narration, scene.visual_description, scene.visual_prompt].filter(Boolean).join(" ");
+    const useBrandReferences = /\\b(product|produk|brand|merek|logo|kemasan|packaging|promosi|promosikan|alat kesehatan)\\b/i.test(sceneContext);
+    const scenePrompt = [
+      "SCENE ACTION AND SUBJECT — HIGHEST PRIORITY: " + (scene.narration || "Follow the visual direction below."),
+      "VISUAL DIRECTION: " + (scene.visual_description || ""),
+      "DETAILED SCENE COMPOSITION: " + (scene.visual_prompt || ""),
+      "VISUAL STYLE: " + selectedStyle.prompt,
+      "STYLE CONSISTENCY: Keep the entire image in " + selectedStyle.label + " style. Do not reinterpret or switch styles.",
+      "IMPORTANT: Depict the exact action and subject described in the narration. Do not substitute a different activity, prop, medical procedure, or scene. The scene description takes priority over decorative details."
+    ].join("\\n\\n");
     const result = await api("/api/video/image", {
       method: "POST",
-      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nSTRICT STYLE: Keep the entire image in " + selectedStyle.label + " style. Do not reinterpret or switch styles.\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: scenePrompt, referenceImages: useBrandReferences ? [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) : [] })
     });
     scene.imageError = "";
     scene.generatedImage = {

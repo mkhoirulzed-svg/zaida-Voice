@@ -235,12 +235,12 @@ async function loadTextVideoHistory(){
     const result=await api("/api/video/projects",{authRequired:true});
     const projects=(result.projects||[]).filter(project=>project.payload?.kind==="text-to-video");
     box.replaceChildren();
-    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada video</b><small>Hasil Text-to-Video akan tersimpan di sini.</small></div>';return;}
+    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada video</b><small>Hasil Video Generator AI akan tersimpan di sini.</small></div>';return;}
     projects.forEach(project=>{
       const row=document.createElement("div");row.className="text-video-history-row";
       const icon=document.createElement("span");icon.className="text-video-history-icon";icon.textContent="▶";
       const info=document.createElement("div");info.className="text-video-history-info";
-      const title=document.createElement("b");title.textContent=project.title||"Text-to-Video";
+      const title=document.createElement("b");title.textContent=project.title||"Video Generator AI";
       const small=document.createElement("small");small.textContent=(project.payload?.status||"pending")+" · "+(project.payload?.duration||0)+" detik · "+(project.updatedAt?new Date(project.updatedAt).toLocaleString("id-ID"):"");
       info.append(title,small);row.append(icon,info);
       if(project.payload?.assetId){const media=document.createElement("button");media.type="button";media.textContent="Media Library";media.addEventListener("click",()=>showView("media"));row.append(media);}
@@ -640,7 +640,7 @@ function showView(requestedView){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
-  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",textToVideo:"Text-to-Video",media:"Media Library"})[requestedView]||"Voice Studio";
+  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",textToVideo:"Video Generator AI",media:"Media Library"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
   if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();loadTextVideoHistory();}
   if(view==="media")loadMediaLibrary();

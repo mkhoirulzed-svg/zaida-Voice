@@ -52,7 +52,7 @@ async function refreshAccount() {
 }
 async function loadQuote() {
   const data = await api("/api/video/generate");
-  quoteData = data.quote;
+  quoteData = { ...data.quote, referenceQuote: data.referenceQuote, maxReferenceImages: data.maxReferenceImages || 2 };
   updateEstimate();
 }
 async function loadHistory() {
@@ -170,6 +170,17 @@ function fileToDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+function removeReference(index) {
+  referenceFiles[index] = null;
+  const input = $("textVideoReference" + (index + 1));
+  if (input) input.value = "";
+  if (referencePreviewUrls[index]) URL.revokeObjectURL(referencePreviewUrls[index]);
+  referencePreviewUrls[index] = null;
+  $("textVideoReferencePreview" + (index + 1)).innerHTML = "<span>＋</span>";
+  $("textVideoReferenceName" + (index + 1)).textContent = "Pilih foto";
+  $("textVideoReferenceRemove" + (index + 1)).hidden = true;
+  updateEstimate();
+}
 function bindReferenceInput(index) {
   const input = $("textVideoReference" + (index + 1));
   input?.addEventListener("change", () => {
@@ -190,12 +201,15 @@ function bindReferenceInput(index) {
     image.alt = "Pratinjau Foto Referensi " + (index + 1);
     preview.replaceChildren(image);
     $("textVideoReferenceName" + (index + 1)).textContent = file.name;
+    $("textVideoReferenceRemove" + (index + 1)).hidden = false;
     updateEstimate();
     setStatus("Foto Referensi " + (index + 1) + " siap digunakan. Sebut nomor fotonya di prompt.");
   });
 }
 bindReferenceInput(0);
 bindReferenceInput(1);
+$("textVideoReferenceRemove1")?.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); removeReference(0); });
+$("textVideoReferenceRemove2")?.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); removeReference(1); });
 $("textVideoGenerate").addEventListener("click", generate);
 $("textVideoDuration").addEventListener("change", updateEstimate);
 onAuthStateChanged(auth, async user => {

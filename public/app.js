@@ -229,7 +229,7 @@ async function loadVideoProjectHistory(){
 
 
 async function loadTextVideoHistory(){
-  const box=$("textVideoHistory");if(!box)return;
+  const box=$("textVideoHistoryPageList");if(!box)return;
   if(!currentUser){box.innerHTML='<div class="empty-output"><b>Masuk untuk melihat riwayat</b></div>';return;}
   try{
     const result=await api("/api/video/projects",{authRequired:true});

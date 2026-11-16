@@ -42,8 +42,8 @@ async function refreshAccount() {
     $("sidebarCreditBalance").textContent = value;
     $("creditBalance").hidden = false;
     $("creditBalance").textContent = "Kredit: " + Number(data.credits || 0).toLocaleString("id-ID");
-    $("textVideoBalance").textContent = value;
-  } catch (error) { $("textVideoBalance").textContent = "Saldo tidak tersedia"; }
+  
+  } catch (error) { /* Saldo tidak ditampilkan di panel ini. */ }
 }
 async function loadQuote() {
   const data = await api("/api/video/generate");
@@ -62,7 +62,7 @@ async function loadHistory() {
       const row = document.createElement("div"); row.className = "text-video-history-row";
       const icon = document.createElement("span"); icon.className = "text-video-history-icon"; icon.textContent = "▶";
       const info = document.createElement("div"); info.className = "text-video-history-info";
-      const title = document.createElement("b"); title.textContent = project.title || "Text-to-Video";
+      const title = document.createElement("b"); title.textContent = project.title || "Video Generator AI";
       const small = document.createElement("small");
       const p = project.payload || {};
       small.textContent = (p.status || "pending") + " · " + (p.duration || 0) + " detik · " + new Date(project.updatedAt || project.createdAt).toLocaleString("id-ID");
@@ -76,7 +76,7 @@ async function loadHistory() {
       }
       const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "Hapus";
       remove.addEventListener("click", async () => {
-        if (!confirm("Hapus catatan riwayat Text-to-Video ini? File di Media Library tidak ikut dihapus.")) return;
+        if (!confirm("Hapus catatan riwayat Video Generator AI ini? File di Media Library tidak ikut dihapus.")) return;
         remove.disabled = true;
         try { await api("/api/video/projects/" + encodeURIComponent(project.id), { method: "DELETE" }); await loadHistory(); }
         catch (error) { remove.disabled = false; alert(error.message); }
@@ -113,7 +113,7 @@ async function pollProject(projectId) {
       if (data.creditsRemaining !== undefined) {
         $("sidebarCreditBalance").textContent = Number(data.creditsRemaining).toLocaleString("id-ID") + " kredit";
         $("creditBalance").textContent = "Kredit: " + Number(data.creditsRemaining).toLocaleString("id-ID");
-        $("textVideoBalance").textContent = Number(data.creditsRemaining).toLocaleString("id-ID") + " kredit";
+
       }
       await loadPreview(data.assetId, "Video ZAIDA");
       await loadHistory();
@@ -160,7 +160,7 @@ $("textVideoDuration").addEventListener("change", updateEstimate);
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (!user) {
-    $("textVideoBalance").textContent = "Masuk untuk melihat kredit";
+
     setStatus("Masuk ke akun ZAIDA Voice untuk mulai membuat video.");
     $("textVideoHistory").innerHTML = '<div class="empty-output"><b>Masuk untuk melihat riwayat</b></div>';
     return;

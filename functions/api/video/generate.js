@@ -87,7 +87,7 @@ export async function onRequestGet({ request, env }) {
     catch { return jsonError("Video selesai dibuat, tetapi unduhan terputus. Coba periksa kembali.", 502); }
     if (!videoResponse.ok) return jsonError("Video selesai, tetapi belum dapat diunduh dari provider.", 502);
     const bytes = await videoResponse.arrayBuffer();
-    if (!bytes.byteLength || bytes.byteLength > 150 * 1024 * 1024) return jsonError("Ukuran video tidak valid atau melebihi batas 150 MB.", 413);
+    if (!bytes.byteLength || bytes.byteLength > 50 * 1024 * 1024) return jsonError("Ukuran video tidak valid atau melebihi batas 50 MB.", 413);
     try { await ensureStorageCapacity(auth.user, env, bytes.byteLength); }
     catch (error) { return jsonError(error.message || "Kuota Media Library tidak mencukupi.", error.status || 413); }
     assetId = crypto.randomUUID();

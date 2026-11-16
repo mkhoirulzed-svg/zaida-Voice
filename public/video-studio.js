@@ -91,7 +91,7 @@ function removeVideoBrandAsset(kind) {
 
 
 const VIDEO_VISUAL_STYLES={
-  stickman:{label:"Stickman",prompt:"Use a clean minimalist stickman illustration style: simple expressive line-drawn human characters, clear poses, uncluttered backgrounds, consistent character design, restrained color palette. Not photorealistic."},
+  stickman:{label:"Stickman",prompt:"Create premium polished 2D cartoon storybook illustrations with appealing stickman-inspired human characters. Characters must be expressive and thoughtfully designed, with readable facial features, hairstyles, colored clothing, simplified but natural proportions, articulated hands and feet, and confident clean black outlines. Use a cohesive soft color palette, subtle cel shading, gentle highlights and cast shadows, dimensional 2D depth, and richly illustrated scene-specific environments with meaningful props, perspective and background details. The result should look like a frame from a professionally illustrated educational cartoon, not a bare stick figure, icon or pictogram. Keep character designs consistent. Strictly 2D hand-drawn/cartoon illustration: no photorealism, no live action, no 3D rendering, no empty white studio background."},
   "2d":{label:"Ilustrasi 2D",prompt:"Use polished 2D flat vector illustration, clean shapes, crisp outlines, balanced colors, simple readable composition, consistent illustrated characters. Not photorealistic or 3D."},
   "3d":{label:"Animasi 3D",prompt:"Use high-quality stylized 3D animated film visuals, appealing dimensional characters, soft global illumination, detailed but friendly materials, expressive poses, consistent character design."},
   anime:{label:"Anime",prompt:"Use high-quality Japanese anime illustration style, expressive character design, refined line art, cinematic anime lighting, rich but controlled colors, consistent characters."},
@@ -356,7 +356,7 @@ async function generateSceneImage(scene, button, imageArea) {
   try {
     const result = await api("/api/video/image", {
       method: "POST",
-      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nSTRICT STYLE: Keep the entire image in " + selectedStyle.label + " style. Do not reinterpret or switch styles.\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nSTRICT STYLE: Keep the entire image in " + selectedStyle.label + " style. Do not reinterpret or switch styles. For Stickman, create a premium detailed 2D cartoon storybook frame with expressive designed characters, colored clothes, clean black outlines, soft shading and shadows, and a fully illustrated scene-specific background. Never simplify it into a bare stick figure, icon, pictogram or blank white background.\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
     });
     scene.imageError = "";
     scene.generatedImage = {

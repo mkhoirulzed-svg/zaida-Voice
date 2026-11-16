@@ -62,17 +62,31 @@ function normalizeGroups(rawScenes, units, requestedCount, duration) {
   }
   return groups;
 }
-function fallbackVisual(narration, index) {
-  const excerpt = narration.trim().replace(/\s+/gu, " ").slice(0, 180);
+const VISUAL_STYLE_RULES = {
+  stickman: "MINIMALIST 2D STICKMAN ONLY: simple human figures built from clean black lines, round heads, line limbs and simple flat shapes; expressive poses; consistent character proportions; sparse clean backgrounds. Absolutely no 3D, no photorealism, no realistic human anatomy, no cinematic film rendering, no volumetric lighting, no detailed skin or realistic textures.",
+  "2d": "POLISHED 2D FLAT VECTOR ILLUSTRATION ONLY: flat shapes, crisp outlines, simple readable composition and consistent illustrated characters. No 3D and no photorealism.",
+  "3d": "STYLIZED 3D ANIMATION ONLY: dimensional animated characters and environments, appealing materials and expressive poses. No 2D line-art stick figures and no photorealistic live-action photography.",
+  anime: "JAPANESE ANIME ILLUSTRATION ONLY: expressive anime character design, refined line art and illustrated environments. No 3D and no photorealistic live action.",
+  realistic: "PHOTOREALISTIC REAL-WORLD IMAGE ONLY: believable people, environments, anatomy, textures and natural lighting. No cartoon, illustration or 3D-rendered character style.",
+  cinematic: "CINEMATIC PHOTOREALISTIC FILM STILL ONLY: realistic textures, thoughtful camera composition, atmospheric depth and professional film color grading. No cartoon or stickman illustration.",
+  watercolor: "WATERCOLOR PAINTING ONLY: visible paper texture, soft pigment washes, brush edges and layered painted colors. No 3D or photorealistic photography.",
+  comic: "GRAPHIC NOVEL COMIC ILLUSTRATION ONLY: confident ink outlines, expressive poses, controlled halftone texture and panel-like composition. No 3D or photorealism.",
+  mixed: "MIXED VISUAL STYLE: choose the visual medium that best serves each scene, varying between photography, illustration and animation when appropriate."
+};
+function visualStyleRule(style) {
+  return VISUAL_STYLE_RULES[style] || VISUAL_STYLE_RULES.cinematic;
+}
+function fallbackVisual(narration, index, style) {
+  const excerpt = narration.trim().replace(/\\s+/gu, " ").slice(0, 180);
   return {
     title: "Adegan " + (index + 1),
-    visual_description: "Visual pendukung untuk inti narasi: " + excerpt,
-    visual_prompt: "Create a cinematic visual illustrating: " + excerpt + ". Clear central subject, composition safe for vertical 9:16 and horizontal 16:9 crop, natural lighting, detailed environment, no text, no logo, no watermark.",
+    visual_description: visualStyleRule(style) + " Visual pendukung untuk inti narasi: " + excerpt,
+    visual_prompt: visualStyleRule(style) + " Illustrate this scene: " + excerpt + ". Clear central subject, composition safe for vertical 9:16 and horizontal 16:9 crop, no text, no logo, no watermark.",
     on_screen_text: "",
     transition: "cut"
   };
 }
-function parseStoryboard(raw, script, units, duration, requestedCount) {
+function parseStoryboard(raw, script, units, duration, requestedCount, style) {
   let parsed = {};
   try {
     const cleaned = String(raw || "").trim().replace(/^\x60{3}(?:json)?\s*/i, "").replace(/\s*\x60{3}$/i, "");
@@ -83,14 +97,14 @@ function parseStoryboard(raw, script, units, duration, requestedCount) {
   const scenes = groups.map((group, index) => {
     const narration = script.slice(units[group.start].start, units[group.end - 1].end);
     const ai = group.metadata || {};
-    const fallback = fallbackVisual(narration, index);
+    const fallback = fallbackVisual(narration, index, style);
     const words = narration.trim().split(/\s+/u).filter(Boolean).length;
     return {
       scene_number: index + 1,
       title: String(ai.title || fallback.title).slice(0, 90),
       narration,
       visual_description: String(ai.visual_description || fallback.visual_description).slice(0, 500),
-      visual_prompt: String(ai.visual_prompt || fallback.visual_prompt).slice(0, 1800),
+      visual_prompt: (visualStyleRule(style) + " " + String(ai.visual_prompt || fallback.visual_prompt)).slice(0, 1800),
       on_screen_text: String(ai.on_screen_text || "").slice(0, 140),
       estimated_seconds: Math.max(1, Math.round(duration * words / totalWords)),
       transition: String(ai.transition || "cut").slice(0, 40)
@@ -129,6 +143,9 @@ export async function onRequestPost({ request, env }) {
   const audience = typeof body.audience === "string" ? body.audience.trim().slice(0, 160) : "penonton umum";
   const tone = typeof body.tone === "string" ? body.tone.trim().slice(0, 100) : "edukatif dan menarik";
   const language = body.language === "en" ? "English" : "Bahasa Indonesia";
+  const requestedVisualStyle = typeof body.visualStyle === "string" && Object.prototype.hasOwnProperty.call(VISUAL_STYLE_RULES, body.visualStyle)
+    ? body.visualStyle : "cinematic";
+  const selectedVisualRule = visualStyleRule(requestedVisualStyle);
   const countInstruction = requestedCount
     ? "Buat tepat " + Math.min(requestedCount, units.length) + " adegan dengan mengelompokkan kalimat yang berurutan."
     : "Tentukan sendiri jumlah adegan yang paling alami (3 sampai 30, atau sebanyak unit kalimat jika naskah sangat pendek). Jangan memakai interval detik tetap. Ganti adegan ketika fokus, aksi, lokasi, atau gagasan visual berubah; kalimat singkat boleh tetap menjadi adegan singkat dan beberapa kalimat yang satu gagasan boleh digabung.";
@@ -139,7 +156,9 @@ ${countInstruction}
 Durasi audio total sekitar ${duration} detik. Audiens: ${audience}. Nuansa: ${tone}. Bahasa metadata: ${language}.
 Kelompokkan hanya kalimat yang berurutan dan jangan melewatkan, mengulang, atau mengubah urutannya. Setiap adegan harus punya sentence_start dan sentence_end (inklusif), menggunakan nomor kalimat dari input.
 Atur pergantian adegan berdasarkan makna dan perubahan visual, bukan target 5 detik. Berikan arahan visual yang benar-benar menggambarkan kalimat dalam rentang tersebut.
-Gaya visual Mixed2: pilih footage/fotografi realistis, ilustrasi, 3D, atau cinematic sesuai isi segmen.
+GAYA VISUAL WAJIB: ${requestedVisualStyle.toUpperCase()}.
+${selectedVisualRule}
+Patuhi gaya ini pada SETIAP adegan tanpa pengecualian. Jangan mengganti media, gaya, bentuk karakter, atau teknik render berdasarkan isi segmen. Setiap visual_prompt harus secara eksplisit mempertahankan gaya visual wajib tersebut; hanya komposisi, aksi, properti, lokasi, dan ekspresi yang boleh berubah sesuai narasi. Jika gaya stickman dipilih, semua manusia harus berupa stickman 2D sederhana dari garis dan lingkaran, bukan manusia realistis atau karakter 3D.
 Setiap visual_prompt harus mandiri, rinci, aman untuk crop 9:16 dan 16:9 dengan subjek di tengah, tanpa tulisan, logo, atau watermark. on_screen_text maksimal 8 kata.
 Kembalikan HANYA JSON valid:
 {"title":"...","hook":"...","closing":"...","scenes":[{"scene_number":1,"sentence_start":1,"sentence_end":2,"title":"...","visual_description":"...","visual_prompt":"...","on_screen_text":"","transition":"cut"}]}`;
@@ -298,10 +317,10 @@ Kembalikan HANYA JSON valid:
       });
     settled = true;
 
-    const storyboard = parseStoryboard(raw, script, units, duration, requestedCount);
+    const storyboard = parseStoryboard(raw, script, units, duration, requestedCount, requestedVisualStyle);
     return Response.json({
       ...storyboard, durationSeconds: duration, requestedSceneCount: storyboard.scenes.length,
-      segmentation: "semantic", format: "9:16+16:9", resolution: "720p", outputFormats: ["9:16", "16:9"], outputResolutions: ["720x1280", "1280x720"], visualStyle: "mixed2",
+      segmentation: "semantic", format: "9:16+16:9", resolution: "720p", outputFormats: ["9:16", "16:9"], outputResolutions: ["720x1280", "1280x720"], visualStyle: requestedVisualStyle,
       provider: providerName, model: modelUsed,
       creditsCharged: charged.charged, creditsRemaining: charged.remaining
     }, { headers: { "Cache-Control": "no-store" } });

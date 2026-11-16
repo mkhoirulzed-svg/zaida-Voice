@@ -31,7 +31,7 @@ export async function onRequestPost({ request, env }) {
   catch { return jsonError("Format permintaan tidak valid.", 400); }
 
   const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : null;
-  const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 1800) : "";
+  const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 5000) : "";
   const sceneNumber = Math.max(1, Math.min(30, Number(body.sceneNumber) || 1));
   const referenceImages = Array.isArray(body.referenceImages)
     ? body.referenceImages.filter(value => typeof value === "string" && /^data:image\/(?:png|jpe?g|webp);base64,/i.test(value)).slice(0, 4)

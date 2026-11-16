@@ -79,9 +79,9 @@ export async function onRequestGet({ request, env }) {
 
   let assetId = payload.assetId || "";
   if (!assetId) {
-    const downloadUrl = Array.isArray(job.unsigned_urls) && job.unsigned_urls[0]
-      ? job.unsigned_urls[0]
-      : "https://openrouter.ai/api/v1/videos/" + encodeURIComponent(payload.openRouterJobId) + "/content?index=0";
+    // Always download through OpenRouter's authenticated content endpoint.
+    // Do not forward our OpenRouter API key to a provider-supplied unsigned URL.
+    const downloadUrl = "https://openrouter.ai/api/v1/videos/" + encodeURIComponent(payload.openRouterJobId) + "/content?index=0";
     let videoResponse;
     try { videoResponse = await fetch(downloadUrl, { headers: openRouterHeaders(env) }); }
     catch { return jsonError("Video selesai dibuat, tetapi unduhan terputus. Coba periksa kembali.", 502); }

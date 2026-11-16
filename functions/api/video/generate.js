@@ -4,21 +4,22 @@ import {
 } from "../../lib/firebase.js";
 
 const MODEL = "x-ai/grok-imagine-video-1.5-lite";
+const REFERENCE_MODEL = "x-ai/grok-imagine-video";
 const PROVIDER_USD_PER_SECOND = 0.02; // Published starting price at 480p; actual usage.cost takes precedence.
 const DEFAULT_FX = 18000;
 const jsonError = (message, status = 400) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 const validId = value => typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value);
 const markupFor = env => Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
 const fxFor = env => Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || DEFAULT_FX);
-function quote(duration, env) {
+function quote(duration, env, useReferences = false) {
   const seconds = Math.max(1, Math.min(15, Math.round(Number(duration) || 8)));
-  const providerCostUsd = PROVIDER_USD_PER_SECOND * seconds;
+  const providerCostUsd = (useReferences ? 0.05 : PROVIDER_USD_PER_SECOND) * seconds;
   const providerCostIdr = Math.ceil(providerCostUsd * fxFor(env));
   return {
-    model: MODEL, resolution: "480p", duration: seconds, currency: "IDR",
+    model: useReferences ? REFERENCE_MODEL : MODEL, resolution: "480p", duration: seconds, currency: "IDR",
     providerCostUsd, providerCostIdr,
     estimatedCredits: Math.max(1, Math.ceil(providerCostIdr * markupFor(env))),
-    reserveCredits: Math.max(1, Math.ceil(providerCostIdr * markupFor(env) * 1.25)),
+    reserveCredits: Math.max(1, Math.ceil(providerCostIdr * markupFor(env) * (useReferences ? 1.75 : 1.25))),
     usdToIdr: fxFor(env), markup: markupFor(env)
   };
 }
@@ -42,7 +43,7 @@ export async function onRequestGet({ request, env }) {
   const auth = await verifyFirebaseUser(request, env);
   if (auth.error) return auth.error;
   const id = new URL(request.url).searchParams.get("id");
-  if (!id) return Response.json({ quote: quote(8, env), model: MODEL }, { headers: { "Cache-Control": "no-store" } });
+  if (!id) return Response.json({ quote: quote(8, env), referenceQuote: quote(8, env, true), model: MODEL, referenceModel: REFERENCE_MODEL, maxReferenceImages: 2 }, { headers: { "Cache-Control": "no-store" } });
   if (!env.OPENROUTER_API_KEY) return jsonError("OPENROUTER_API_KEY belum dikonfigurasi di Cloudflare.", 503);
   if (!env.VIDEO_MEDIA) return jsonError("R2 VIDEO_MEDIA belum terhubung.", 503);
   let project;
@@ -138,6 +139,20 @@ export async function onRequestPost({ request, env }) {
   const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 2000) : "";
   const duration = Math.max(4, Math.min(15, Math.round(Number(body.duration) || 8)));
   const aspectRatio = ["9:16", "16:9", "1:1"].includes(body.aspectRatio) ? body.aspectRatio : "9:16";
+  const referenceImages = Array.isArray(body.referenceImages) ? body.referenceImages : [];
+  if (referenceImages.length > 2) return jsonError("Maksimal 2 foto referensi untuk versi saat ini.", 400);
+  for (const image of referenceImages) {
+    if (typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image)) return jsonError("Format foto referensi tidak valid. Gunakan JPG, PNG, atau WebP.", 400);
+    if (image.length > 7 * 1024 * 1024) return jsonError("Ukuran setiap foto referensi maksimal 5 MB.", 413);
+  }
+  const useReferences = referenceImages.length > 0;
+  const selectedModel = useReferences ? REFERENCE_MODEL : MODEL;
+  const normalizedPrompt = useReferences
+    ? prompt
+      .replace(/foto\s+referensi\s*1/gi, "<IMAGE_0>")
+      .replace(/foto\s+referensi\s*2/gi, "<IMAGE_1>") +
+      "\n\nReference mapping: <IMAGE_0> is the first uploaded reference image; <IMAGE_1> is the second uploaded reference image. Use each image according to the user's instructions and preserve the referenced visual identity where requested."
+    : prompt;
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);
   if (prompt.length < 12) return jsonError("Prompt minimal 12 karakter.", 400);
   try {
@@ -145,17 +160,17 @@ export async function onRequestPost({ request, env }) {
     if (existing?.payload?.kind === "text-to-video") return Response.json({ ok: true, projectId: requestId, status: existing.payload.status, duplicate: true });
   } catch (error) { if (error.status !== 404) return jsonError(error.message, error.status || 500); }
 
-  const pricing = quote(duration, env);
+  const pricing = quote(duration, env, useReferences);
   let reservation = null;
   let providerRequestStarted = false;
   try {
     await getOrCreateAccount(auth.user, env);
-    reservation = await reserveCredits(auth.user, env, pricing.reserveCredits, "text-to-video:openrouter:" + MODEL, {
-      requestId, provider: "openrouter", model: MODEL
+    reservation = await reserveCredits(auth.user, env, pricing.reserveCredits, "text-to-video:openrouter:" + selectedModel, {
+      requestId, provider: "openrouter", model: selectedModel
     });
     const title = prompt.replace(/\s+/g, " ").slice(0, 72) || "Text-to-Video";
     const initialPayload = {
-      kind: "text-to-video", status: "submitting", prompt, model: MODEL,
+      kind: "text-to-video", status: "submitting", prompt, model: selectedModel, referenceCount: referenceImages.length,
       duration, resolution: "480p", aspectRatio, generateAudio: false,
       requestId, reservationId: reservation.reservationId,
       reservedCredits: reservation.reserved, estimatedCredits: pricing.estimatedCredits,
@@ -168,7 +183,11 @@ export async function onRequestPost({ request, env }) {
     try {
       upstream = await fetch("https://openrouter.ai/api/v1/videos", {
         method: "POST", headers: openRouterHeaders(env, true),
-        body: JSON.stringify({ model: MODEL, prompt, duration, resolution: "480p", aspect_ratio: aspectRatio, generate_audio: false })
+        body: JSON.stringify({
+          model: selectedModel, prompt: normalizedPrompt, duration, resolution: "480p",
+          aspect_ratio: aspectRatio, generate_audio: false,
+          ...(useReferences ? { image_urls: referenceImages } : {})
+        })
       });
     } catch {
       await saveJob(auth.user, env, requestId, title, { ...initialPayload, status: "submission_unknown", error: "Koneksi terputus saat mengirim permintaan. Reservasi kredit ditahan agar tidak terjadi pengiriman ganda." });
@@ -188,7 +207,7 @@ export async function onRequestPost({ request, env }) {
     await saveJob(auth.user, env, requestId, title, pendingPayload);
     return Response.json({
       ok: true, projectId: requestId, status: pendingPayload.status,
-      model: MODEL, duration, estimatedCredits: pricing.estimatedCredits,
+      model: selectedModel, duration, estimatedCredits: pricing.estimatedCredits, referenceCount: referenceImages.length,
       reservedCredits: reservation.reserved, creditsRemaining: reservation.remaining
     }, { status: 202, headers: { "Cache-Control": "no-store" } });
   } catch (error) {

@@ -182,7 +182,8 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
     button.innerHTML = 'Edit Foto <b>→</b>';
   }
 });
-\nonAuthStateChanged(imageAuth, async user => {
+
+onAuthStateChanged(imageAuth, async user => {
   imageCurrentUser = user && user.emailVerified ? user : null;
   const allowed = Boolean(imageCurrentUser);
   const display = allowed ? (user.displayName || user.email || "U").slice(0,1).toUpperCase() : "Z";

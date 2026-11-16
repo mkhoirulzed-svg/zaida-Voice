@@ -81,7 +81,7 @@ function fallbackVisual(narration, index, style) {
   return {
     title: "Adegan " + (index + 1),
     visual_description: visualStyleRule(style) + " Visual pendukung untuk inti narasi: " + excerpt,
-    visual_prompt: visualStyleRule(style) + " Illustrate this scene: " + excerpt + ". Clear central subject, composition safe for vertical 9:16 and horizontal 16:9 crop, no text, no logo, no watermark.",
+    visual_prompt: "Illustrate this exact scene: " + excerpt + ". Clear central subject, composition safe for vertical 9:16 and horizontal 16:9 crop, no text, no logo, no watermark.\\n\\nSTYLE CONSTRAINT: " + visualStyleRule(style),
     on_screen_text: "",
     transition: "cut"
   };
@@ -104,7 +104,7 @@ function parseStoryboard(raw, script, units, duration, requestedCount, style) {
       title: String(ai.title || fallback.title).slice(0, 90),
       narration,
       visual_description: String(ai.visual_description || fallback.visual_description).slice(0, 500),
-      visual_prompt: (visualStyleRule(style) + " " + String(ai.visual_prompt || fallback.visual_prompt)).slice(0, 1800),
+      visual_prompt: (String(ai.visual_prompt || fallback.visual_prompt) + "\\n\\nSTYLE CONSTRAINT: " + visualStyleRule(style)).slice(0, 3000),
       on_screen_text: String(ai.on_screen_text || "").slice(0, 140),
       estimated_seconds: Math.max(1, Math.round(duration * words / totalWords)),
       transition: String(ai.transition || "cut").slice(0, 40)

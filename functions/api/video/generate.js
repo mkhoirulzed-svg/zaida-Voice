@@ -154,10 +154,10 @@ export async function onRequestPost({ request, env }) {
         let mapped = prompt;
         const mapping = [];
         referenceSlots.forEach((slot, index) => {
-          mapped = mapped.replace(new RegExp("foto\\\\s+referensi\\\\s*" + slot + "(?![0-9])", "gi"), "<IMAGE_" + index + ">");
+          mapped = mapped.replace(new RegExp("foto\\s+referensi\\s*" + slot + "(?![0-9])", "gi"), "<IMAGE_" + index + ">");
           mapping.push("<IMAGE_" + index + "> is Foto Referensi " + slot);
         });
-        return mapped + "\\n\\nReference mapping: " + mapping.join("; ") + ". Use each image according to the user's instructions and preserve the referenced visual identity where requested.";
+        return mapped + "\n\nReference mapping: " + mapping.join("; ") + ". Use each image according to the user's instructions and preserve the referenced visual identity where requested.";
       })()
     : prompt;
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);

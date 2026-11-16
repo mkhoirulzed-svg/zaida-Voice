@@ -55,9 +55,14 @@ export async function onRequestPost({ request, env }) {
   if (templateId === "free" && userPrompt.length < 8) return jsonError("Tulis instruksi edit terlebih dahulu.", 400);
 
   const baseInstruction = TEMPLATE_INSTRUCTIONS[templateId] || "Edit the supplied photograph according to the user's instructions. Preserve the original person's identity, face, body proportions and all details not explicitly requested to change.";
+  const sourceWidth = Math.max(1, Math.min(12000, Math.round(Number(body.sourceDimensions?.width) || 1)));
+  const sourceHeight = Math.max(1, Math.min(12000, Math.round(Number(body.sourceDimensions?.height) || 1)));
+  const sourceRatio = sourceWidth / sourceHeight;
+  const ratioOptions = [{ value: "1:1", ratio: 1 }, { value: "4:5", ratio: 0.8 }, { value: "3:4", ratio: 0.75 }, { value: "2:3", ratio: 2/3 }, { value: "9:16", ratio: 9/16 }, { value: "5:4", ratio: 1.25 }, { value: "4:3", ratio: 4/3 }, { value: "3:2", ratio: 1.5 }, { value: "16:9", ratio: 16/9 }];
+  const outputAspectRatio = ratioOptions.reduce((best, item) => Math.abs(Math.log(sourceRatio / item.ratio)) < Math.abs(Math.log(sourceRatio / best.ratio)) ? item : best).value;
   const prompt = [
     baseInstruction,
-    "CRITICAL IMAGE PRESERVATION: keep the exact original image aspect ratio, canvas proportions, crop, framing, camera viewpoint and composition. Do not convert to square, portrait, story or landscape. Do not crop, pad, stretch, zoom, reframe or reposition the image. Return the edited image using the same width-to-height ratio as the input photo.",
+    `CRITICAL SOURCE CANVAS: the uploaded photo is ${sourceWidth}x${sourceHeight} pixels (${sourceWidth >= sourceHeight ? "landscape" : "portrait"} orientation; aspect ratio ${sourceWidth}:${sourceHeight}). Return the edited image in the same orientation and closest matching aspect ratio (${outputAspectRatio}). Never rotate, turn sideways, crop, pad, stretch, zoom, reframe, or reposition the original composition. Do not default to square. Preserve the original camera framing and all edges unless the user explicitly asks for a composition change.`,
     userPrompt ? "USER INSTRUCTIONS: " + userPrompt : "",
     "Important: treat the uploaded image as the source photograph. This is an image-edit task, not text-to-image. Preserve identity and all unrequested details. Do not add text, logos or watermarks. Return one edited image."
   ].filter(Boolean).join("\n\n");
@@ -82,8 +87,8 @@ export async function onRequestPost({ request, env }) {
     });
 
     const imageRequest = useOpenRouter
-      ? { model, prompt, n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
-      : { model, prompt, images: [body.referenceImage], n: 1 };
+      ? { model, prompt, aspect_ratio: outputAspectRatio, n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
+      : { model, prompt, aspect_ratio: outputAspectRatio, images: [body.referenceImage], n: 1 };
 
     let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";
     let modelUsed = model;
@@ -104,7 +109,7 @@ export async function onRequestPost({ request, env }) {
       upstream = await fetch("https://api.kiosapi.id/v1/images/edits", {
         method: "POST",
         headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: modelUsed, prompt, images: [body.referenceImage], n: 1 })
+        body: JSON.stringify({ model: modelUsed, prompt, aspect_ratio: outputAspectRatio, images: [body.referenceImage], n: 1 })
       });
       data = await readJson(upstream);
     }

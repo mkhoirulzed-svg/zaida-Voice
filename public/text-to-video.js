@@ -146,8 +146,10 @@ async function generate() {
   setStatus("Menyiapkan prompt dan foto referensi…");
   const requestId = crypto.randomUUID();
   try {
-    const referenceImages = await Promise.all(referenceFiles.filter(Boolean).map(file => fileToDataUrl(file)));
-    const data = await api("/api/video/generate", { method: "POST", body: JSON.stringify({ requestId, prompt, duration: durationValue(), aspectRatio: $("textVideoAspect").value, referenceImages }) });
+    const selectedReferences = referenceFiles.map((file, slot) => file ? { slot, file } : null).filter(Boolean);
+    const referenceImages = await Promise.all(selectedReferences.map(item => fileToDataUrl(item.file)));
+    const referenceSlots = selectedReferences.map(item => item.slot + 1);
+    const data = await api("/api/video/generate", { method: "POST", body: JSON.stringify({ requestId, prompt, duration: durationValue(), aspectRatio: $("textVideoAspect").value, referenceImages, referenceSlots }) });
     accepted = true;
     activeProjectId = data.projectId;
     $("textVideoGenerate").disabled = true;

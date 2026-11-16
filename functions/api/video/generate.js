@@ -140,7 +140,9 @@ export async function onRequestPost({ request, env }) {
   const duration = Math.max(4, Math.min(15, Math.round(Number(body.duration) || 8)));
   const aspectRatio = ["9:16", "16:9", "1:1"].includes(body.aspectRatio) ? body.aspectRatio : "9:16";
   const referenceImages = Array.isArray(body.referenceImages) ? body.referenceImages : [];
+  const referenceSlots = Array.isArray(body.referenceSlots) ? body.referenceSlots : referenceImages.map((_, index) => index + 1);
   if (referenceImages.length > 2) return jsonError("Maksimal 2 foto referensi untuk versi saat ini.", 400);
+  if (referenceSlots.length !== referenceImages.length || referenceSlots.some(slot => ![1, 2].includes(Number(slot))) || new Set(referenceSlots).size !== referenceSlots.length) return jsonError("Urutan foto referensi tidak valid.", 400);
   for (const image of referenceImages) {
     if (typeof image !== "string" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image)) return jsonError("Format foto referensi tidak valid. Gunakan JPG, PNG, atau WebP.", 400);
     if (image.length > 7 * 1024 * 1024) return jsonError("Ukuran setiap foto referensi maksimal 5 MB.", 413);
@@ -148,10 +150,15 @@ export async function onRequestPost({ request, env }) {
   const useReferences = referenceImages.length > 0;
   const selectedModel = useReferences ? REFERENCE_MODEL : MODEL;
   const normalizedPrompt = useReferences
-    ? prompt
-      .replace(/foto\s+referensi\s*1/gi, "<IMAGE_0>")
-      .replace(/foto\s+referensi\s*2/gi, "<IMAGE_1>") +
-      "\n\nReference mapping: <IMAGE_0> is the first uploaded reference image; <IMAGE_1> is the second uploaded reference image. Use each image according to the user's instructions and preserve the referenced visual identity where requested."
+    ? (() => {
+        let mapped = prompt;
+        const mapping = [];
+        referenceSlots.forEach((slot, index) => {
+          mapped = mapped.replace(new RegExp("foto\\\\s+referensi\\\\s*" + slot + "(?![0-9])", "gi"), "<IMAGE_" + index + ">");
+          mapping.push("<IMAGE_" + index + "> is Foto Referensi " + slot);
+        });
+        return mapped + "\\n\\nReference mapping: " + mapping.join("; ") + ". Use each image according to the user's instructions and preserve the referenced visual identity where requested.";
+      })()
     : prompt;
   if (!requestId) return jsonError("ID permintaan tidak valid.", 400);
   if (prompt.length < 12) return jsonError("Prompt minimal 12 karakter.", 400);

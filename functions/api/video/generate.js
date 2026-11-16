@@ -4,8 +4,9 @@ import {
 } from "../../lib/firebase.js";
 
 const MODEL = "x-ai/grok-imagine-video-1.5-lite";
-const REFERENCE_MODEL = "x-ai/grok-imagine-video";
-const PROVIDER_USD_PER_SECOND = 0.02; // Published starting price at 480p; actual usage.cost takes precedence.
+const REFERENCE_MODEL = "x-ai/grok-imagine-video-1.5";
+const PROVIDER_USD_PER_SECOND = 0.02; // Grok Imagine Video 1.5 Lite, 480p starting rate. Actual usage.cost takes precedence.
+const REFERENCE_PROVIDER_USD_PER_SECOND = 0.08; // Grok Imagine Video 1.5, 480p published rate. Actual usage.cost takes precedence.
 const DEFAULT_FX = 18000;
 const jsonError = (message, status = 400) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 const validId = value => typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value);
@@ -13,7 +14,7 @@ const markupFor = env => Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
 const fxFor = env => Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || DEFAULT_FX);
 function quote(duration, env, useReferences = false) {
   const seconds = Math.max(1, Math.min(15, Math.round(Number(duration) || 8)));
-  const providerCostUsd = (useReferences ? 0.05 : PROVIDER_USD_PER_SECOND) * seconds;
+  const providerCostUsd = (useReferences ? REFERENCE_PROVIDER_USD_PER_SECOND : PROVIDER_USD_PER_SECOND) * seconds;
   const providerCostIdr = Math.ceil(providerCostUsd * fxFor(env));
   return {
     model: useReferences ? REFERENCE_MODEL : MODEL, resolution: "480p", duration: seconds, currency: "IDR",
@@ -105,7 +106,8 @@ export async function onRequestGet({ request, env }) {
 
   const usageCost = Number(job.usage?.cost);
   const providerCostEstimated = !(Number.isFinite(usageCost) && usageCost > 0);
-  const providerCostUsd = providerCostEstimated ? Number(payload.estimatedProviderCostUsd || (PROVIDER_USD_PER_SECOND * Number(payload.duration || 8))) : usageCost;
+  const fallbackRate = payload.model === REFERENCE_MODEL ? REFERENCE_PROVIDER_USD_PER_SECOND : PROVIDER_USD_PER_SECOND;
+  const providerCostUsd = providerCostEstimated ? Number(payload.estimatedProviderCostUsd || (fallbackRate * Number(payload.duration || 8))) : usageCost;
   const providerCostIdr = Math.ceil(providerCostUsd * fxFor(env));
   const calculatedCharge = Math.max(1, Math.ceil(providerCostIdr * markupFor(env)));
   const reserved = Math.max(1, Number(payload.reservedCredits) || 1);
@@ -193,7 +195,7 @@ export async function onRequestPost({ request, env }) {
         body: JSON.stringify({
           model: selectedModel, prompt: normalizedPrompt, duration, resolution: "480p",
           aspect_ratio: aspectRatio, generate_audio: false,
-          ...(useReferences ? { image_urls: referenceImages } : {})
+          ...(useReferences ? { input_references: referenceImages.map(url => ({ type: "image_url", image_url: { url } })) } : {})
         })
       });
     } catch {

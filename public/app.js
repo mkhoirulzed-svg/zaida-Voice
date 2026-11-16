@@ -385,25 +385,35 @@ $("standaloneUseAssistantScript").addEventListener("click",()=>{if(!superChatSta
 function formatRupiah(value){return "Rp"+Math.round(Number(value)||0).toLocaleString("id-ID");}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function formatAdminDate(value){if(!value)return "Waktu tidak tersedia";const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});}
+function formatAdminUsageCard(label, data, note) {
+  return '<div class="admin-metric"><small>'+label+'</small><b>'+Number(data?.creditsCharged||0).toLocaleString("id-ID")+' kredit</b><span>'+formatRupiah(data?.providerCostIdr||0)+' biaya provider · '+Number(data?.requests||0).toLocaleString("id-ID")+' proses'+(note?' · '+note:'')+'</span></div>';
+}
+function renderAdminProviders(periodData) {
+  const items = periodData?.byService || [];
+  $("adminProviders").innerHTML = items.length ? items.map(item => '<div class="panel admin-provider"><div class="admin-provider-head"><b>'+escapeHtml(item.service)+'</b><span>'+Number(item.requests||0).toLocaleString("id-ID")+' proses</span></div><strong>'+formatRupiah(item.providerCostIdr)+'</strong><small>Biaya provider · '+Number(item.creditsCharged||0).toLocaleString("id-ID")+' kredit terpakai'+(item.estimatedCostTransactions?' · '+item.estimatedCostTransactions+' estimasi':'')+'</small></div>').join("") : '<div class="empty-output"><b>Belum ada pemakaian pada periode ini</b></div>';
+}
 async function loadAdminDashboard(){
   if(accountInfo?.role!=="admin"){toast("Akses dashboard admin tidak tersedia.");return;}
   const button=$("refreshAdmin");button.disabled=true;button.textContent="Memuat…";
-  $("adminTransactionList").innerHTML='<div class="admin-loading">Mengambil data transaksi…</div>';
+  $("adminTransactionList").innerHTML='<div class="admin-loading">Mengambil seluruh data transaksi…</div>';
   try{
     const data=await api("/api/admin/usage",{authRequired:true});
-    $("adminMetrics").innerHTML=[
-      ["KREDIT TERPAKAI",Number(data.creditsCharged||0).toLocaleString("id-ID")+" kredit","Dari "+(data.count||0)+" transaksi terakhir"],
-      ["ESTIMASI BIAYA PROVIDER",formatRupiah(data.providerCostIdr),"≈ $"+Number(data.providerCostUsd||0).toFixed(5)+" USD"],
-      ["TRANSAKSI TERCATAT",Number(data.count||0).toLocaleString("id-ID"),"Maksimal 100 data terbaru"]
-    ].map(x=>'<div class="admin-metric"><small>'+x[0]+'</small><b>'+x[1]+'</b><span>'+x[2]+'</span></div>').join("");
-    $("adminProviders").innerHTML=(data.byProvider||[]).map(p=>'<div class="panel admin-provider"><div class="admin-provider-head"><b>'+escapeHtml(p.provider==="elevenlabs"?"Pembuatan suara":p.provider==="openrouter"||p.provider==="kiosapi"?"Gambar AutoClip Studio":p.provider==="deepseek"?"Penyusunan naskah":"Layanan AI")+'</b><span>'+Number(p.requests||0)+' proses</span></div><strong>'+formatRupiah(p.providerCostIdr)+'</strong><small>Biaya provider · '+Number(p.creditsCharged||0).toLocaleString("id-ID")+' kredit terpakai'+(p.estimatedCostTransactions?' · '+p.estimatedCostTransactions+' biaya estimasi':'')+'</small></div>').join("");
+    const periods=data.periods||{};
+    $("adminPeriodSummaries").innerHTML=[
+      formatAdminUsageCard("HARI INI",periods.day),
+      formatAdminUsageCard("MINGGU INI",periods.week),
+      formatAdminUsageCard("BULAN INI",periods.month),
+      formatAdminUsageCard("TOTAL SEPANJANG WAKTU",periods.total,data.complete?"Seluruh ledger":"Data belum lengkap")
+    ].join("");
+    renderAdminProviders(periods[$("adminProviderPeriod")?.value||"month"]);
     const transactions=data.transactions||[];
-    $("adminTransactionList").innerHTML=transactions.length?transactions.map(t=>'<div class="admin-transaction"><div class="admin-tx-main"><b>'+escapeHtml(t.description||"Pemakaian layanan")+'</b><small>'+escapeHtml(formatAdminDate(t.createdAt))+'</small></div><div class="admin-tx-values"><b>'+Number(t.amount||0).toLocaleString("id-ID")+' kredit</b><small>'+formatRupiah(t.providerCostIdr||0)+'</small></div></div>').join(""):'<div class="empty-output"><b>Belum ada transaksi</b><p>Transaksi pemakaian akan muncul di sini.</p></div>';
-    $("adminUpdated").textContent="Diperbarui "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+    $("adminTransactionList").innerHTML=transactions.length?transactions.map(t=>'<div class="admin-transaction"><div class="admin-tx-main"><b>'+escapeHtml(t.description||"Pemakaian layanan")+'</b><small>'+escapeHtml(formatAdminDate(t.createdAt))+' · '+escapeHtml(t.provider||"provider tidak diketahui")+'</small></div><div class="admin-tx-values"><b>'+Number(t.amount||0).toLocaleString("id-ID")+' kredit</b><small>'+formatRupiah(t.providerCostIdr||0)+'</small></div></div>').join(""):'<div class="empty-output"><b>Belum ada transaksi</b><p>Transaksi pemakaian akan muncul di sini.</p></div>';
+    $("adminUpdated").textContent="Diperbarui "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})+" · "+Number(data.scannedTransactions||0).toLocaleString("id-ID")+" transaksi diperiksa"+(data.truncated?" · data historis lebih dari batas pemindaian":"");
   }catch(error){$("adminTransactionList").innerHTML='<div class="admin-error">'+escapeHtml(error.message)+'</div>';toast("Laporan admin gagal dimuat: "+error.message);}
   finally{button.disabled=false;button.textContent="Perbarui data";}
 }
-$("refreshAdmin").addEventListener("click",loadAdminDashboard);
+
+$("refreshAdmin").addEventListener("click",loadAdminDashboard);\n$("adminProviderPeriod")?.addEventListener("change",async()=>{try{const data=await api("/api/admin/usage",{authRequired:true});renderAdminProviders(data.periods?.[$("adminProviderPeriod").value]);}catch(error){toast(error.message);}});
 $("adminCreditForm").addEventListener("submit",async event=>{
   event.preventDefault();
   if(accountInfo?.role!=="admin"){toast("Akses admin diperlukan.");return;}

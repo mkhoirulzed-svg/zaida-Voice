@@ -356,7 +356,7 @@ async function generateSceneImage(scene, button, imageArea) {
   try {
     const result = await api("/api/video/image", {
       method: "POST",
-      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: selectedStyle.prompt + "\\n\\nSTRICT STYLE: Keep the entire image in " + selectedStyle.label + " style. Do not reinterpret or switch styles.\\n\\nScene direction: " + scene.visual_prompt, referenceImages: [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) })
     });
     scene.imageError = "";
     scene.generatedImage = {
@@ -598,6 +598,7 @@ async function generateStoryboard() {
         requestId: requestId(), topic,
         duration: durationSeconds,
         sceneCount,
+        visualStyle: $("videoVisualStyle").value || "cinematic",
         audience: $("videoAudience").value.trim(),
         tone: $("videoTone").value,
         language: "id"
@@ -1334,6 +1335,7 @@ $("visualStyleGrid")?.addEventListener("click", event => {
   $("videoVisualStyle").value = card.dataset.visualStyle;
   updateVisualStyleDescription();
 });
+$("videoVisualStyle")?.addEventListener("change", updateVisualStyleDescription);
 updateVisualStyleDescription();
 $("videoDurationMode")?.addEventListener("change", syncVideoDurationMode);
 syncVideoDurationMode();

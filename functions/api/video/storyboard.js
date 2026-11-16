@@ -63,7 +63,7 @@ function normalizeGroups(rawScenes, units, requestedCount, duration) {
   return groups;
 }
 const VISUAL_STYLE_RULES = {
-  stickman: "Use a clean minimalist stickman illustration style: simple expressive line-drawn human characters, clear poses, uncluttered backgrounds, consistent character design, restrained color palette. Not photorealistic.",
+  stickman: "Minimalist stickman with a consistent character design in every scene: same simple line-drawn body, head and body proportions, facial style, and line weight. Only pose, gesture, and expression may change. Let the background, setting, props, colors, and composition vary freely to match the scene. Not photorealistic.",
   "2d": "POLISHED 2D FLAT VECTOR ILLUSTRATION ONLY: flat shapes, crisp outlines, simple readable composition and consistent illustrated characters. No 3D and no photorealism.",
   "3d": "STYLIZED 3D ANIMATION ONLY: dimensional animated characters and environments, appealing materials and expressive poses. No 2D line-art stick figures and no photorealistic live-action photography.",
   anime: "JAPANESE ANIME ILLUSTRATION ONLY: expressive anime character design, refined line art and illustrated environments. No 3D and no photorealistic live action.",

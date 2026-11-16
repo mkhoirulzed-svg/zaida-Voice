@@ -209,7 +209,7 @@ async function loadVideoProjectHistory(){
   box.innerHTML='<div class="empty-output">Memuat proyek…</div>';
   try{
     const result=await api("/api/video/projects",{authRequired:true});
-    const projects=result.projects||[];
+    const projects=(result.projects||[]).filter(project=>project.payload?.kind!=="text-to-video");
     box.replaceChildren();
     if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada proyek video</b><small>Proyek yang disimpan dari AutoClip Studio akan muncul di sini.</small></div>';return;}
     projects.forEach(project=>{
@@ -226,6 +226,29 @@ async function loadVideoProjectHistory(){
     });
   }catch(error){box.innerHTML='<div class="empty-output"><b>Riwayat belum dapat dimuat</b><small></small></div>';box.querySelector("small").textContent=error.message;}
 }
+
+
+async function loadTextVideoHistory(){
+  const box=$("textVideoHistory");if(!box)return;
+  if(!currentUser){box.innerHTML='<div class="empty-output"><b>Masuk untuk melihat riwayat</b></div>';return;}
+  try{
+    const result=await api("/api/video/projects",{authRequired:true});
+    const projects=(result.projects||[]).filter(project=>project.payload?.kind==="text-to-video");
+    box.replaceChildren();
+    if(!projects.length){box.innerHTML='<div class="empty-output"><b>Belum ada video</b><small>Hasil Text-to-Video akan tersimpan di sini.</small></div>';return;}
+    projects.forEach(project=>{
+      const row=document.createElement("div");row.className="text-video-history-row";
+      const icon=document.createElement("span");icon.className="text-video-history-icon";icon.textContent="▶";
+      const info=document.createElement("div");info.className="text-video-history-info";
+      const title=document.createElement("b");title.textContent=project.title||"Text-to-Video";
+      const small=document.createElement("small");small.textContent=(project.payload?.status||"pending")+" · "+(project.payload?.duration||0)+" detik · "+(project.updatedAt?new Date(project.updatedAt).toLocaleString("id-ID"):"");
+      info.append(title,small);row.append(icon,info);
+      if(project.payload?.assetId){const media=document.createElement("button");media.type="button";media.textContent="Media Library";media.addEventListener("click",()=>showView("media"));row.append(media);}
+      const remove=document.createElement("button");remove.type="button";remove.textContent="Hapus";remove.addEventListener("click",async()=>{if(!confirm("Hapus riwayat Text-to-Video ini? File di Media Library tidak ikut dihapus."))return;remove.disabled=true;try{await api("/api/video/projects/"+encodeURIComponent(project.id),{method:"DELETE",authRequired:true});await loadTextVideoHistory();}catch(error){remove.disabled=false;toast(error.message);}});row.append(remove);box.append(row);
+    });
+  }catch(error){box.innerHTML='<div class="empty-output"></div>';box.firstElementChild.textContent=error.message;}
+}
+$("textVideoRefreshHistory")?.addEventListener("click",loadTextVideoHistory);
 
 const scriptAssistantState={messages:[],draft:"",busy:false};
 const superChatState={messages:[],draft:"",busy:false};
@@ -611,15 +634,15 @@ function showView(requestedView){
     if(!state.audioUrl){toast("Buat suara sebelum menyiapkan subtitle.");view="studio";setStep(2);}
     else{view="studio";setStep(3);$("includeSubtitle").checked=true;$("subtitlePreviewToggle").hidden=false;$("subtitleOptions").hidden=false;$("subtitlePreviewToggle").textContent="Tutup Preview";$("subtitlePreviewToggle").setAttribute("aria-expanded","true");renderSubtitles();}
   }
-  const pageId={studio:"studioPage",voices:"voicesPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage",video:"videoStudioPage",media:"mediaPage"}[view]||"studioPage";
+  const pageId={studio:"studioPage",voices:"voicesPage",history:"historyPage",admin:"adminPage",assistant:"assistantPage",persona:"personaPage",video:"videoStudioPage",textToVideo:"textToVideoPage",media:"mediaPage"}[view]||"studioPage";
   document.body.classList.toggle("in-studio",view==="studio");
   document.body.classList.toggle("video-studio-page",view==="video");
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   $(pageId).classList.add("active");
   document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===requestedView));
-  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",media:"Media Library"})[requestedView]||"Voice Studio";
+  $("breadcrumbPage").textContent=({studio:"Voice Studio",voices:"Voices",history:"Riwayat",subtitle:"Subtitle",assistant:"AI Super Chat",persona:"Persona Saya",admin:"Dashboard admin",video:"AutoClip Studio",textToVideo:"Text-to-Video",media:"Media Library"})[requestedView]||"Voice Studio";
   if(view==="admin")loadAdminDashboard();
-  if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();}
+  if(view==="history"){loadVideoProjectHistory();loadVoiceProjectHistory();loadTextVideoHistory();}
   if(view==="media")loadMediaLibrary();
   if(view==="assistant")renderStandaloneConversation();
   if(view==="video")window.dispatchEvent(new Event("zaida:video-page-open"));

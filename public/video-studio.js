@@ -355,7 +355,7 @@ async function generateSceneImage(scene, button, imageArea) {
   setStatus("Sedang membuat gambar adegan " + scene.scene_number + "… Mohon tunggu.");
   try {
     const sceneContext = [scene.narration, scene.visual_description, scene.visual_prompt].filter(Boolean).join(" ");
-    const useBrandReferences = /\\b(product|produk|brand|merek|logo|kemasan|packaging|promosi|promosikan|alat kesehatan)\\b/i.test(sceneContext);
+    const useBrandReferences = /\b(product|produk|brand|merek|logo|kemasan|packaging|promosi|promosikan|alat kesehatan)\b/i.test(sceneContext);
     const scenePrompt = [
       "SCENE ACTION AND SUBJECT — HIGHEST PRIORITY: " + (scene.narration || "Follow the visual direction below."),
       "VISUAL DIRECTION: " + (scene.visual_description || ""),
@@ -363,7 +363,7 @@ async function generateSceneImage(scene, button, imageArea) {
       "VISUAL STYLE: " + selectedStyle.prompt,
       "STYLE CONSISTENCY: Keep the entire image in " + selectedStyle.label + " style. Do not reinterpret or switch styles.",
       "IMPORTANT: Depict the exact action and subject described in the narration. Do not substitute a different activity, prop, medical procedure, or scene. The scene description takes priority over decorative details."
-    ].join("\\n\\n");
+    ].join("\n\n");
     const result = await api("/api/video/image", {
       method: "POST",
       body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: scenePrompt, referenceImages: useBrandReferences ? [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) : [] })
@@ -972,8 +972,8 @@ async function generateVideoNarration() {
   }
 }
 function parsePreviewSrt(srt) {
-  return String(srt || "").replace(/\\r/g, "").trim().split(/\\n\\s*\\n/).map(block => {
-    const lines=block.split("\\n"), time=lines.find(line=>line.includes("-->"));
+  return String(srt || "").replace(/\\r/g, "").trim().split(/\n\\s*\n/).map(block => {
+    const lines=block.split("\n"), time=lines.find(line=>line.includes("-->"));
     if(!time)return null;
     const m=time.match(/(\\d{2}):(\\d{2}):(\\d{2})[,.](\\d{3})\\s*-->\\s*(\\d{2}):(\\d{2}):(\\d{2})[,.](\\d{3})/);
     if(!m)return null;
@@ -1101,7 +1101,7 @@ async function startDualRender(isExport = false) {
       const parts = [];
       if (error.name) parts.push(String(error.name));
       if (error.message) parts.push(String(error.message));
-      if (error.stack) parts.push(String(error.stack).split("\\n").slice(0, 3).join(" | "));
+      if (error.stack) parts.push(String(error.stack).split("\n").slice(0, 3).join(" | "));
       detail = parts.join(" · ");
     }
     progressText.textContent = "Render gagal: " + (detail || "Terjadi kesalahan.");

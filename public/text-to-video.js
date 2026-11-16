@@ -13,6 +13,9 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const $ = id => document.getElementById(id);
 let currentUser = null, quoteData = null, activeProjectId = null, pollTimer = null, previewUrl = null;
+const referenceFiles = [null, null];
+const referencePreviewUrls = [null, null];
+const MAX_REFERENCE_BYTES = 5 * 1024 * 1024;
 
 async function api(path, options = {}) {
   if (!auth.currentUser) throw new Error("Silakan masuk ke akun ZAIDA Voice terlebih dahulu.");
@@ -31,7 +34,9 @@ function durationValue() { return Number($("textVideoDuration").value) || 8; }
 function updateEstimate() {
   if (!quoteData) return;
   const duration = durationValue();
-  const estimate = Math.ceil(duration * Number(quoteData.providerCostIdr / Math.max(1, quoteData.duration)) * Number(quoteData.markup || 1.5));
+  const hasReferences = referenceFiles.some(Boolean);
+  const selectedQuote = hasReferences ? (quoteData.referenceQuote || quoteData) : quoteData;
+  const estimate = Math.ceil(duration * Number(selectedQuote.providerCostIdr / Math.max(1, selectedQuote.duration)) * Number(selectedQuote.markup || 1.5));
   $("textVideoEstimateCredits").textContent = estimate.toLocaleString("id-ID") + " kredit";
   // Rincian modal provider tidak ditampilkan pada UI pengguna.
 }
@@ -138,10 +143,11 @@ async function generate() {
   const prompt = $("textVideoPrompt").value.trim();
   if (prompt.length < 12) { setStatus("Tulis prompt minimal 12 karakter.", true); $("textVideoPrompt").focus(); return; }
   const button = $("textVideoGenerate"); button.disabled = true; button.textContent = "Mengirim ke AI…";
-  setStatus("Mengirim prompt ke OpenRouter…");
+  setStatus("Menyiapkan prompt dan foto referensi…");
   const requestId = crypto.randomUUID();
   try {
-    const data = await api("/api/video/generate", { method: "POST", body: JSON.stringify({ requestId, prompt, duration: durationValue(), aspectRatio: $("textVideoAspect").value }) });
+    const referenceImages = await Promise.all(referenceFiles.filter(Boolean).map(file => fileToDataUrl(file)));
+    const data = await api("/api/video/generate", { method: "POST", body: JSON.stringify({ requestId, prompt, duration: durationValue(), aspectRatio: $("textVideoAspect").value, referenceImages }) });
     accepted = true;
     activeProjectId = data.projectId;
     $("textVideoGenerate").disabled = true;
@@ -155,6 +161,41 @@ async function generate() {
     await refreshAccount();
   } finally { if (!accepted) { button.disabled = false; button.textContent = "✦ Generate Video"; } }
 }
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Foto referensi gagal dibaca."));
+    reader.readAsDataURL(file);
+  });
+}
+function bindReferenceInput(index) {
+  const input = $("textVideoReference" + (index + 1));
+  input?.addEventListener("change", () => {
+    const file = input.files?.[0] || null;
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setStatus("Foto referensi harus JPG, PNG, atau WebP.", true); input.value = ""; return;
+    }
+    if (file.size > MAX_REFERENCE_BYTES) {
+      setStatus("Ukuran setiap foto maksimal 5 MB.", true); input.value = ""; return;
+    }
+    referenceFiles[index] = file;
+    if (referencePreviewUrls[index]) URL.revokeObjectURL(referencePreviewUrls[index]);
+    referencePreviewUrls[index] = URL.createObjectURL(file);
+    const preview = $("textVideoReferencePreview" + (index + 1));
+    const image = document.createElement("img");
+    image.src = referencePreviewUrls[index];
+    image.alt = "Pratinjau Foto Referensi " + (index + 1);
+    preview.replaceChildren(image);
+    $("textVideoReferenceName" + (index + 1)).textContent = file.name;
+    updateEstimate();
+    setStatus("Foto Referensi " + (index + 1) + " siap digunakan. Sebut nomor fotonya di prompt.");
+  });
+}
+bindReferenceInput(0);
+bindReferenceInput(1);
 $("textVideoGenerate").addEventListener("click", generate);
 $("textVideoDuration").addEventListener("change", updateEstimate);
 onAuthStateChanged(auth, async user => {

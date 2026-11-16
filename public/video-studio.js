@@ -355,7 +355,8 @@ async function generateSceneImage(scene, button, imageArea) {
   setStatus("Sedang membuat gambar adegan " + scene.scene_number + "… Mohon tunggu.");
   try {
     const sceneContext = [scene.narration, scene.visual_description, scene.visual_prompt].filter(Boolean).join(" ");
-    const useBrandReferences = /\b(product|produk|brand|merek|logo|kemasan|packaging|promosi|promosikan|alat kesehatan)\b/i.test(sceneContext);
+    const useProductReference = /\b(product|produk|kemasan|packaging|promosi|promosikan)\b/i.test(sceneContext);
+    const useLogoReference = /\b(brand|merek|logo)\b/i.test(sceneContext);
     const scenePrompt = [
       "SCENE ACTION AND SUBJECT — HIGHEST PRIORITY: " + (scene.narration || "Follow the visual direction below."),
       "VISUAL DIRECTION: " + (scene.visual_description || ""),
@@ -366,7 +367,7 @@ async function generateSceneImage(scene, button, imageArea) {
     ].join("\n\n");
     const result = await api("/api/video/image", {
       method: "POST",
-      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: scenePrompt, referenceImages: useBrandReferences ? [videoBrandAssets.product?.dataUrl, videoBrandAssets.logo?.dataUrl].filter(Boolean) : [] })
+      body: JSON.stringify({ requestId: requestId(), sceneNumber: scene.scene_number, format: document.querySelector('input[name="videoOutputFormat"]:checked')?.value || "9:16", prompt: scenePrompt, referenceImages: [useProductReference ? videoBrandAssets.product?.dataUrl : null, useLogoReference ? videoBrandAssets.logo?.dataUrl : null].filter(Boolean) })
     });
     scene.imageError = "";
     scene.generatedImage = {

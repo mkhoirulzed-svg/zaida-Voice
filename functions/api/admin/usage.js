@@ -15,29 +15,43 @@ export async function onRequestGet({ request, env }) {
     const account = await getOrCreateAccount(auth.user, env);
     if (account.role !== "admin") return Response.json({ error: "Akses admin diperlukan." }, { status: 403 });
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        assertion: await createServiceAssertion(env)
-      })
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: await createServiceAssertion(env) })
     });
     const tokenData = await tokenResponse.json();
     if (!tokenResponse.ok || !tokenData.access_token) throw new Error("Tidak dapat mengakses laporan Firestore.");
     const url = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(env.FIREBASE_PROJECT_ID) + "/databases/(default)/documents:runQuery";
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + tokenData.access_token, "Content-Type": "application/json" },
-      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "credit_ledger" }], orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }], limit: 100 } })
-    });
-    const rows = await response.json();
-    if (!response.ok) throw new Error(rows.error?.message || "Gagal membaca transaksi.");
-    const transactions = (Array.isArray(rows) ? rows : []).filter(x => x.document).map(x => {
-      const f = x.document.fields || {};
+    const all = [];
+    let cursor = null, pages = 0;
+    const pageSize = 1000, maxPages = 20;
+    do {
+      const structuredQuery = {
+        from: [{ collectionId: "credit_ledger" }],
+        orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }, { field: { fieldPath: "__name__" }, direction: "DESCENDING" }],
+        limit: pageSize,
+        ...(cursor ? { startAt: { values: [{ stringValue: cursor.createdAt }, { referenceValue: cursor.name }], before: false } } : {})
+      };
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + tokenData.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ structuredQuery })
+      });
+      const rows = await response.json();
+      if (!response.ok) throw new Error(rows.error?.message || "Gagal membaca transaksi Firestore.");
+      const docs = (Array.isArray(rows) ? rows : []).filter(x => x.document).map(x => x.document);
+      all.push(...docs);
+      pages++;
+      const last = docs[docs.length - 1];
+      cursor = docs.length === pageSize && last?.fields?.createdAt?.stringValue
+        ? { createdAt: last.fields.createdAt.stringValue, name: last.name }
+        : null;
+    } while (cursor && pages < maxPages);
+
+    const transactions = all.map(doc => {
+      const f = doc.fields || {};
       return {
-        id: x.document.name.split("/").pop(),
-        uid: read(f.uid), type: read(f.type), amount: read(f.amount),
-        description: read(f.description), provider: read(f.provider),
+        id: doc.name.split("/").pop(), uid: read(f.uid), email: read(f.email), type: read(f.type),
+        amount: read(f.amount), description: read(f.description), provider: read(f.provider),
         model: read(f.model), providerCostIdr: read(f.providerCostIdr) || 0,
         providerCostUsd: Number(read(f.providerCostUsd) || 0),
         providerCostEstimated: read(f.providerCostEstimated) === true,
@@ -46,18 +60,58 @@ export async function onRequestGet({ request, env }) {
       };
     });
     const usage = transactions.filter(x => x.type === "usage");
-    return Response.json({
-      count: transactions.length,
-      creditsCharged: usage.reduce((sum, x) => sum + Math.abs(Number(x.amount) || 0), 0),
-      providerCostIdr: usage.reduce((sum, x) => sum + (Number(x.providerCostIdr) || 0), 0),
-      providerCostUsd: usage.reduce((sum, x) => sum + (Number(x.providerCostUsd) || 0), 0),
-      estimatedCostTransactions: usage.filter(x => x.providerCostEstimated).length,
-      byProvider: ["deepseek", "elevenlabs", "openrouter", "kiosapi"].map(provider => {
-        const items = usage.filter(x => x.provider === provider);
-        return { provider, requests: items.length, creditsCharged: items.reduce((sum,x)=>sum+Math.abs(Number(x.amount)||0),0), providerCostIdr: items.reduce((sum,x)=>sum+(Number(x.providerCostIdr)||0),0), providerCostUsd: items.reduce((sum,x)=>sum+(Number(x.providerCostUsd)||0),0), estimatedCostTransactions: items.filter(x=>x.providerCostEstimated).length };
-      }),
-      transactions
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+    const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const localMidnight = (y, m, d) => new Date(Date.UTC(y, m - 1, d) - 7 * 60 * 60 * 1000);
+    const todayStart = localMidnight(Number(p.year), Number(p.month), Number(p.day));
+    const dayOfWeek = (todayStart.getUTCDay() + 6) % 7;
+    const weekStart = new Date(todayStart.getTime() - dayOfWeek * 86400000);
+    const monthStart = localMidnight(Number(p.year), Number(p.month), 1);
+    const toIso = d => d.toISOString();
+    const periods = {
+      day: { label: "Hari ini", start: toIso(todayStart), end: toIso(new Date(todayStart.getTime() + 86400000)) },
+      week: { label: "Minggu ini", start: toIso(weekStart), end: toIso(new Date(todayStart.getTime() + 86400000)) },
+      month: { label: "Bulan ini", start: toIso(monthStart), end: toIso(new Date(todayStart.getTime() + 86400000)) },
+      total: { label: "Total sepanjang waktu", start: null, end: null }
+    };
+    const serviceOf = x => {
+      const d = String(x.description || "").toLowerCase();
+      if (d.startsWith("image-studio-edit")) return "Image Studio";
+      if (x.provider === "elevenlabs") return "Voice Studio";
+      if (/autoclip|video-image|video image|image-generation/.test(d)) return "AutoClip Studio";
+      if (x.provider === "openrouter" || x.provider === "kiosapi") return "Gambar AutoClip Studio (transaksi lama)";
+      if (x.provider === "deepseek") return "AI Super Chat / Penyusunan naskah";
+      return "Layanan AI lainnya";
+    };
+    const summarize = items => ({
+      requests: items.length,
+      creditsCharged: items.reduce((sum, x) => sum + Math.abs(Number(x.amount) || 0), 0),
+      providerCostIdr: items.reduce((sum, x) => sum + (Number(x.providerCostIdr) || 0), 0),
+      providerCostUsd: items.reduce((sum, x) => sum + (Number(x.providerCostUsd) || 0), 0),
+      estimatedCostTransactions: items.filter(x => x.providerCostEstimated).length
     });
+    const summaries = {};
+    for (const [key, period] of Object.entries(periods)) {
+      const items = usage.filter(x => {
+        const time = Date.parse(x.createdAt || "");
+        return Number.isFinite(time) && (!period.start || time >= Date.parse(period.start)) && (!period.end || time < Date.parse(period.end));
+      });
+      const byProvider = [...new Set(items.map(x => x.provider || "unknown"))].map(provider => ({ provider, ...summarize(items.filter(x => (x.provider || "unknown") === provider)) }));
+      const byService = [...new Set(items.map(serviceOf))].map(service => ({ service, ...summarize(items.filter(x => serviceOf(x) === service)) }));
+      summaries[key] = { ...summarize(items), byProvider, byService };
+    }
+    const complete = pages < maxPages || !cursor;
+    return Response.json({
+      count: transactions.length, scannedTransactions: transactions.length, complete,
+      truncated: !complete, periodTimezone: "Asia/Jakarta", periods: summaries,
+      creditsCharged: summaries.total.creditsCharged,
+      providerCostIdr: summaries.total.providerCostIdr,
+      providerCostUsd: summaries.total.providerCostUsd,
+      estimatedCostTransactions: summaries.total.estimatedCostTransactions,
+      byProvider: summaries.total.byProvider,
+      transactions: transactions.slice(0, 100)
+    }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return Response.json({ error: error.message || "Laporan penggunaan tidak tersedia." }, { status: 503 });
   }

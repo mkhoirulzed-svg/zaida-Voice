@@ -11,7 +11,7 @@ const studios = {
 };
 let activeStudio=null,activeTemplate=null,referenceUrl="",imageEditQuote=null;
 function openCatalog(id){const studio=studios[id];if(!studio)return;activeStudio=id;$("imageStudioGrid").hidden=true;document.querySelector(".image-studio-lower-links").hidden=true;$("imageStudioCatalog").hidden=false;$("imageStudioWorkspace").hidden=true;$("imageStudioCatalogTitle").textContent=studio.title;$("imageStudioCatalogDescription").textContent=studio.description;$("imageStudioCatalogLabel").textContent=studio.templates.length+" template";$("imageTemplateGrid").innerHTML=studio.templates.map(t=>'<button class="image-template-card" type="button" data-image-template="'+t[0]+'"><span class="image-template-art">'+t[3]+'</span><strong>'+t[1]+'</strong><small>'+t[2]+'</small></button>').join("");$("imageStudioCatalog").scrollIntoView({behavior:"smooth",block:"start"});}
-function openTemplate(id){const studio=studios[activeStudio],template=studio?.templates.find(t=>t[0]===id);if(!template)return;activeTemplate=template;const billingNotice=$("imageEditBillingNotice"),consentWrap=$("imageEditConsentWrap");if(billingNotice)billingNotice.hidden=activeStudio!=="edit";if(consentWrap)consentWrap.hidden=false;if($("imageEditConsent"))$("imageEditConsent").checked=false;if(activeStudio==="edit")loadImageEditQuote();const ratioControl=$("imageOutputRatioControl");if(ratioControl)ratioControl.hidden=activeStudio==="edit";$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=false;$("imageTemplateSelectedLabel").textContent=template[1];$("imageWorkspaceTitle").textContent=template[1];$("imageWorkspaceDescription").textContent=template[2];$("imageReferenceRequired").textContent=template[4]?"Diperlukan":"Opsional";$("imageReferenceInput").required=Boolean(template[4]);$("imageReferenceInput").value="";$("imageReferencePreview").hidden=true;$("imageReferencePreview").replaceChildren();if(referenceUrl)URL.revokeObjectURL(referenceUrl);referenceUrl="";renderTemplateFields();$("imageStudioStatus").textContent="Template siap. Unggah foto dan jalankan proses edit.";$("imageStudioResult").hidden=true;$("imageStudioEmptyResult").hidden=false;$("imageStudioWorkspace").scrollIntoView({behavior:"smooth",block:"start"});}
+function openTemplate(id){const studio=studios[activeStudio],template=studio?.templates.find(t=>t[0]===id);if(!template)return;activeTemplate=template;const billingNotice=$("imageEditBillingNotice"),consentWrap=$("imageEditConsentWrap");if(billingNotice)billingNotice.hidden=activeStudio!=="edit";if(consentWrap)consentWrap.hidden=false;if($("imageEditConsent"))$("imageEditConsent").checked=false;loadImageEditQuote(activeStudio==="edit"?"edit":"generate");const ratioControl=$("imageOutputRatioControl");if(ratioControl)ratioControl.hidden=activeStudio==="edit";$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=false;$("imageTemplateSelectedLabel").textContent=template[1];$("imageWorkspaceTitle").textContent=template[1];$("imageWorkspaceDescription").textContent=template[2];$("imageReferenceRequired").textContent=template[4]?"Diperlukan":"Opsional";$("imageReferenceInput").required=Boolean(template[4]);$("imageReferenceInput").value="";$("imageReferencePreview").hidden=true;$("imageReferencePreview").replaceChildren();if(referenceUrl)URL.revokeObjectURL(referenceUrl);referenceUrl="";renderTemplateFields();$("imageStudioStatus").textContent="Template siap. Unggah foto dan jalankan proses edit.";$("imageStudioResult").hidden=true;$("imageStudioEmptyResult").hidden=false;$("imageStudioWorkspace").scrollIntoView({behavior:"smooth",block:"start"});}
 function renderTemplateFields(){const studio=activeStudio;let fields=[];if(studio==="product")fields=[["Nama produk","text","Contoh: Pulse Oximeter"],["Informasi produk","textarea","Fitur atau informasi yang harus terlihat"],["Suasana foto","select",["Otomatis","Minimalis","Klinis","Premium","Lifestyle"]]];else if(studio==="poster")fields=[["Judul utama","text","Tuliskan judul poster"],["Teks pendukung","textarea","Informasi yang ingin ditampilkan"],["Warna dominan","select",["Otomatis","Ungu","Biru","Hijau","Hangat","Monokrom"]]];else if(studio==="education")fields=[["Topik edukasi","text","Contoh: Teknik injeksi insulin"],["Poin penting","textarea","Masukkan informasi yang harus dijelaskan"],["Gaya ilustrasi","select",["Ilustrasi medis","Flat illustration","3D edukasi","Infografis"]]];else if(studio==="free")fields=[["Ide gambar","textarea","Jelaskan gambar yang ingin dibuat"]];else if(studio==="edit")fields=activeTemplate?.[0]==="free"?[["Instruksi edit bebas","textarea","Contoh: ganti pakaian menjadi jas hitam, pertahankan wajah dan ekspresi asli"]]:[["Instruksi tambahan (opsional)","textarea","Tambahkan detail perubahan yang kamu inginkan"]];else if(studio==="portrait")fields=[["Gaya potret","select",["Profesional","Formal","Editorial","Outdoor","Kreatif"]]];else if(studio==="character")fields=[["Deskripsi karakter","textarea","Ceritakan karakter yang ingin dibuat"],["Gaya visual","select",["3D","Kartun","Anime","Ilustrasi","Minimalis"]]];else if(studio==="brand")fields=[["Nama brand","text","Nama usaha atau proyek"],["Bidang usaha","text","Contoh: kesehatan, kuliner, teknologi"],["Karakter brand","select",["Modern","Minimalis","Premium","Ramah","Playful"]]];$("imageTemplateFields").innerHTML=fields.map((f,i)=>{const id="imageField"+i;if(f[1]==="select")return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><select id="'+id+'">'+f[2].map(v=>'<option>'+v+'</option>').join("")+'</select></div>';if(f[1]==="textarea")return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><textarea id="'+id+'" rows="3" placeholder="'+f[2]+'"></textarea></div>';return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><input id="'+id+'" type="text" placeholder="'+f[2]+'"></div>';}).join("");}
 function backToHome(){$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=true;$("imageStudioGrid").hidden=false;document.querySelector(".image-studio-lower-links").hidden=false;activeStudio=null;activeTemplate=null;$("imageStudioPage").scrollIntoView({behavior:"smooth",block:"start"});$("imageStudioResult").hidden=true;$("imageStudioEmptyResult").hidden=false;}
 $("imageStudioGrid")?.addEventListener("click",e=>{const b=e.target.closest("[data-image-studio]");if(b)openCatalog(b.dataset.imageStudio);});
@@ -108,7 +108,7 @@ $("imageAuthResend")?.addEventListener("click", async () => {
   } catch (error) { $("imageAuthMessage").textContent = error.message; }
 });
 
-async function loadImageEditQuote() {
+async function loadImageEditQuote(mode = "edit") {
   imageEditQuote = null;
   const textNode = $("imageEditQuoteText");
   if (textNode) textNode.textContent = "Memuat estimasi kredit…";
@@ -119,7 +119,7 @@ async function loadImageEditQuote() {
   }
   try {
     const token = await user.getIdToken();
-    const response = await fetch("/api/image-studio/quote", { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
+    const response = await fetch("/api/image-studio/quote?mode=" + encodeURIComponent(mode), { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Estimasi biaya tidak tersedia.");
     imageEditQuote = data;
@@ -166,40 +166,77 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
     return;
   }
   const file = $("imageReferenceInput").files?.[0];
-  if (!file) { $("imageStudioStatus").textContent = "Silakan unggah foto terlebih dahulu."; $("imageReferenceInput").focus(); return; }
-  const extraPrompt = $("imageField0")?.value?.trim() || "";
-  if (activeTemplate?.[0] === "free" && extraPrompt.length < 8) {
-    $("imageStudioStatus").textContent = "Tuliskan instruksi edit bebas minimal 8 karakter.";
-    $("imageField0")?.focus();
+  const isEdit = activeStudio === "edit";
+  const requiresReference = Boolean(activeTemplate?.[4]);
+  if ((isEdit || requiresReference) && !file) {
+    $("imageStudioStatus").textContent = "Silakan unggah foto referensi terlebih dahulu.";
+    $("imageReferenceInput").focus();
     return;
   }
-  if (!$("imageEditConsent")?.checked) { $("imageStudioStatus").textContent = "Centang persetujuan penggunaan foto sebelum melanjutkan."; $("imageEditConsent")?.focus(); return; }
-  const quote = imageEditQuote || await loadImageEditQuote();
-  if (!quote) { $("imageStudioStatus").textContent = "Estimasi kredit belum tersedia. Coba lagi sebelum mengedit."; return; }
-  if (Number(quote.availableCredits) < Number(quote.maxTemporaryReserve)) { $("imageStudioStatus").textContent = "Saldo belum cukup untuk reservasi maksimal " + Number(quote.maxTemporaryReserve).toLocaleString("id-ID") + " kredit."; return; }
+  if (file && (!["image/png","image/jpeg","image/webp"].includes(file.type) || file.size > 12 * 1024 * 1024)) {
+    $("imageStudioStatus").textContent = "Gunakan foto PNG, JPEG, atau WebP maksimal 12 MB.";
+    $("imageReferenceInput").focus();
+    return;
+  }
+  if (!$("imageEditConsent")?.checked) {
+    $("imageStudioStatus").textContent = "Centang persetujuan penggunaan foto sebelum melanjutkan.";
+    $("imageEditConsent")?.focus();
+    return;
+  }
+  const quote = imageEditQuote || await loadImageEditQuote(isEdit ? "edit" : "generate");
+  if (!quote) { $("imageStudioStatus").textContent = "Estimasi kredit belum tersedia. Coba lagi sebelum memproses."; return; }
+  if (Number(quote.availableCredits) < Number(quote.maxTemporaryReserve)) {
+    $("imageStudioStatus").textContent = "Saldo belum cukup untuk reservasi maksimal " + Number(quote.maxTemporaryReserve).toLocaleString("id-ID") + " kredit.";
+    return;
+  }
   const button = $("imageStudioGenerate");
   button.disabled = true;
-  button.textContent = "Menyiapkan foto…";
-  $("imageStudioStatus").textContent = "Mengompres foto dan memeriksa sesi akun…";
+  button.textContent = isEdit ? "Menyiapkan foto…" : "Menyiapkan desain…";
+  $("imageStudioStatus").textContent = "Memeriksa sesi akun dan menyiapkan gambar…";
   try {
-    const sourceDimensions = await getImageDimensions(file);
-    const referenceImage = await imageFileToDataUrl(file);
+    const referenceImage = file ? await imageFileToDataUrl(file) : null;
     const token = await imageAuth.currentUser.getIdToken(true);
     const requestId = crypto.randomUUID();
-    button.textContent = "Sedang mengedit…";
-    $("imageStudioStatus").textContent = "Memeriksa kredit dan mengirim foto ke mesin AI. Jangan tutup halaman.";
-    const response = await fetch("/api/image-studio/edit", {
+    let endpoint, payload;
+    if (isEdit) {
+      endpoint = "/api/image-studio/edit";
+      const sourceDimensions = await getImageDimensions(file);
+      payload = {
+        requestId, templateId: activeTemplate?.[0] || "free",
+        prompt: $("imageField0")?.value?.trim() || "",
+        referenceImage, sourceDimensions
+      };
+    } else {
+      endpoint = "/api/image-studio/generate";
+      const fieldNodes = [...$("imageTemplateFields").querySelectorAll(".image-template-field")];
+      const fields = {};
+      fieldNodes.forEach((node, index) => {
+        const label = node.querySelector("label")?.textContent?.trim() || ("Informasi " + (index + 1));
+        const control = node.querySelector("input, textarea, select");
+        if (control?.value?.trim()) fields[label] = control.value.trim();
+      });
+      const prompt = activeStudio === "free" ? (fields["Ide gambar"] || "") : "";
+      if (activeStudio === "free" && prompt.length < 8) throw new Error("Tuliskan ide gambar minimal 8 karakter.");
+      payload = {
+        requestId, studio: activeStudio, templateId: activeTemplate?.[0],
+        templateLabel: activeTemplate?.[1], fields, prompt, referenceImage,
+        requiresReference, aspectRatio: $("imageOutputRatio")?.value || "1:1"
+      };
+    }
+    button.textContent = isEdit ? "Sedang mengedit…" : "Sedang membuat desain…";
+    $("imageStudioStatus").textContent = "Mengirim permintaan ke mesin AI. Jangan tutup halaman.";
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({ requestId, templateId: activeTemplate?.[0] || "free", prompt: extraPrompt, referenceImage, sourceDimensions })
+      body: JSON.stringify(payload)
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "Proses edit foto gagal (" + response.status + ").");
+    if (!response.ok) throw new Error(result.error || "Proses gambar gagal (" + response.status + ").");
     if (!result.image?.b64 || !result.image?.mime || !result.image?.assetId) throw new Error("Server tidak mengembalikan hasil gambar yang lengkap.");
     const dataUrl = "data:" + result.image.mime + ";base64," + result.image.b64;
     $("imageStudioResultImage").src = dataUrl;
     $("imageStudioDownload").href = dataUrl;
-    $("imageStudioDownload").download = "zaida-edit-" + result.image.assetId.slice(0,8) + (result.image.mime === "image/jpeg" ? ".jpg" : result.image.mime === "image/webp" ? ".webp" : ".png");
+    $("imageStudioDownload").download = "zaida-" + (activeStudio || "edit") + "-" + result.image.assetId.slice(0,8) + (result.image.mime === "image/jpeg" ? ".jpg" : result.image.mime === "image/webp" ? ".webp" : ".png");
     $("imageStudioResultMeta").textContent = (result.provider || "AI") + " · " + Number(result.creditsCharged || 0).toLocaleString("id-ID") + " kredit";
     $("imageStudioEmptyResult").hidden = true;
     $("imageStudioResult").hidden = false;
@@ -209,12 +246,14 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
       $("imageCreditBalance").textContent = "Kredit: " + formatted;
       $("sidebarCreditBalance").textContent = formatted + " kredit";
     }
-    $("imageStudioStatus").textContent = "Foto berhasil diedit dan disimpan ke Media Library.";
+    $("imageStudioStatus").textContent = isEdit
+      ? "Foto berhasil diedit dan disimpan ke Media Library."
+      : "Desain berhasil dibuat dan disimpan ke Media Library.";
   } catch (error) {
-    $("imageStudioStatus").textContent = error.message || "Tidak dapat mengedit foto.";
+    $("imageStudioStatus").textContent = error.message || "Tidak dapat memproses gambar.";
   } finally {
     button.disabled = false;
-    button.innerHTML = 'Edit Foto <b>→</b>';
+    button.innerHTML = (isEdit ? "Edit Foto" : "Buat Desain") + ' <b>→</b>';
   }
 });
 

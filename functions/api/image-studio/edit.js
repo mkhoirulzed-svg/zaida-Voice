@@ -81,9 +81,9 @@ export async function onRequestPost({ request, env }) {
 
     const imageRequest = useOpenRouter
       ? { model, prompt, aspect_ratio: "1:1", resolution: "1K", n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
-      : { model, prompt, images: [reference.base64], n: 1 };
+      : { model, prompt, images: [body.referenceImage], n: 1 };
 
-    let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";
+    let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";\n    let modelUsed = model;
     let upstream = await fetch(useOpenRouter ? "https://openrouter.ai/api/v1/images" : "https://api.kiosapi.id/v1/images/edits", {
       method: "POST",
       headers: {
@@ -100,7 +100,7 @@ export async function onRequestPost({ request, env }) {
       upstream = await fetch("https://api.kiosapi.id/v1/images/edits", {
         method: "POST",
         headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: env.ZAIDA_IMAGE_STUDIO_KIOSAPI_EDIT_MODEL || EDIT_MODEL, prompt, images: [reference.base64], n: 1 })
+        body: JSON.stringify({ model: modelUsed, prompt, images: [reference.base64], n: 1 })
       });
       data = await readJson(upstream);
     }
@@ -123,8 +123,8 @@ export async function onRequestPost({ request, env }) {
     const providerCostUsd = hasOpenRouterActualCost ? openRouterCostUsd : 0;
     const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
     const charge = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
-      "image-studio-edit:" + providerUsed + ":" + model, {
-        provider: providerUsed, model, providerCostIdr, providerCostUsd,
+      "image-studio-edit:" + providerUsed + ":" + modelUsed, {
+        provider: providerUsed, model: modelUsed, providerCostIdr, providerCostUsd,
         providerCostEstimated: !(hasOpenRouterActualCost || hasKiosapiActualCost),
         requestId, imageMode: "image-edit"
       });
@@ -149,7 +149,7 @@ export async function onRequestPost({ request, env }) {
     return Response.json({
       ok: true,
       image: { b64: image.b64_json, mime, assetId },
-      model, provider: providerUsed, providerCostIdr,
+      model: modelUsed, provider: providerUsed, providerCostIdr,
       creditsCharged: charge.charged, creditsRemaining: charge.remaining
     }, { headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
   } catch (error) {

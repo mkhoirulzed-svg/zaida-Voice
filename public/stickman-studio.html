@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <title>ZAIDA Stickman Studio — Future</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/apple-light.css">
+  <style>
+    .stickman-page{max-width:1240px;margin:auto;padding:38px clamp(18px,3vw,42px) 60px}
+    .future-banner{display:inline-flex;align-items:center;gap:8px;border:1px solid #e4defb;background:#f1efff;color:#5b50bb;border-radius:999px;padding:7px 12px;font-size:10px;font-weight:800;letter-spacing:1.4px}
+    .future-banner:before{content:"";width:7px;height:7px;background:#8b7ce8;border-radius:50%;box-shadow:0 0 0 4px #8b7ce822}
+    .stickman-hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);gap:28px;align-items:center;margin:22px 0 30px}
+    .stickman-hero h1{font-size:clamp(34px,5vw,58px);line-height:1.02;letter-spacing:-.06em;margin:15px 0;color:#19191d;font-weight:760}
+    .stickman-hero h1 em{font-style:normal;color:#675bd0}
+    .stickman-hero p{max-width:570px;color:#777780;font-size:15px;line-height:1.8}
+    .hero-art{min-height:245px;border:1px solid #e8e8ed;border-radius:24px;background:radial-gradient(circle at 50% 45%,#fff 0,#f6f5fc 65%,#eeedf7 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .hero-art svg{width:min(90%,390px);height:auto;max-height:230px}
+    .hero-art-label{position:absolute;bottom:15px;right:18px;color:#9897a2;font-size:9px;letter-spacing:1.5px;font-weight:700}
+    .future-note{display:flex;gap:12px;align-items:flex-start;padding:15px 17px;border:1px solid #e9e7f3;background:#fff;border-radius:16px;margin-bottom:26px;color:#686873;line-height:1.6}
+    .future-note b{display:block;color:#28282d;margin-bottom:3px}
+    .future-note .note-icon{font-size:19px;color:#7065cf}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:30px 0 14px}
+    .section-head h2{font-size:19px;margin:0 0 5px}.section-head p{font-size:12px;margin:0;color:#85858e}
+    .future-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .future-card{background:#fff;border:1px solid #e8e8ed;border-radius:17px;padding:18px;min-height:148px;box-shadow:0 8px 28px rgba(20,20,30,.035)}
+    .future-card .card-icon{width:36px;height:36px;border-radius:11px;background:#f0effb;color:#6558c9;display:grid;place-items:center;font-size:18px;margin-bottom:14px}
+    .future-card h3{font-size:14px;margin:0 0 6px;color:#252529}.future-card p{font-size:12px;line-height:1.65;color:#80808a;margin:0}
+    .workflow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+    .workflow-step{background:#fff;border:1px solid #e8e8ed;border-radius:14px;padding:14px 12px;min-height:104px}
+    .workflow-step span{font-size:10px;color:#8b80d8;font-weight:800;letter-spacing:1px}.workflow-step b{display:block;margin:8px 0 4px;font-size:12px;color:#2b2b30}.workflow-step small{font-size:10px;color:#898991;line-height:1.5;display:block}
+    .preview-panel{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;background:#fff;border:1px solid #e8e8ed;border-radius:19px;padding:18px;margin-top:14px}
+    .preview-stage{min-height:210px;border-radius:14px;background:linear-gradient(135deg,#f8f8fb,#f0eff8);display:grid;place-items:center;position:relative;overflow:hidden}
+    .preview-stage svg{width:80%;max-width:260px;height:auto}
+    .preview-stage .stage-tag{position:absolute;top:12px;left:13px;font-size:9px;color:#777780;background:#fff;border:1px solid #e7e7ed;border-radius:999px;padding:6px 9px}
+    .preview-copy{align-self:center;padding:8px}.preview-copy h3{font-size:16px;margin:0 0 8px}.preview-copy p{font-size:12px;color:#81818b;line-height:1.7;margin:0 0 13px}
+    .locked-button{border:0;border-radius:999px;background:#ecebf2;color:#777681;padding:10px 15px;font-size:11px;font-weight:700;cursor:not-allowed}
+    .future-footer{text-align:center;color:#9999a1;font-size:9px;letter-spacing:1.5px;margin:35px 0 0}
+    @media(max-width:900px){.stickman-hero{grid-template-columns:1fr}.hero-art{min-height:200px}.future-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.workflow{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media(max-width:560px){.stickman-page{padding-top:25px}.future-grid{grid-template-columns:1fr}.workflow{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-panel{grid-template-columns:1fr}.stickman-hero h1{font-size:39px}}
+  </style>
+</head>
+<body class="in-studio">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row"><a class="brand" href="/" aria-label="ZAIDA Voice beranda"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11.5C8 9.6 9.6 8 11.5 8h17C30.4 8 32 9.6 32 11.5v17c0 1.9-1.6 3.5-3.5 3.5h-17C9.6 32 8 30.4 8 28.5v-17Z" fill="currentColor" opacity=".18"/><path d="M12 25.5 25.5 12H14m2 16h12" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>ZAIDA <i>Voice</i></strong><small>STUDIO SUARA AI</small></span></a><button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">×</button></div>
+      <section class="sidebar-credit"><div class="sidebar-credit-top"><span>Kredit</span><b id="sidebarCreditBalance">Masuk untuk melihat saldo</b></div><a href="/harga.html">Lihat paket kredit <span>→</span></a></section>
+      <div class="nav-label">WORKSPACE</div>
+      <a class="nav-item" href="/">Voice Studio</a><a class="nav-item" href="/">AutoClip Studio</a><a class="nav-item" href="/?view=textToVideo">Video Generator AI</a><a class="nav-item" href="/image-studio.html">Image Studio</a><a class="nav-item active" href="/stickman-studio.html" aria-current="page">Stickman Studio <span class="future-banner" style="font-size:8px;padding:3px 7px;margin-left:5px">FUTURE</span></a><a class="nav-item" href="/?view=media">Media Library</a><a class="nav-item" href="/">Voices</a><a class="nav-item" href="/">AI Super Chat</a>
+      <div class="sidebar-bottom"><nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav><div class="profile"><div class="avatar">Z</div><div><b>ZAIDA Labs</b><small>Creator workspace</small></div></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu">☰</button><div class="breadcrumb">Ruang kerja <span>/</span> <b>Stickman Studio</b> <span class="future-banner" style="margin-left:8px">FUTURE</span></div><div class="top-actions"><div class="credit-balance">Studio konsep</div><div class="top-avatar">Z</div></div></header>
+      <section class="stickman-page">
+        <span class="future-banner">FUTURE FEATURE · NOT ACTIVE YET</span>
+        <div class="stickman-hero">
+          <div><div class="eyebrow"><span></span> ANIMATION WORKSPACE</div><h1>Cerita bergerak,<br><em>tanpa biaya video AI.</em></h1><p>Rancang video animasi dari naskah menggunakan karakter reusable, gerakan otomatis, voice-over ZAIDA, dan subtitle yang tersinkron.</p></div>
+          <div class="hero-art" aria-label="Ilustrasi konsep animasi stickman"><svg viewBox="0 0 420 235" role="img" aria-label="Dua karakter stickman sedang berinteraksi"><g fill="none" stroke="#292932" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><circle cx="137" cy="56" r="25" fill="#fff" stroke-width="7"/><path d="M137 83v65m0-44-43 26m43-26 42 18m-42 26-31 48m31-48 35 48"/><circle cx="287" cy="56" r="25" fill="#fff" stroke-width="7"/><path d="M287 83v65m0-44-36 19m36-19 39-24m-39 68-28 48m28-48 35 48"/></g><path d="M184 43q26-23 52 0" fill="none" stroke="#8176d7" stroke-width="5" stroke-linecap="round"/><path d="M222 36l13 7-11 10" fill="none" stroke="#8176d7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M65 205h290" stroke="#d8d7e1" stroke-width="3" stroke-linecap="round"/><circle cx="137" cy="56" r="4" fill="#292932"/><circle cx="287" cy="56" r="4" fill="#292932"/><path d="M129 65q8 7 16 0" fill="none" stroke="#292932" stroke-width="2.5" stroke-linecap="round"/></svg><span class="hero-art-label">STORY · MOTION · VOICE</span></div>
+        </div>
+        <div class="future-note"><span class="note-icon">✦</span><div><b>Halaman konsep — belum dapat digunakan</b>Fitur ini ditandai FUTURE. Belum ada proses generate, pemakaian kredit, atau penyimpanan proyek yang berjalan. Kita siapkan desain dan alur terlebih dahulu sebelum implementasi.</div></div>
+        <div class="section-head"><div><h2>Ruang kreatif</h2><p>Rencana kemampuan utama Stickman Studio.</p></div></div>
+        <div class="future-grid">
+          <article class="future-card"><div class="card-icon">✎</div><h3>Script to Storyboard</h3><p>Ubah naskah menjadi rangkaian adegan dan arahan aksi karakter secara otomatis.</p></article>
+          <article class="future-card"><div class="card-icon">♙</div><h3>Character Library</h3><p>Pilih karakter reusable, pakaian, aksesori, ekspresi, dan variasi tampilan.</p></article>
+          <article class="future-card"><div class="card-icon">⌁</div><h3>Motion &amp; Rigging</h3><p>Gerakkan karakter dengan skeleton, pose, keyframe, dan preset gerakan.</p></article>
+          <article class="future-card"><div class="card-icon">▧</div><h3>Scene &amp; Background</h3><p>Atur lokasi, properti, komposisi, dan perpindahan antaradegan.</p></article>
+          <article class="future-card"><div class="card-icon">♫</div><h3>Voice &amp; Subtitle</h3><p>Gunakan Voice Studio untuk narasi, dialog, dan subtitle tersinkron.</p></article>
+          <article class="future-card"><div class="card-icon">▶</div><h3>Preview &amp; Export</h3><p>Pratinjau animasi dan ekspor video vertikal atau landscape ke MP4.</p></article>
+        </div>
+        <div class="section-head"><div><h2>Alur produksi yang direncanakan</h2><p>Fokus pada animasi berbasis aset agar biaya produksi lebih efisien.</p></div></div>
+        <div class="workflow">
+          <div class="workflow-step"><span>01</span><b>Tulis naskah</b><small>Masukkan cerita atau dialog</small></div>
+          <div class="workflow-step"><span>02</span><b>Storyboard AI</b><small>Susun adegan dan aksi</small></div>
+          <div class="workflow-step"><span>03</span><b>Atur karakter</b><small>Pilih pose dan gerakan</small></div>
+          <div class="workflow-step"><span>04</span><b>Voice &amp; subtitle</b><small>Sinkronkan audio dan teks</small></div>
+          <div class="workflow-step"><span>05</span><b>Render video</b><small>Ekspor hasil animasi</small></div>
+        </div>
+        <div class="section-head"><div><h2>Contoh kanvas animasi</h2><p>Preview visual konsep — belum interaktif.</p></div></div>
+        <div class="preview-panel"><div class="preview-stage"><span class="stage-tag">SCENE 01 · PREVIEW</span><svg viewBox="0 0 300 190" role="img" aria-label="Ilustrasi stickman berdiri"><path d="M20 165h260" stroke="#d7d6e0" stroke-width="3" stroke-linecap="round"/><circle cx="150" cy="42" r="22" fill="#fff" stroke="#35353e" stroke-width="6"/><path d="M150 66v54m0-34-42 23m42-23 42 23m-42 11-29 44m29-44 29 44" fill="none" stroke="#35353e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M142 49q8 6 16 0" fill="none" stroke="#35353e" stroke-width="2" stroke-linecap="round"/><path d="M203 34q16-18 31 0" fill="none" stroke="#8a7fda" stroke-width="3" stroke-linecap="round"/><path d="m226 27 9 7-10 5" fill="none" stroke="#8a7fda" stroke-width="3" stroke-linecap="round"/></svg></div><div class="preview-copy"><h3>Preview adegan akan tampil di sini</h3><p>Nantinya pengguna dapat melihat karakter, mengatur posisi, memilih gerakan, dan memeriksa timing sebelum seluruh adegan dirender menjadi video.</p><button class="locked-button" type="button" disabled>◷ Akan tersedia di tahap berikutnya</button></div></div>
+        <div class="future-footer">ZAIDA LABS · STICKMAN STUDIO · FUTURE CONCEPT</div>
+      </section>
+    </main>
+  </div>
+  <button class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Tutup menu" hidden></button>
+  <script>
+    const side=document.getElementById('sidebar'),back=document.getElementById('sidebarBackdrop');
+    const close=()=>{side.classList.remove('open');back.hidden=true;document.body.classList.remove('sidebar-open')};
+    document.getElementById('mobileMenu')?.addEventListener('click',()=>{side.classList.toggle('open');back.hidden=!side.classList.contains('open');document.body.classList.toggle('sidebar-open',side.classList.contains('open'))});
+    document.getElementById('sidebarClose')?.addEventListener('click',close);back?.addEventListener('click',close);
+  </script>
+</body>
+</html>

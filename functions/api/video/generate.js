@@ -147,6 +147,7 @@ export async function onRequestPost({ request, env }) {
 
   const pricing = quote(duration, env);
   let reservation = null;
+  let providerRequestStarted = false;
   try {
     await getOrCreateAccount(auth.user, env);
     reservation = await reserveCredits(auth.user, env, pricing.reserveCredits, "text-to-video:openrouter:" + MODEL, {
@@ -163,6 +164,7 @@ export async function onRequestPost({ request, env }) {
     };
     await saveJob(auth.user, env, requestId, title, initialPayload);
     let upstream;
+    providerRequestStarted = true;
     try {
       upstream = await fetch("https://openrouter.ai/api/v1/videos", {
         method: "POST", headers: openRouterHeaders(env, true),
@@ -186,8 +188,8 @@ export async function onRequestPost({ request, env }) {
       reservedCredits: reservation.reserved, creditsRemaining: reservation.remaining
     }, { status: 202, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    if (reservation && error.status !== 409) {
-      // Keep an accepted/uncertain provider job reserved; only known pre-submit failures should release.
+    if (reservation && !providerRequestStarted) {
+      try { await releaseCredits(auth.user, env, reservation.reservationId, "text-to-video-pre-submit-error"); } catch {}
     }
     return jsonError(error.message || "Gagal memulai generasi video.", error.status || 500);
   }

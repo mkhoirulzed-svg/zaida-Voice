@@ -85,3 +85,6 @@
 .text-video-reference-card small{font-size:9px;color:#85858e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .text-video-reference-help{font-size:10px;line-height:1.55;color:#85858e;margin:8px 0 0}
 @media(max-width:760px){.text-video-reference-card{padding:8px}.text-video-reference-preview{aspect-ratio:4/3}}
+
+.text-video-reference-remove{align-self:flex-start;border:0;background:transparent;color:#a04444;padding:3px 0;font-size:9px;font-weight:650;cursor:pointer}
+.text-video-reference-remove[hidden]{display:none}

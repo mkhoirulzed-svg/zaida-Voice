@@ -175,10 +175,14 @@ export async function onRequestPost({ request, env }) {
       return jsonError("Koneksi provider terputus saat mengirim permintaan. Cek Riwayat sebelum mencoba ulang agar tidak membuat video ganda.", 502);
     }
     const data = await readJson(upstream);
-    if (!upstream.ok || !data.id) {
+    if (!upstream.ok) {
       await releaseCredits(auth.user, env, reservation.reservationId, "text-to-video-submit-failed");
       await saveJob(auth.user, env, requestId, title, { ...initialPayload, status: "failed", creditsReleased: true, error: data.error?.message || data.message || "Provider menolak permintaan video." });
       return jsonError(data.error?.message || data.message || "Provider menolak permintaan video.", upstream.status || 502);
+    }
+    if (!data.id) {
+      await saveJob(auth.user, env, requestId, title, { ...initialPayload, status: "submission_unknown", error: "Provider menerima respons tetapi tidak mengembalikan ID job. Reservasi ditahan untuk pemeriksaan." });
+      return jsonError("Provider tidak mengembalikan ID job. Reservasi kredit ditahan untuk pemeriksaan; cek Riwayat sebelum mengirim ulang.", 502);
     }
     const pendingPayload = { ...initialPayload, status: String(data.status || "pending"), openRouterJobId: data.id, pollingUrl: data.polling_url || "", submittedAt: new Date().toISOString() };
     await saveJob(auth.user, env, requestId, title, pendingPayload);

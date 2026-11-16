@@ -123,20 +123,18 @@ export async function onRequestPost({ request, env }) {
     const providerCostIdr = hasOpenRouterActualCost
       ? Math.ceil(openRouterCostUsd * Math.max(1, Number(env.ZAIDA_USD_TO_IDR) || 18000))
       : hasKiosapiActualCost ? Math.ceil(kiosapiCostIdr) : providerPriceIdr;
-    const providerCostUsd = hasOpenRouterActualCost ? openRouterCostUsd : 0;
-    const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
-    const charge = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
-      "image-studio-edit:" + providerUsed + ":" + modelUsed, {
-        provider: providerUsed, model: modelUsed, providerCostIdr, providerCostUsd,
-        providerCostEstimated: !(hasOpenRouterActualCost || hasKiosapiActualCost),
-        requestId, imageMode: "image-edit"
-      });
-    settled = true;
-
     if (!image?.b64_json || typeof image.b64_json !== "string") {
+      const providerCostUsd = hasOpenRouterActualCost ? openRouterCostUsd : 0;
+      const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
+      await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
+        "image-studio-edit:" + providerUsed + ":" + modelUsed, {
+          provider: providerUsed, model: modelUsed, providerCostIdr, providerCostUsd,
+          providerCostEstimated: !(hasOpenRouterActualCost || hasKiosapiActualCost),
+          requestId, imageMode: "image-edit"
+        });
+      settled = true;
       return jsonError("Provider merespons tetapi tidak mengembalikan data gambar yang dapat disimpan. Biaya provider sudah tercatat.", 502);
     }
-
     const mime = String(image.media_type || image.mime || "image/png").toLowerCase();
     if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) return jsonError("Provider mengembalikan format gambar yang tidak didukung.", 502);
     const binary = Uint8Array.from(atob(image.b64_json), ch => ch.charCodeAt(0));
@@ -148,6 +146,15 @@ export async function onRequestPost({ request, env }) {
       httpMetadata: { contentType: mime, cacheControl: "private, no-store" },
       customMetadata: { uid: auth.user.uid, project: "zaida-image-studio", kind: "image", source: "image-studio-edit", fileName: "ZAIDA-Edit-" + assetId.slice(0, 8) }
     });
+    const providerCostUsd = hasOpenRouterActualCost ? openRouterCostUsd : 0;
+    const billing = calculateKiosapiCharge({ cost_idr: providerCostIdr }, env);
+    const charge = await settleReservedCredits(auth.user, env, reservation.reservationId, billing.credits,
+      "image-studio-edit:" + providerUsed + ":" + modelUsed, {
+        provider: providerUsed, model: modelUsed, providerCostIdr, providerCostUsd,
+        providerCostEstimated: !(hasOpenRouterActualCost || hasKiosapiActualCost),
+        requestId, imageMode: "image-edit"
+      });
+    settled = true;
 
     return Response.json({
       ok: true,

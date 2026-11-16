@@ -175,7 +175,7 @@ export async function onRequestPost({ request, env }) {
     reservation = await reserveCredits(auth.user, env, pricing.reserveCredits, "text-to-video:openrouter:" + selectedModel, {
       requestId, provider: "openrouter", model: selectedModel
     });
-    const title = prompt.replace(/\s+/g, " ").slice(0, 72) || "Text-to-Video";
+    const title = prompt.replace(/\s+/g, " ").slice(0, 72) || "Video Generator AI";
     const initialPayload = {
       kind: "text-to-video", status: "submitting", prompt, model: selectedModel, referenceCount: referenceImages.length,
       duration, resolution: "480p", aspectRatio, generateAudio: false,

@@ -1194,7 +1194,13 @@ function showVideoProjectChooser() {
   if (videoChooserLoading) return;
   videoChooserLoading = true;
   api("/api/video/projects").then(result => {
-    const projects = result.projects || [];
+    // AutoClip chooser must only list storyboard projects.
+    // Video Generator AI projects share the same API but do not contain AutoClip scenes.
+    const projects = (result.projects || []).filter(project =>
+      project.payload?.kind !== "text-to-video" &&
+      Array.isArray(project.payload?.scenes) &&
+      project.payload.scenes.length > 0
+    );
     list.replaceChildren();
     if (!projects.length) {
       const empty = document.createElement("div");

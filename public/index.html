@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/video-studio.css">
 
   <link rel="stylesheet" href="/apple-light.css">
+  <link rel="stylesheet" href="/text-to-video.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lato:wght@400;700;900&family=Montserrat:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&family=Open+Sans:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -27,6 +28,7 @@
       
       <div class="nav-label">WORKSPACE</div><button class="nav-item active" data-view="studio">Voice Studio</button>
       <button class="nav-item" data-view="video">AutoClip Studio</button>
+      <button class="nav-item" data-view="textToVideo">Text-to-Video</button>
        <a class="nav-item" href="/image-studio.html">Image Studio</a>
       <button class="nav-item" data-view="media">Media Library</button>
       <button class="nav-item" data-view="voices">Voices</button>
@@ -115,6 +117,38 @@
           <div class="chat-compose studio-chat-compose"><textarea id="standaloneAssistantInput" rows="1" maxlength="3000" placeholder="Tanyakan sesuatu…"></textarea><button id="standaloneSendAssistant" class="primary-button" aria-label="Kirim pesan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           <div class="script-export"><button id="standaloneUseAssistantScript" class="subtle-button" disabled>Gunakan naskah</button></div>
         </div></section>
+      <section class="page text-video-page" id="textToVideoPage">
+        <div class="text-video-heading">
+          <div><div class="eyebrow"><span></span> GENERATIVE VIDEO</div><h1>Text-to-Video</h1><p>Ubah deskripsi menjadi klip video AI yang benar-benar bergerak.</p></div>
+          <span class="text-video-beta">BETA</span>
+        </div>
+        <div class="text-video-layout">
+          <section class="text-video-panel">
+            <h2>Buat video dari prompt</h2>
+            <label class="text-video-label" for="textVideoPrompt">DESKRIPSI VIDEO</label>
+            <textarea id="textVideoPrompt" class="text-video-prompt" maxlength="2000" placeholder="Contoh: A cinematic shot of a nurse walking through a modern emergency room, camera slowly tracking behind, realistic lighting, natural movement..."></textarea>
+            <div class="text-video-controls">
+              <div><label class="text-video-label" for="textVideoDuration">DURASI</label><select id="textVideoDuration"><option value="4">4 detik</option><option value="6">6 detik</option><option value="8" selected>8 detik</option><option value="10">10 detik</option><option value="12">12 detik</option><option value="15">15 detik</option></select></div>
+              <div><label class="text-video-label" for="textVideoAspect">RASIO</label><select id="textVideoAspect"><option value="9:16" selected>9:16 · Vertikal</option><option value="16:9">16:9 · Landscape</option><option value="1:1">1:1 · Square</option></select></div>
+              <div><label class="text-video-label">KUALITAS</label><input value="480p · Standard" disabled aria-label="Kualitas video 480p"></div>
+            </div>
+            <div class="text-video-estimate"><div><small>Estimasi kredit</small><strong id="textVideoEstimateCredits">Menghitung…</strong></div><span id="textVideoEstimateCost">Modal provider dihitung otomatis</span></div>
+            <button class="text-video-generate" id="textVideoGenerate" type="button">✦ Generate Video</button>
+            <p class="text-video-status" id="textVideoStatus" role="status" aria-live="polite">Masuk ke akun ZAIDA Voice untuk mulai membuat video.</p>
+            <div class="text-video-progress" id="textVideoProgress" hidden><span class="text-video-spinner"></span><span id="textVideoProgressLabel">AI sedang membuat video…</span></div>
+            <div class="text-video-preview" id="textVideoPreview"><div class="text-video-preview-empty">Preview video akan muncul setelah generasi selesai.</div></div>
+            <div class="text-video-preview-actions" id="textVideoPreviewActions" hidden></div>
+          </section>
+          <aside class="text-video-panel text-video-side">
+            <h2>Pengaturan & kredit</h2>
+            <div class="text-video-side-note"><b id="textVideoBalance">Masuk untuk melihat saldo kredit</b><p>Model awal: Grok Imagine Video 1.5 Lite melalui OpenRouter.</p><ul><li>Text-to-video asli, bukan slideshow gambar.</li><li>Durasi 4–15 detik.</li><li>Resolusi awal 480p untuk menekan biaya.</li><li>Video otomatis masuk ke Media Library dan Riwayat.</li></ul><p>Kredit direservasi saat permintaan dikirim. Setelah video selesai, tagihan dihitung dan sisa reservasi dikembalikan. Jika generasi gagal, reservasi dilepas.</p></div>
+            <div class="text-video-history">
+              <div class="section-head"><h2>Riwayat Text-to-Video</h2><button class="subtle-button" id="textVideoRefreshHistory" type="button">Perbarui</button></div>
+              <div id="textVideoHistory"><div class="empty-output"><b>Memuat riwayat…</b></div></div>
+            </div>
+          </aside>
+        </div>
+      </section>
       <section class="page" id="mediaPage">
         <div class="history-heading media-library-heading">
           <div><h1>Media Library</h1></div>
@@ -132,7 +166,7 @@
           <div class="media-library-grid" id="mediaLibraryGrid"><div class="media-library-empty"><div class="media-library-empty-icon">＋</div><h3>Memuat media…</h3><p>Menyiapkan koleksi aset kamu.</p></div></div>
         </section>
       </section>
-      <section class="page" id="historyPage"><div class="history-heading"><h1>Riwayat</h1></div><div class="history-heading history-section-heading"><div><h2>Proyek Voice Studio</h2><p>Naskah, pengaturan, dan audio yang tersimpan di akun kamu.</p></div><button class="history-clear-button" id="clearVoiceProjects" type="button">Hapus semua</button></div><div class="panel history-panel" id="voiceProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div><div class="history-heading history-section-heading" style="margin-top:28px"><h2>Riwayat audio perangkat</h2><button class="history-clear-button" id="clearAudioHistory" type="button">Hapus semua</button></div><div class="panel history-panel" id="historyList"><div class="empty-output"><b>Belum ada riwayat</b></div></div><div class="history-heading history-section-heading" style="margin-top:28px"><h2>Proyek AutoClip Studio</h2><button class="history-clear-button" id="clearVideoProjects" type="button">Hapus semua</button></div><div class="panel history-panel" id="videoProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div></section>
+      <section class="page" id="historyPage"><div class="history-heading"><h1>Riwayat</h1></div><div class="history-heading history-section-heading"><div><h2>Proyek Voice Studio</h2><p>Naskah, pengaturan, dan audio yang tersimpan di akun kamu.</p></div><button class="history-clear-button" id="clearVoiceProjects" type="button">Hapus semua</button></div><div class="panel history-panel" id="voiceProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div><div class="history-heading history-section-heading" style="margin-top:28px"><h2>Riwayat audio perangkat</h2><button class="history-clear-button" id="clearAudioHistory" type="button">Hapus semua</button></div><div class="panel history-panel" id="historyList"><div class="empty-output"><b>Belum ada riwayat</b></div></div><div class="history-heading history-section-heading" style="margin-top:28px"><h2>Proyek AutoClip Studio</h2><button class="history-clear-button" id="clearVideoProjects" type="button">Hapus semua</button></div><div class="panel history-panel" id="videoProjectHistory"><div class="empty-output"><b>Memuat proyek…</b></div></div><div class="history-heading history-section-heading" style="margin-top:28px"><div><h2>Riwayat Text-to-Video</h2><p>Klip AI yang dihasilkan langsung dari prompt.</p></div></div><div class="panel history-panel" id="textVideoHistoryPageList"><div class="empty-output"><b>Memuat riwayat…</b></div></div></section>
         <section class="page" id="adminPage"><div class="history-heading"><h1>Dashboard admin</h1></div>
           <div class="admin-toolbar"><span id="adminUpdated">Data belum dimuat</span><button class="subtle-button" id="refreshAdmin">Perbarui data</button></div><div class="admin-period-heading"><h2>Ringkasan pemakaian</h2><small>Waktu Indonesia Barat (WIB)</small></div><div class="admin-period-grid" id="adminPeriodSummaries"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div><div class="admin-period-heading"><h2>Pendapatan top-up</h2><small>Hanya pembayaran berstatus lunas</small></div><div class="admin-period-grid admin-revenue-grid" id="adminRevenueSummaries"><div class="admin-metric"><small>MEMUAT DATA</small><b>—</b><span>Mohon tunggu…</span></div></div><p class="admin-revenue-note">Pendapatan kotor dari pembayaran top-up yang berhasil. Belum dikurangi biaya Midtrans, pajak, biaya provider AI, atau pengeluaran operasional.</p><div class="admin-provider-toolbar"><h2>Rincian layanan</h2><label>Periode <select id="adminProviderPeriod"><option value="day">Hari ini</option><option value="week">Minggu ini</option><option value="month" selected>Bulan ini</option><option value="total">Total</option></select></label></div><div class="admin-provider-grid" id="adminProviders"></div>
           <div class="panel admin-credit-panel"><div class="panel-heading"><div><div><h2>Tambah kredit pengguna</h2></div></div></div><form id="adminCreditForm" class="admin-credit-form"><label>Email pengguna<input id="adminCreditEmail" type="email" placeholder="nama@email.com" required></label><label>Jumlah kredit<input id="adminCreditAmount" type="number" min="1" max="1000000" step="1" value="10000" required></label><button class="generate-button" id="adminCreditSubmit" type="submit">Tambahkan kredit</button></form></div>
@@ -372,5 +406,5 @@
     </section>
   </div>
   <div class="zaida-processing-overlay" id="zaidaProcessingOverlay" hidden role="status" aria-live="polite" aria-labelledby="zaidaProcessingTitle" aria-describedby="zaidaProcessingMessage"><div class="zaida-processing-card"><span class="zaida-processing-spinner" aria-hidden="true"></span><h2 id="zaidaProcessingTitle">ZAIDA sedang memproses</h2><p id="zaidaProcessingMessage">Mohon tunggu sebentar…</p></div></div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script><script type="module" src="/video-studio.js"></script><script type="module" src="/image-studio.js"></script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="/app.js"></script><script type="module" src="/video-studio.js"></script><script type="module" src="/image-studio.js"></script><script type="module" src="/text-to-video.js"></script>
 </body></html>

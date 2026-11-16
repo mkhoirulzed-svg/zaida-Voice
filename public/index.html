@@ -127,6 +127,24 @@
             <h2>Buat video dari prompt</h2>
             <label class="text-video-label" for="textVideoPrompt">DESKRIPSI VIDEO</label>
             <textarea id="textVideoPrompt" class="text-video-prompt" maxlength="2000" placeholder="Contoh: A cinematic shot of a nurse walking through a modern emergency room, camera slowly tracking behind, realistic lighting, natural movement..."></textarea>
+            <div class="text-video-reference-section">
+              <div class="text-video-reference-heading"><div><b>Foto referensi</b><small>Opsional · Maksimal 2 foto untuk versi awal</small></div><span>AI Reference</span></div>
+              <div class="text-video-reference-grid">
+                <label class="text-video-reference-card" for="textVideoReference1">
+                  <span class="text-video-reference-preview" id="textVideoReferencePreview1"><span>＋</span></span>
+                  <span class="text-video-reference-title">Foto Referensi 1</span>
+                  <small id="textVideoReferenceName1">Pilih foto</small>
+                  <input id="textVideoReference1" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                </label>
+                <label class="text-video-reference-card" for="textVideoReference2">
+                  <span class="text-video-reference-preview" id="textVideoReferencePreview2"><span>＋</span></span>
+                  <span class="text-video-reference-title">Foto Referensi 2</span>
+                  <small id="textVideoReferenceName2">Pilih foto</small>
+                  <input id="textVideoReference2" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                </label>
+              </div>
+              <p class="text-video-reference-help">Gunakan di prompt dengan menyebut Foto Referensi 1 atau Foto Referensi 2. Bebas untuk wajah, produk, logo, karakter, atau objek lainnya.</p>
+            </div>
             <div class="text-video-controls">
               <div><label class="text-video-label" for="textVideoDuration">DURASI</label><select id="textVideoDuration"><option value="4">4 detik</option><option value="6">6 detik</option><option value="8" selected>8 detik</option><option value="10">10 detik</option><option value="12">12 detik</option><option value="15">15 detik</option></select></div>
               <div><label class="text-video-label" for="textVideoAspect">RASIO</label><select id="textVideoAspect"><option value="9:16" selected>9:16 · Vertikal</option><option value="16:9">16:9 · Landscape</option><option value="1:1">1:1 · Square</option></select></div>

@@ -412,6 +412,12 @@ function setActiveScene(index, scrollIntoView = false) {
 }
 function renderStoryboard(data) {
   currentStoryboard = data;
+  // Restore the project's saved visual style so subsequent image generation
+  // cannot silently fall back to the page's default style.
+  if (data.visualStyle && VIDEO_VISUAL_STYLES[data.visualStyle]) {
+    $("videoVisualStyle").value = data.visualStyle;
+    updateVisualStyleDescription();
+  }
   $("storyboardEmpty").hidden = true;
   $("storyboardResult").hidden = false;
   $("storyboardQuickTitle").textContent = data.title;

@@ -108,6 +108,7 @@ async function pollProject(projectId) {
     const data = await api("/api/video/generate?id=" + encodeURIComponent(projectId));
     if (data.status === "completed") {
       $("textVideoProgress").hidden = true;
+      $("textVideoGenerate").disabled = false; $("textVideoGenerate").textContent = "✦ Generate Video";
       setStatus("Video berhasil dibuat dan otomatis tersimpan di Media Library serta Riwayat.");
       if (data.creditsRemaining !== undefined) {
         $("sidebarCreditBalance").textContent = Number(data.creditsRemaining).toLocaleString("id-ID") + " kredit";
@@ -120,6 +121,7 @@ async function pollProject(projectId) {
     }
     if (["failed", "cancelled", "expired"].includes(data.status)) {
       $("textVideoProgress").hidden = true;
+      $("textVideoGenerate").disabled = false; $("textVideoGenerate").textContent = "✦ Generate Video";
       setStatus(data.error || "Video gagal dibuat. Reservasi kredit dikembalikan.", true);
       await refreshAccount(); await loadHistory(); return;
     }
@@ -131,6 +133,7 @@ async function pollProject(projectId) {
   }
 }
 async function generate() {
+  let accepted = false;
   if (!currentUser) { document.getElementById("authButton")?.click(); setStatus("Masuk terlebih dahulu untuk membuat video.", true); return; }
   const prompt = $("textVideoPrompt").value.trim();
   if (prompt.length < 12) { setStatus("Tulis prompt minimal 12 karakter.", true); $("textVideoPrompt").focus(); return; }
@@ -139,7 +142,10 @@ async function generate() {
   const requestId = crypto.randomUUID();
   try {
     const data = await api("/api/video/generate", { method: "POST", body: JSON.stringify({ requestId, prompt, duration: durationValue(), aspectRatio: $("textVideoAspect").value }) });
+    accepted = true;
     activeProjectId = data.projectId;
+    $("textVideoGenerate").disabled = true;
+    $("textVideoGenerate").textContent = "Video sedang diproses…";
     $("textVideoProgress").hidden = false;
     $("textVideoProgressLabel").textContent = "Permintaan diterima. AI sedang menyiapkan video…";
     setStatus("Job diterima. Jangan kirim ulang; kamu bisa meninggalkan halaman dan melanjutkannya dari Riwayat.");
@@ -147,7 +153,7 @@ async function generate() {
   } catch (error) {
     setStatus(error.message, true);
     await refreshAccount();
-  } finally { button.disabled = false; button.textContent = "✦ Generate Video"; }
+  } finally { if (!accepted) { button.disabled = false; button.textContent = "✦ Generate Video"; } }
 }
 $("textVideoGenerate").addEventListener("click", generate);
 $("textVideoDuration").addEventListener("change", updateEstimate);
@@ -162,6 +168,6 @@ onAuthStateChanged(auth, async user => {
   try {
     await Promise.all([refreshAccount(), loadQuote(), loadHistory()]);
     const pending = (await api("/api/video/projects")).projects?.find(item => item.payload?.kind === "text-to-video" && ["pending", "in_progress", "submitting", "saving"].includes(item.payload.status));
-    if (pending) pollProject(pending.id);
+    if (pending) { $("textVideoGenerate").disabled = true; $("textVideoGenerate").textContent = "Video sedang diproses…"; pollProject(pending.id); }
   } catch (error) { setStatus(error.message, true); }
 });

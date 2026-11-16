@@ -166,6 +166,10 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
     $("imageField0")?.focus();
     return;
   }
+  if (!$("imageEditConsent")?.checked) { $("imageStudioStatus").textContent = "Centang persetujuan penggunaan foto sebelum melanjutkan."; $("imageEditConsent")?.focus(); return; }
+  const quote = imageEditQuote || await loadImageEditQuote();
+  if (!quote) { $("imageStudioStatus").textContent = "Estimasi kredit belum tersedia. Coba lagi sebelum mengedit."; return; }
+  if (Number(quote.availableCredits) < Number(quote.maxTemporaryReserve)) { $("imageStudioStatus").textContent = "Saldo belum cukup untuk reservasi maksimal " + Number(quote.maxTemporaryReserve).toLocaleString("id-ID") + " kredit."; return; }
   const button = $("imageStudioGenerate");
   button.disabled = true;
   button.textContent = "Menyiapkan foto…";

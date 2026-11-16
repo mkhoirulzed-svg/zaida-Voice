@@ -15,13 +15,16 @@ export async function onRequestGet({ request, env }) {
 
   try {
     const account = await getOrCreateAccount(auth.user, env);
-    const providerPriceIdr = Math.max(1, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_PRICE_IDR) || 2500);
+    const mode = new URL(request.url).searchParams.get("mode") === "generate" ? "generate" : "edit";
+    const isGenerate = mode === "generate";
+    const providerPriceIdr = Math.max(1, Number(isGenerate ? env.ZAIDA_IMAGE_STUDIO_GENERATE_PRICE_IDR : env.ZAIDA_IMAGE_STUDIO_EDIT_PRICE_IDR) || (isGenerate ? 500 : 2500));
     const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
     const estimate = calculateKiosapiCharge({ cost_idr: providerPriceIdr }, env);
-    const reserveCeilingIdr = Math.max(providerPriceIdr, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_MAX_COST_IDR) || 5000);
+    const reserveCeilingIdr = Math.max(providerPriceIdr, Number(isGenerate ? env.ZAIDA_IMAGE_STUDIO_GENERATE_MAX_COST_IDR : env.ZAIDA_IMAGE_STUDIO_EDIT_MAX_COST_IDR) || (isGenerate ? 2500 : 5000));
     const maxTemporaryReserve = Math.ceil(reserveCeilingIdr * markup) + 1;
     return json({
       ok: true,
+      mode,
       provider,
       estimatedCredits: estimate.credits,
       estimatedProviderCostIdr: providerPriceIdr,

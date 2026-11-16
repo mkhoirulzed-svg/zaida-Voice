@@ -33,7 +33,7 @@ function updateEstimate() {
   const duration = durationValue();
   const estimate = Math.ceil(duration * Number(quoteData.providerCostIdr / Math.max(1, quoteData.duration)) * Number(quoteData.markup || 1.5));
   $("textVideoEstimateCredits").textContent = estimate.toLocaleString("id-ID") + " kredit";
-  $("textVideoEstimateCost").textContent = "Estimasi modal " + money(duration * Number(quoteData.providerCostIdr / Math.max(1, quoteData.duration)));
+  // Rincian modal provider tidak ditampilkan pada UI pengguna.
 }
 async function refreshAccount() {
   try {

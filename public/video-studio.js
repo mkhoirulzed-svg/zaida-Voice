@@ -91,7 +91,7 @@ function removeVideoBrandAsset(kind) {
 
 
 const VIDEO_VISUAL_STYLES={
-  stickman:{label:"Stickman",prompt:"Use a clean minimalist stickman illustration style: simple expressive line-drawn human characters, clear poses, uncluttered backgrounds, consistent character design, restrained color palette. Not photorealistic."},
+  stickman:{label:"Stickman",prompt:"Minimalist stickman with a consistent character design in every scene: same simple line-drawn body, head and body proportions, facial style, and line weight. Only pose, gesture, and expression may change. Let the background, setting, props, colors, and composition vary freely to match the scene. Not photorealistic."},
   "2d":{label:"Ilustrasi 2D",prompt:"Use polished 2D flat vector illustration, clean shapes, crisp outlines, balanced colors, simple readable composition, consistent illustrated characters. Not photorealistic or 3D."},
   "3d":{label:"Animasi 3D",prompt:"Use high-quality stylized 3D animated film visuals, appealing dimensional characters, soft global illumination, detailed but friendly materials, expressive poses, consistent character design."},
   anime:{label:"Anime",prompt:"Use high-quality Japanese anime illustration style, expressive character design, refined line art, cinematic anime lighting, rich but controlled colors, consistent characters."},

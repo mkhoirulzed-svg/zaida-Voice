@@ -70,7 +70,8 @@ export async function onRequestPost({ request, env }) {
   const model = useOpenRouter ? (env.ZAIDA_IMAGE_STUDIO_EDIT_MODEL || OPENROUTER_EDIT_MODEL) : (env.ZAIDA_IMAGE_STUDIO_KIOSAPI_EDIT_MODEL || EDIT_MODEL);
   const providerPriceIdr = Math.max(1, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_PRICE_IDR) || 2500);
   const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
-  const reserveCeilingIdr = Math.max(providerPriceIdr, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_MAX_COST_IDR) || 5000);\n  const reserveAmount = Math.ceil(reserveCeilingIdr * markup) + 1;
+  const reserveCeilingIdr = Math.max(providerPriceIdr, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_MAX_COST_IDR) || 5000);
+  const reserveAmount = Math.ceil(reserveCeilingIdr * markup) + 1;
   let reservation = null, settled = false, providerResponded = false;
 
   try {
@@ -83,7 +84,8 @@ export async function onRequestPost({ request, env }) {
       ? { model, prompt, aspect_ratio: "1:1", resolution: "1K", n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
       : { model, prompt, images: [body.referenceImage], n: 1 };
 
-    let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";\n    let modelUsed = model;
+    let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";
+    let modelUsed = model;
     let upstream = await fetch(useOpenRouter ? "https://openrouter.ai/api/v1/images" : "https://api.kiosapi.id/v1/images/edits", {
       method: "POST",
       headers: {
@@ -97,10 +99,11 @@ export async function onRequestPost({ request, env }) {
 
     if (!upstream.ok && useOpenRouter && env.KIOSAPI_API_KEY) {
       providerUsed = "kiosapi";
+      modelUsed = env.ZAIDA_IMAGE_STUDIO_KIOSAPI_EDIT_MODEL || EDIT_MODEL;
       upstream = await fetch("https://api.kiosapi.id/v1/images/edits", {
         method: "POST",
         headers: { "Authorization": "Bearer " + env.KIOSAPI_API_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: modelUsed, prompt, images: [reference.base64], n: 1 })
+        body: JSON.stringify({ model: modelUsed, prompt, images: [body.referenceImage], n: 1 })
       });
       data = await readJson(upstream);
     }

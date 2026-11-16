@@ -1,6 +1,6 @@
 const $ = id => document.getElementById(id);
 const studios = {
- edit:{title:"Edit Foto",description:"Pilih jenis perbaikan atau perubahan yang ingin dilakukan.",templates:[["restore","Perbaiki Foto Lama","Pulihkan foto lama dan kurangi kerusakan visual.","↗",true],["enhance","Perjelas Foto","Tingkatkan kejernihan dan detail foto.","✧",true],["background","Ganti Background","Ganti latar foto dengan suasana pilihan.","▧",true],["remove","Hapus Objek","Hilangkan objek yang mengganggu dari foto.","⌫",true],["lighting","Perbaiki Pencahayaan","Atur pencahayaan agar foto terlihat lebih seimbang.","☼",true],["style","Ubah Gaya Foto","Terapkan gaya visual baru pada foto.","◈",true]]},
+ edit:{title:"Edit Foto",description:"Pilih jenis perbaikan atau perubahan yang ingin dilakukan.",templates:[["restore","Perbaiki Foto Lama","Pulihkan foto lama dan kurangi kerusakan visual.","↗",true],["enhance","Perjelas Foto","Tingkatkan kejernihan dan detail foto.","✧",true],["background","Ganti Background","Ganti latar foto dengan suasana pilihan.","▧",true],["remove","Hapus Objek","Hilangkan objek yang mengganggu dari foto.","⌫",true],["lighting","Perbaiki Pencahayaan","Atur pencahayaan agar foto terlihat lebih seimbang.","☼",true],["style","Ubah Gaya Foto","Terapkan gaya visual baru pada foto.","◈",true],["free","Edit Bebas","Tulis sendiri perubahan yang kamu inginkan.","✎",true]]},
  product:{title:"Foto Produk",description:"Buat foto produk yang siap digunakan untuk katalog dan promosi.",templates:[["clean","Katalog Putih","Foto produk dengan latar putih bersih.","▣",true],["premium","Studio Premium","Tampilan produk dengan pencahayaan komersial premium.","✦",true],["lifestyle","Lifestyle","Tempatkan produk dalam suasana penggunaan yang natural.","⌂",true],["advert","Iklan Produk","Visual promosi produk dengan komposisi menarik.","▤",true],["medical","Medical Product","Foto profesional khusus alat kesehatan.","✚",true],["marketplace","Marketplace","Foto produk yang rapi untuk katalog toko online.","▦",true]]},
  poster:{title:"Poster & Konten",description:"Pilih format konten yang ingin kamu buat.",templates:[["feed","Instagram Feed","Konten persegi atau portrait untuk feed.","▧",false],["story","Instagram Story","Konten vertikal untuk story dan reels cover.","▤",false],["banner","Banner Promosi","Banner untuk toko, layanan, atau kampanye.","▰",false],["thumbnail","Thumbnail YouTube","Visual thumbnail dengan fokus pada headline.","▶",false],["promo","Poster Promosi","Poster promosi dengan ruang untuk informasi utama.","✦",false]]},
  education:{title:"Ilustrasi & Edukasi",description:"Buat visual penjelasan yang mudah dipahami.",templates:[["medical","Ilustrasi Medis","Visual anatomi dan tindakan untuk edukasi.","✚",false],["nursing","Prosedur Keperawatan","Ilustrasi langkah tindakan keperawatan.","＋",false],["infographic","Infografis","Ringkas informasi menjadi visual terstruktur.","▦",false],["patient","Edukasi Pasien","Materi visual sederhana untuk pasien dan keluarga.","♡",false]]},
@@ -11,9 +11,9 @@ const studios = {
 };
 let activeStudio=null,activeTemplate=null,referenceUrl="";
 function openCatalog(id){const studio=studios[id];if(!studio)return;activeStudio=id;$("imageStudioGrid").hidden=true;document.querySelector(".image-studio-lower-links").hidden=true;$("imageStudioCatalog").hidden=false;$("imageStudioWorkspace").hidden=true;$("imageStudioCatalogTitle").textContent=studio.title;$("imageStudioCatalogDescription").textContent=studio.description;$("imageStudioCatalogLabel").textContent=studio.templates.length+" template";$("imageTemplateGrid").innerHTML=studio.templates.map(t=>'<button class="image-template-card" type="button" data-image-template="'+t[0]+'"><span class="image-template-art">'+t[3]+'</span><strong>'+t[1]+'</strong><small>'+t[2]+'</small></button>').join("");$("imageStudioCatalog").scrollIntoView({behavior:"smooth",block:"start"});}
-function openTemplate(id){const studio=studios[activeStudio],template=studio?.templates.find(t=>t[0]===id);if(!template)return;activeTemplate=template;$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=false;$("imageTemplateSelectedLabel").textContent=template[1];$("imageWorkspaceTitle").textContent=template[1];$("imageWorkspaceDescription").textContent=template[2];$("imageReferenceRequired").textContent=template[4]?"Diperlukan":"Opsional";$("imageReferenceInput").required=Boolean(template[4]);$("imageReferenceInput").value="";$("imageReferencePreview").hidden=true;$("imageReferencePreview").replaceChildren();if(referenceUrl)URL.revokeObjectURL(referenceUrl);referenceUrl="";renderTemplateFields();$("imageStudioStatus").textContent="Template dipilih. Mesin generator akan dihubungkan pada tahap berikutnya.";$("imageStudioWorkspace").scrollIntoView({behavior:"smooth",block:"start"});}
-function renderTemplateFields(){const studio=activeStudio;let fields=[];if(studio==="product")fields=[["Nama produk","text","Contoh: Pulse Oximeter"],["Informasi produk","textarea","Fitur atau informasi yang harus terlihat"],["Suasana foto","select",["Otomatis","Minimalis","Klinis","Premium","Lifestyle"]]];else if(studio==="poster")fields=[["Judul utama","text","Tuliskan judul poster"],["Teks pendukung","textarea","Informasi yang ingin ditampilkan"],["Warna dominan","select",["Otomatis","Ungu","Biru","Hijau","Hangat","Monokrom"]]];else if(studio==="education")fields=[["Topik edukasi","text","Contoh: Teknik injeksi insulin"],["Poin penting","textarea","Masukkan informasi yang harus dijelaskan"],["Gaya ilustrasi","select",["Ilustrasi medis","Flat illustration","3D edukasi","Infografis"]]];else if(studio==="free")fields=[["Ide gambar","textarea","Jelaskan gambar yang ingin dibuat"]];else if(studio==="edit")fields=[["Apa yang ingin diubah?","textarea","Jelaskan perubahan yang diinginkan"]];else if(studio==="portrait")fields=[["Gaya potret","select",["Profesional","Formal","Editorial","Outdoor","Kreatif"]]];else if(studio==="character")fields=[["Deskripsi karakter","textarea","Ceritakan karakter yang ingin dibuat"],["Gaya visual","select",["3D","Kartun","Anime","Ilustrasi","Minimalis"]]];else if(studio==="brand")fields=[["Nama brand","text","Nama usaha atau proyek"],["Bidang usaha","text","Contoh: kesehatan, kuliner, teknologi"],["Karakter brand","select",["Modern","Minimalis","Premium","Ramah","Playful"]]];$("imageTemplateFields").innerHTML=fields.map((f,i)=>{const id="imageField"+i;if(f[1]==="select")return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><select id="'+id+'">'+f[2].map(v=>'<option>'+v+'</option>').join("")+'</select></div>';if(f[1]==="textarea")return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><textarea id="'+id+'" rows="3" placeholder="'+f[2]+'"></textarea></div>';return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><input id="'+id+'" type="text" placeholder="'+f[2]+'"></div>';}).join("");}
-function backToHome(){$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=true;$("imageStudioGrid").hidden=false;document.querySelector(".image-studio-lower-links").hidden=false;activeStudio=null;activeTemplate=null;$("imageStudioPage").scrollIntoView({behavior:"smooth",block:"start"});}
+function openTemplate(id){const studio=studios[activeStudio],template=studio?.templates.find(t=>t[0]===id);if(!template)return;activeTemplate=template;$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=false;$("imageTemplateSelectedLabel").textContent=template[1];$("imageWorkspaceTitle").textContent=template[1];$("imageWorkspaceDescription").textContent=template[2];$("imageReferenceRequired").textContent=template[4]?"Diperlukan":"Opsional";$("imageReferenceInput").required=Boolean(template[4]);$("imageReferenceInput").value="";$("imageReferencePreview").hidden=true;$("imageReferencePreview").replaceChildren();if(referenceUrl)URL.revokeObjectURL(referenceUrl);referenceUrl="";renderTemplateFields();$("imageStudioStatus").textContent="Template siap. Unggah foto dan jalankan proses edit.";$("imageStudioResult").hidden=true;$("imageStudioEmptyResult").hidden=false;$("imageStudioWorkspace").scrollIntoView({behavior:"smooth",block:"start"});}
+function renderTemplateFields(){const studio=activeStudio;let fields=[];if(studio==="product")fields=[["Nama produk","text","Contoh: Pulse Oximeter"],["Informasi produk","textarea","Fitur atau informasi yang harus terlihat"],["Suasana foto","select",["Otomatis","Minimalis","Klinis","Premium","Lifestyle"]]];else if(studio==="poster")fields=[["Judul utama","text","Tuliskan judul poster"],["Teks pendukung","textarea","Informasi yang ingin ditampilkan"],["Warna dominan","select",["Otomatis","Ungu","Biru","Hijau","Hangat","Monokrom"]]];else if(studio==="education")fields=[["Topik edukasi","text","Contoh: Teknik injeksi insulin"],["Poin penting","textarea","Masukkan informasi yang harus dijelaskan"],["Gaya ilustrasi","select",["Ilustrasi medis","Flat illustration","3D edukasi","Infografis"]]];else if(studio==="free")fields=[["Ide gambar","textarea","Jelaskan gambar yang ingin dibuat"]];else if(studio==="edit")fields=activeTemplate?.[0]==="free"?[["Instruksi edit bebas","textarea","Contoh: ganti pakaian menjadi jas hitam, pertahankan wajah dan ekspresi asli"]]:[["Instruksi tambahan (opsional)","textarea","Tambahkan detail perubahan yang kamu inginkan"]];else if(studio==="portrait")fields=[["Gaya potret","select",["Profesional","Formal","Editorial","Outdoor","Kreatif"]]];else if(studio==="character")fields=[["Deskripsi karakter","textarea","Ceritakan karakter yang ingin dibuat"],["Gaya visual","select",["3D","Kartun","Anime","Ilustrasi","Minimalis"]]];else if(studio==="brand")fields=[["Nama brand","text","Nama usaha atau proyek"],["Bidang usaha","text","Contoh: kesehatan, kuliner, teknologi"],["Karakter brand","select",["Modern","Minimalis","Premium","Ramah","Playful"]]];$("imageTemplateFields").innerHTML=fields.map((f,i)=>{const id="imageField"+i;if(f[1]==="select")return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><select id="'+id+'">'+f[2].map(v=>'<option>'+v+'</option>').join("")+'</select></div>';if(f[1]==="textarea")return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><textarea id="'+id+'" rows="3" placeholder="'+f[2]+'"></textarea></div>';return '<div class="image-template-field"><label for="'+id+'">'+f[0]+'</label><input id="'+id+'" type="text" placeholder="'+f[2]+'"></div>';}).join("");}
+function backToHome(){$("imageStudioCatalog").hidden=true;$("imageStudioWorkspace").hidden=true;$("imageStudioGrid").hidden=false;document.querySelector(".image-studio-lower-links").hidden=false;activeStudio=null;activeTemplate=null;$("imageStudioPage").scrollIntoView({behavior:"smooth",block:"start"});$("imageStudioResult").hidden=true;$("imageStudioEmptyResult").hidden=false;}
 $("imageStudioGrid")?.addEventListener("click",e=>{const b=e.target.closest("[data-image-studio]");if(b)openCatalog(b.dataset.imageStudio);});
 $("imageTemplateGrid")?.addEventListener("click",e=>{const b=e.target.closest("[data-image-template]");if(b)openTemplate(b.dataset.imageTemplate);});
 document.querySelector("[data-image-back]")?.addEventListener("click",backToHome);
@@ -107,7 +107,82 @@ $("imageAuthResend")?.addEventListener("click", async () => {
     $("imageAuthMessage").textContent = "Email verifikasi telah dikirim ulang.";
   } catch (error) { $("imageAuthMessage").textContent = error.message; }
 });
-onAuthStateChanged(imageAuth, async user => {
+
+async function imageFileToDataUrl(file) {
+  if (!file || !["image/png","image/jpeg","image/webp"].includes(file.type)) throw new Error("Gunakan foto PNG, JPEG, atau WebP.");
+  if (file.size > 12 * 1024 * 1024) throw new Error("Ukuran foto maksimal 12 MB.");
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext("2d", { alpha: false });
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  if (!blob) throw new Error("Foto tidak dapat diproses di perangkat ini.");
+  if (blob.size > 2 * 1024 * 1024) throw new Error("Foto terlalu besar setelah kompresi. Pilih foto lain.");
+  return await new Promise((resolve,reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Gagal membaca foto."));
+    reader.readAsDataURL(blob);
+  });
+}
+$("imageStudioGenerate")?.addEventListener("click", async () => {
+  if (!imageCurrentUser || !imageAuth.currentUser || !imageAuth.currentUser.emailVerified) {
+    $("imageStudioStatus").textContent = "Masuk dengan akun terverifikasi untuk menggunakan AI.";
+    showImageAuth("login");
+    return;
+  }
+  const file = $("imageReferenceInput").files?.[0];
+  if (!file) { $("imageStudioStatus").textContent = "Silakan unggah foto terlebih dahulu."; $("imageReferenceInput").focus(); return; }
+  const extraPrompt = $("imageField0")?.value?.trim() || "";
+  if (activeTemplate?.[0] === "free" && extraPrompt.length < 8) {
+    $("imageStudioStatus").textContent = "Tuliskan instruksi edit bebas minimal 8 karakter.";
+    $("imageField0")?.focus();
+    return;
+  }
+  const button = $("imageStudioGenerate");
+  button.disabled = true;
+  button.textContent = "Menyiapkan foto…";
+  $("imageStudioStatus").textContent = "Mengompres foto dan memeriksa sesi akun…";
+  try {
+    const referenceImage = await imageFileToDataUrl(file);
+    const token = await imageAuth.currentUser.getIdToken(true);
+    const requestId = crypto.randomUUID();
+    button.textContent = "Sedang mengedit…";
+    $("imageStudioStatus").textContent = "Memeriksa kredit dan mengirim foto ke mesin AI. Jangan tutup halaman.";
+    const response = await fetch("/api/image-studio/edit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ requestId, templateId: activeTemplate?.[0] || "free", prompt: extraPrompt, referenceImage })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Proses edit foto gagal (" + response.status + ").");
+    if (!result.image?.b64 || !result.image?.mime || !result.image?.assetId) throw new Error("Server tidak mengembalikan hasil gambar yang lengkap.");
+    const dataUrl = "data:" + result.image.mime + ";base64," + result.image.b64;
+    $("imageStudioResultImage").src = dataUrl;
+    $("imageStudioDownload").href = dataUrl;
+    $("imageStudioDownload").download = "zaida-edit-" + result.image.assetId.slice(0,8) + (result.image.mime === "image/jpeg" ? ".jpg" : result.image.mime === "image/webp" ? ".webp" : ".png");
+    $("imageStudioResultMeta").textContent = (result.provider || "AI") + " · " + Number(result.creditsCharged || 0).toLocaleString("id-ID") + " kredit";
+    $("imageStudioEmptyResult").hidden = true;
+    $("imageStudioResult").hidden = false;
+    const credits = Number(result.creditsRemaining);
+    if (Number.isFinite(credits)) {
+      const formatted = credits.toLocaleString("id-ID");
+      $("imageCreditBalance").textContent = "Kredit: " + formatted;
+      $("sidebarCreditBalance").textContent = formatted + " kredit";
+    }
+    $("imageStudioStatus").textContent = "Foto berhasil diedit dan disimpan ke Media Library.";
+  } catch (error) {
+    $("imageStudioStatus").textContent = error.message || "Tidak dapat mengedit foto.";
+  } finally {
+    button.disabled = false;
+    button.innerHTML = 'Edit Foto <b>→</b>';
+  }
+});
+\nonAuthStateChanged(imageAuth, async user => {
   imageCurrentUser = user && user.emailVerified ? user : null;
   const allowed = Boolean(imageCurrentUser);
   const display = allowed ? (user.displayName || user.email || "U").slice(0,1).toUpperCase() : "Z";

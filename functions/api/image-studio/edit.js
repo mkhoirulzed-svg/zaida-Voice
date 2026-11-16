@@ -4,7 +4,7 @@ import {
 } from "../../lib/firebase.js";
 
 const EDIT_MODEL = "google/nano-banana-2";
-const OPENROUTER_EDIT_MODEL = "google/gemini-2.5-flash-image";
+const OPENROUTER_EDIT_MODEL = "bytedance-seed/seedream-5-0-flash";
 const jsonError = (message, status = 502) => Response.json({ error: message }, {
   status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" }
 });
@@ -70,7 +70,7 @@ export async function onRequestPost({ request, env }) {
   const model = useOpenRouter ? (env.ZAIDA_IMAGE_STUDIO_EDIT_MODEL || OPENROUTER_EDIT_MODEL) : (env.ZAIDA_IMAGE_STUDIO_KIOSAPI_EDIT_MODEL || EDIT_MODEL);
   const providerPriceIdr = Math.max(1, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_PRICE_IDR) || 2500);
   const markup = Math.max(1, Number(env.ZAIDA_AI_MARKUP) || 1.5);
-  const reserveAmount = Math.ceil(providerPriceIdr * markup) + 1;
+  const reserveCeilingIdr = Math.max(providerPriceIdr, Number(env.ZAIDA_IMAGE_STUDIO_EDIT_MAX_COST_IDR) || 5000);\n  const reserveAmount = Math.ceil(reserveCeilingIdr * markup) + 1;
   let reservation = null, settled = false, providerResponded = false;
 
   try {
@@ -80,21 +80,11 @@ export async function onRequestPost({ request, env }) {
     });
 
     const imageRequest = useOpenRouter
-      ? {
-          model,
-          modalities: ["image", "text"],
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: body.referenceImage } }
-            ]
-          }]
-        }
+      ? { model, prompt, aspect_ratio: "1:1", resolution: "1K", n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
       : { model, prompt, images: [reference.base64], n: 1 };
 
     let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";
-    let upstream = await fetch(useOpenRouter ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.kiosapi.id/v1/images/edits", {
+    let upstream = await fetch(useOpenRouter ? "https://openrouter.ai/api/v1/images" : "https://api.kiosapi.id/v1/images/edits", {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + (useOpenRouter ? env.OPENROUTER_API_KEY : env.KIOSAPI_API_KEY),

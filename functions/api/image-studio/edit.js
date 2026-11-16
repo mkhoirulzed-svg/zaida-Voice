@@ -57,6 +57,7 @@ export async function onRequestPost({ request, env }) {
   const baseInstruction = TEMPLATE_INSTRUCTIONS[templateId] || "Edit the supplied photograph according to the user's instructions. Preserve the original person's identity, face, body proportions and all details not explicitly requested to change.";
   const prompt = [
     baseInstruction,
+    "CRITICAL IMAGE PRESERVATION: keep the exact original image aspect ratio, canvas proportions, crop, framing, camera viewpoint and composition. Do not convert to square, portrait, story or landscape. Do not crop, pad, stretch, zoom, reframe or reposition the image. Return the edited image using the same width-to-height ratio as the input photo.",
     userPrompt ? "USER INSTRUCTIONS: " + userPrompt : "",
     "Important: treat the uploaded image as the source photograph. This is an image-edit task, not text-to-image. Preserve identity and all unrequested details. Do not add text, logos or watermarks. Return one edited image."
   ].filter(Boolean).join("\n\n");
@@ -81,7 +82,7 @@ export async function onRequestPost({ request, env }) {
     });
 
     const imageRequest = useOpenRouter
-      ? { model, prompt, aspect_ratio: "1:1", resolution: "1K", n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
+      ? { model, prompt, n: 1, input_references: [{ type: "image_url", image_url: { url: body.referenceImage } }] }
       : { model, prompt, images: [body.referenceImage], n: 1 };
 
     let providerUsed = useOpenRouter ? "openrouter" : "kiosapi";

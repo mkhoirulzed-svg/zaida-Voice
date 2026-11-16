@@ -54,7 +54,11 @@ export async function onRequestPost({ request, env }) {
   if (!TEMPLATE_INSTRUCTIONS[templateId] && templateId !== "free") return jsonError("Template edit tidak dikenal.", 400);
   if (templateId === "free" && userPrompt.length < 8) return jsonError("Tulis instruksi edit terlebih dahulu.", 400);
 
-  const baseInstruction = TEMPLATE_INSTRUCTIONS[templateId] || "Edit the supplied photograph according to the user's instructions. Preserve the original person's identity, face, body proportions and all details not explicitly requested to change.";
+  const baseInstruction = templateId === "background"
+    ? (userPrompt
+      ? "BACKGROUND REPLACEMENT MODE. Replace ONLY the existing background with the exact location, scene and atmosphere requested by the user. The user's requested background description is the highest priority and overrides any generic studio-background suggestion. Preserve the original foreground subject exactly: same identity, face, hair, expression, pose, clothing, body proportions, camera angle, framing and position. Keep fine hair edges natural, remove the old background cleanly, and blend the subject into the new environment with realistic lighting, perspective and contact shadows. Do not leave any part of the old background. Do not use a studio, gray, white or plain backdrop unless the user explicitly asks for one."
+      : TEMPLATE_INSTRUCTIONS.background)
+    : (TEMPLATE_INSTRUCTIONS[templateId] || "Edit the supplied photograph according to the user's instructions. Preserve the original person's identity, face, body proportions and all details not explicitly requested to change.");
   const sourceWidth = Math.max(1, Math.min(12000, Math.round(Number(body.sourceDimensions?.width) || 1)));
   const sourceHeight = Math.max(1, Math.min(12000, Math.round(Number(body.sourceDimensions?.height) || 1)));
   const sourceRatio = sourceWidth / sourceHeight;
@@ -63,7 +67,7 @@ export async function onRequestPost({ request, env }) {
   const prompt = [
     baseInstruction,
     `CRITICAL SOURCE CANVAS: the uploaded photo is ${sourceWidth}x${sourceHeight} pixels (${sourceWidth >= sourceHeight ? "landscape" : "portrait"} orientation; aspect ratio ${sourceWidth}:${sourceHeight}). Return the edited image in the same orientation and closest matching aspect ratio (${outputAspectRatio}). Never rotate, turn sideways, crop, pad, stretch, zoom, reframe, or reposition the original composition. Do not default to square. Preserve the original camera framing and all edges unless the user explicitly asks for a composition change.`,
-    userPrompt ? "USER INSTRUCTIONS: " + userPrompt : "",
+    userPrompt ? "USER INSTRUCTIONS (HIGHEST PRIORITY — follow this requested change exactly): " + userPrompt : "",
     "Important: treat the uploaded image as the source photograph. This is an image-edit task, not text-to-image. Preserve identity and all unrequested details. Do not add text, logos or watermarks. Return one edited image."
   ].filter(Boolean).join("\n\n");
 

@@ -1283,3 +1283,7 @@ button.media-upload-button:active{transform:translateY(1px)}
 .admin-provider-toolbar label{display:flex;align-items:center;gap:8px;color:#777780;font-size:13px}
 .admin-provider-toolbar select{border:1px solid #e5e2ec;border-radius:10px;background:#fff;padding:9px 12px;color:#333}
 @media(max-width:560px){.admin-period-grid{grid-template-columns:1fr 1fr;gap:8px}.admin-period-grid .admin-metric{padding:13px}.admin-period-grid .admin-metric b{font-size:18px}.admin-period-grid .admin-metric small{font-size:10px}.admin-period-heading,.admin-provider-toolbar{align-items:flex-start;flex-direction:column}}
+
+
+.admin-revenue-metric b{color:#26845b!important}
+.admin-revenue-note{margin:-8px 0 20px;color:#777780;font-size:12px;line-height:1.55}

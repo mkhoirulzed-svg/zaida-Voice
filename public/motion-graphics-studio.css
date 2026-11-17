@@ -36,7 +36,7 @@
 .motion-scene-card select{height:34px;font-size:9px;padding:0 6px}
 .motion-live{display:flex;align-items:center;gap:8px;font-size:9px;color:#55a88f;font-weight:800;letter-spacing:1px}
 .motion-stage-wrap{position:relative;display:grid;place-items:center;background:#f0f0f5;border-radius:13px;overflow:hidden;min-height:320px}
-#motionCanvas{display:block;width:min(100%,330px);height:auto;max-height:65vh;aspect-ratio:9/16;background:#f7f6f1;border-radius:7px;box-shadow:0 8px 30px #20212a1a}
+#motionCanvas{display:block;width:min(100%,330px);height:auto;max-height:65vh;aspect-ratio:auto;background:#f7f6f1;border-radius:7px;box-shadow:0 8px 30px #20212a1a}
 .motion-stage-empty{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:8px;color:#999aa4;pointer-events:none}
 .motion-stage-empty[hidden]{display:none}.motion-stage-empty div{font-size:28px;color:#8a80dc}.motion-stage-empty b{font-size:12px;color:#565762}.motion-stage-empty span{font-size:10px}
 .motion-player-controls{display:flex;align-items:center;gap:9px;margin-top:12px}.motion-player-controls button{width:30px;height:30px;border:1px solid #e8e8ee;border-radius:9px;background:#fff;color:#60616c;font-size:17px}.motion-player-controls .motion-play{background:#766bd7;border-color:#766bd7;color:#fff;font-size:11px}

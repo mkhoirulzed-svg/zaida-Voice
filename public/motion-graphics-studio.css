@@ -15,7 +15,7 @@
 .motion-step{width:31px;height:31px;display:grid;place-items:center;border-radius:10px;background:#f0effb;color:#7267d2;font-size:10px;font-weight:800}
 .motion-panel-head h2{font-size:15px;margin:0 0 3px;letter-spacing:-.02em}.motion-panel-head p{font-size:10px;color:#92939c;margin:0}
 .motion-panel label{display:block;font-size:9px;letter-spacing:1px;font-weight:800;color:#777985;margin:13px 0 7px}
-#motionScript{width:100%;min-height:180px;resize:vertical;border:1px solid #e7e7ed;border-radius:12px;background:#fcfcfd;padding:13px;color:#30313a;font:13px/1.7 inherit;outline:none}
+#motionScript{width:100%;min-height:180px;resize:vertical;border:1px solid #e7e7ed;border-radius:12px;background:#fcfcfd;padding:13px;color:#30313a;font:inherit;font-size:13px;line-height:1.7;outline:none}
 #motionScript:focus,.motion-panel select:focus{border-color:#a59be9;box-shadow:0 0 0 3px #8c80e51c}
 .motion-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .motion-panel select{width:100%;height:40px;border:1px solid #e7e7ed;border-radius:10px;background:#fff;padding:0 10px;color:#353640;font-size:11px;outline:none}

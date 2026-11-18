@@ -13,7 +13,7 @@ function toast(message){const el=$("motionToast");el.textContent=message;el.clas
 
 function showAuth(mode="login"){authMode=mode;$("motionAuthTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice.";$("motionAuthDescription").textContent=mode==="login"?"Masuk untuk menggunakan Motion Graphics Studio.":"Daftar menggunakan email aktif."; $("motionAuthSubmit").innerHTML=mode==="login"?'Masuk <b>→</b>':'Buat akun <b>→</b>';$("motionAuthSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk";$("motionAuthMessage").textContent="";$("motionAuthResend").hidden=true;$("motionAuthOverlay").hidden=false;}
 function closeAuth(){$("motionAuthOverlay").hidden=true;}
-$("motionAuthButton").addEventListener("click",()=>auth.currentUser?.emailVerified?signOut(auth):showAuth());
+$("motionAuthButton").addEventListener("click",()=>user?signOut(auth):showAuth());
 $("motionAuthClose").addEventListener("click",closeAuth);
 $("motionAuthOverlay").addEventListener("click",e=>{if(e.target===$("motionAuthOverlay"))closeAuth()});
 $("motionAuthSwitch").addEventListener("click",()=>showAuth(authMode==="login"?"register":"login"));
@@ -48,7 +48,33 @@ $("mobileMenu").addEventListener("click",()=>setSidebarOpen(!$("sidebar").classL
 $("sidebarClose").addEventListener("click",()=>setSidebarOpen(false));
 $("motionSidebarBackdrop").addEventListener("click",()=>setSidebarOpen(false));
 document.querySelectorAll("#sidebar .nav-item, #sidebar .brand").forEach(link=>link.addEventListener("click",()=>setSidebarOpen(false)));
-async function handleAuthState(current){user=current&&current.emailVerified?current:null;$("motionAuthButton").textContent=user?(user.email||"Akun")+" · Keluar":"Masuk / Daftar";
-$("motionProfileName").textContent=user?(user.displayName||"Pengguna"):"Pengunjung";$("motionProfileEmail").textContent=user?(user.email||"Akun terverifikasi"):(current?"Email belum diverifikasi":"Belum masuk");$("motionProfileAvatar").textContent=user?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";$("motionTopAvatar").textContent=$("motionProfileAvatar").textContent;$("generateStoryboard").disabled=!user;if(!user){status(current?"Email belum diverifikasi. Klik Masuk/Daftar untuk mengirim ulang verifikasi.":"Silakan masuk ke akun ZAIDA Voice untuk menggunakan AI Director.");$("creditBalance").textContent=current?"Verifikasi email":"Belum masuk";return}status("Akun terhubung. Siap membuat storyboard.");try{const data=await api("/api/account");$("creditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit"}catch(error){$("creditBalance").textContent="Saldo tidak tersedia";status(error.message,true)}}
-onAuthStateChanged(auth,handleAuthState);
+onAuthStateChanged(auth,async current=>{
+  user=current&&current.emailVerified?current:null;
+  const allowed=Boolean(user);
+  const display=allowed?(current.displayName||current.email||"U").slice(0,1).toUpperCase():"Z";
+  $("motionAuthButton").textContent=allowed?(current.email||"Akun")+" · Keluar":"Masuk / Daftar";
+  $("motionProfileName").textContent=allowed?(current.displayName||"Pengguna"):"Pengunjung";
+  $("motionProfileEmail").textContent=allowed?"Akun terverifikasi":(current?"Email belum diverifikasi":"Belum masuk");
+  $("motionProfileAvatar").textContent=display;
+  $("motionTopAvatar").textContent=display;
+  $("motionAuthResend").hidden=!(current&&!current.emailVerified);
+  $("generateStoryboard").disabled=!allowed;
+  if(!allowed){
+    status(current?"Email belum diverifikasi. Klik Masuk/Daftar untuk mengirim ulang verifikasi.":"Silakan masuk ke akun ZAIDA Voice untuk menggunakan AI Director.");
+    $("creditBalance").textContent=current?"Verifikasi email":"Belum masuk";
+    return;
+  }
+  status("Akun terhubung. Siap membuat storyboard.");
+  try{
+    const token=await current.getIdToken();
+    const response=await fetch("/api/account",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||"Saldo tidak dapat dimuat.");
+    $("creditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit";
+  }catch(error){
+    $("creditBalance").textContent="Saldo tidak tersedia";
+    status(error.message,true);
+    console.warn("Motion Graphics account refresh:",error);
+  }
+});
 resizeCanvas();

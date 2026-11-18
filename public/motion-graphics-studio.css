@@ -51,3 +51,7 @@
 @media(max-width:700px){.motion-workspace{padding:22px 13px 35px}.motion-right{display:grid;grid-template-columns:1fr}.preview-panel{grid-row:auto}.motion-panel{padding:14px}.motion-scene-card{grid-template-columns:34px minmax(0,1fr)}.motion-scene-card select{grid-column:2}.motion-stage-wrap{min-height:260px}.motion-heading h1{font-size:35px}.motion-pill{font-size:8px}.motion-form-row{gap:8px}}
 
 .auth-overlay[hidden]{display:none!important}
+
+/* Native mobile dropdown must remain independently tappable. */
+.motion-scene-card select{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation;appearance:auto;-webkit-appearance:menulist;min-width:0}
+.motion-scene-copy{cursor:pointer;touch-action:manipulation}

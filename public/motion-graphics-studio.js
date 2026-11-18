@@ -2,7 +2,8 @@ import {initializeApp,getApps,getApp} from "https://www.gstatic.com/firebasejs/1
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {drawMotionFrame,inferMotionType} from "/motion-graphics-engine.js";
 import {renderMotionVideo} from "/motion-graphics-renderer.js";
-const firebaseConfig={apiKey:"AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",authDomain:"zaida-voice.firebaseapp.com",projectId:"zaida-voice",storageBucket:"zaida-voice.firebasestorage.app",messagingSenderId:"146292786794",appId:"1:146292786794:web:da865938c177b21d5d6c13"});
+const firebaseConfig={apiKey:"AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",authDomain:"zaida-voice.firebaseapp.com",projectId:"zaida-voice",storageBucket:"zaida-voice.firebasestorage.app",messagingSenderId:"146292786794",appId:"1:146292786794:web:da865938c177b21d5d6c13"};
+const firebaseApp=getApps().length?getApp():initializeApp(firebaseConfig);
 const auth=getAuth(firebaseApp),$=id=>document.getElementById(id);
 let user=null,authMode="login",scenes=[],audioFile=null,audioDuration=0,selected=0,playing=false,raf=0,playStart=0,playOffset=0,downloadUrl=null;
 const canvas=$("motionCanvas"),ctx=canvas.getContext("2d");
@@ -12,7 +13,7 @@ function toast(message){const el=$("motionToast");el.textContent=message;el.clas
 
 function showAuth(mode="login"){authMode=mode;$("motionAuthTitle").textContent=mode==="login"?"Selamat datang.":"Buat akun ZAIDA Voice.";$("motionAuthDescription").textContent=mode==="login"?"Masuk untuk menggunakan Motion Graphics Studio.":"Daftar menggunakan email aktif."; $("motionAuthSubmit").innerHTML=mode==="login"?'Masuk <b>→</b>':'Buat akun <b>→</b>';$("motionAuthSwitch").textContent=mode==="login"?"Belum punya akun? Daftar":"Sudah punya akun? Masuk";$("motionAuthMessage").textContent="";$("motionAuthResend").hidden=true;$("motionAuthOverlay").hidden=false;}
 function closeAuth(){$("motionAuthOverlay").hidden=true;}
-$("motionAuthButton").addEventListener("click",()=>auth.currentUser?signOut(auth):showAuth());
+$("motionAuthButton").addEventListener("click",()=>auth.currentUser?.emailVerified?signOut(auth):showAuth());
 $("motionAuthClose").addEventListener("click",closeAuth);
 $("motionAuthOverlay").addEventListener("click",e=>{if(e.target===$("motionAuthOverlay"))closeAuth()});
 $("motionAuthSwitch").addEventListener("click",()=>showAuth(authMode==="login"?"register":"login"));
@@ -43,5 +44,5 @@ $("nextScene").addEventListener("click",()=>{if(!scenes.length)return;stopPrevie
 $("exportMotion").addEventListener("click",exportVideo);
 $("mobileMenu").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
 $("sidebarClose").addEventListener("click",()=>$("sidebar").classList.remove("open"));
-onAuthStateChanged(auth,async current=>{user=current&&current.emailVerified?current:null;$("motionAuthButton").textContent=current?"Keluar":"Masuk / Daftar";$("generateStoryboard").disabled=!user;if(!user){status(current?"Email belum diverifikasi. Klik Masuk/Daftar untuk mengirim ulang verifikasi.":"Silakan masuk ke akun ZAIDA Voice untuk menggunakan AI Director.");$("creditBalance").textContent=current?"Verifikasi email":"Belum masuk";return}status("Akun terhubung. Siap membuat storyboard.");try{const data=await api("/api/account");$("creditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit"}catch(error){$("creditBalance").textContent="Saldo tidak tersedia";status(error.message,true)}});
+onAuthStateChanged(auth,async current=>{user=current&&current.emailVerified?current:null;$("motionAuthButton").textContent=user?"Keluar":"Masuk / Daftar";$("generateStoryboard").disabled=!user;if(!user){status(current?"Email belum diverifikasi. Klik Masuk/Daftar untuk mengirim ulang verifikasi.":"Silakan masuk ke akun ZAIDA Voice untuk menggunakan AI Director.");$("creditBalance").textContent=current?"Verifikasi email":"Belum masuk";return}status("Akun terhubung. Siap membuat storyboard.");try{const data=await api("/api/account");$("creditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit"}catch(error){$("creditBalance").textContent="Saldo tidak tersedia";status(error.message,true)}});
 resizeCanvas();

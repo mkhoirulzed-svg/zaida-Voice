@@ -9,7 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",
+  apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-aP8",
   authDomain: "zaida-voice.firebaseapp.com",
   projectId: "zaida-voice",
   storageBucket: "zaida-voice.firebasestorage.app",

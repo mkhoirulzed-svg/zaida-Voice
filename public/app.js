@@ -1004,3 +1004,7 @@ onAuthStateChanged(auth,user=>{
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }
 });
+
+// Allow standalone ZAIDA workspace pages to deep-link into the requested SPA section.
+const initialWorkspaceView=new URLSearchParams(location.search).get("view");
+if(initialWorkspaceView){showView(initialWorkspaceView);}

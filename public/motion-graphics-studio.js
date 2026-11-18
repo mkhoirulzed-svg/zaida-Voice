@@ -46,7 +46,7 @@ $("mobileMenu").addEventListener("click",()=>setSidebarOpen(!$("sidebar").classL
 $("sidebarClose").addEventListener("click",()=>setSidebarOpen(false));
 $("motionSidebarBackdrop").addEventListener("click",()=>setSidebarOpen(false));
 document.querySelectorAll("#sidebar .nav-item, #sidebar .brand").forEach(link=>link.addEventListener("click",()=>setSidebarOpen(false)));
-onAuthStateChanged(auth,async current=>{
+authReady.then(()=>onAuthStateChanged(auth,async current=>{
   user=current&&current.emailVerified?current:null;
   const allowed=Boolean(user);
   const display=allowed?(current.displayName||current.email||"U").slice(0,1).toUpperCase():"Z";

@@ -1,10 +1,11 @@
-import {drawMotionFrame} from "/motion-graphics-engine.js?v=20261118-svg-ecg-test";
+import {drawMotionFrame,prepareMotionAssets} from "/motion-graphics-engine.js?v=20261118-svg-ecg-test";
 const VERSION="1.61.6";let libraryPromise;
 export async function renderMotionVideo({scenes,audioFile=null,format="9:16",onProgress=()=>{}}){
  if(!Array.isArray(scenes)||scenes.length<2)throw new Error("Storyboard minimal 2 adegan diperlukan.");
  if(!["9:16","16:9"].includes(format))throw new Error("Format video tidak valid.");
  if(typeof VideoEncoder==="undefined"||typeof VideoFrame==="undefined")throw new Error("Browser belum mendukung WebCodecs. Gunakan Chrome versi terbaru.");
- onProgress({phase:"loading",message:"Memuat mesin ekspor MP4…"});
+ onProgress({phase:"loading",message:"Memuat aset SVG dan mesin ekspor MP4…"});
+ await prepareMotionAssets();
  if(!libraryPromise)libraryPromise=import("https://esm.sh/mediabunny@"+VERSION);
  const mb=await libraryPromise,portrait=format==="9:16",width=portrait?720:1280,height=portrait?1280:720,fps=30;
  const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{alpha:false});

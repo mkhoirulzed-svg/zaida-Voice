@@ -11,16 +11,16 @@ function brain(ctx,cx,cy,s,time){ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);
 function bloodCells(ctx,cx,cy,s,time){for(let i=0;i<12;i++){const a=i*Math.PI*2/12+time*.65,r=95+Math.sin(time*2+i)*12,x=cx+Math.cos(a)*r*s,y=cy+Math.sin(a)*r*s;ctx.fillStyle=i%3?COLORS.coral:COLORS.blue;ctx.beginPath();ctx.ellipse(x,y,13*s,9*s,Math.sin(a),0,Math.PI*2);ctx.fill()}}
 function chart(ctx,cx,cy,s,time){const vals=[.35,.58,.44,.8,.65,.94];const bw=42*s;vals.forEach((v,i)=>{const h=v*220*s*(.96+.04*Math.sin(time*2+i));rounded(ctx,cx+(i-3)*58*s,cy-h/2,bw,h,9,COLORS.teal)});ctx.strokeStyle="#77818a";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-210*s,cy+125*s);ctx.lineTo(cx+210*s,cy+125*s);ctx.stroke()}
 
-const ECG_PATH="M3 12h4l3 8l4 -16l3 8h4";
+const activitySvgImage=new Image();activitySvgImage.src="/assets/motion/medical/activity.svg";
+export async function prepareMotionAssets(){if(activitySvgImage.complete&&activitySvgImage.naturalWidth)return;await activitySvgImage.decode();}
 function ecg(ctx,cx,cy,s,time){
  ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);
  rounded(ctx,-250,-105,500,210,28,"#ffffff","#dce8e5");
  ctx.strokeStyle="#dce8e5";ctx.lineWidth=1;
  for(let x=-210;x<=210;x+=30){ctx.beginPath();ctx.moveTo(x,-75);ctx.lineTo(x,75);ctx.stroke()}
  for(let y=-75;y<=75;y+=30){ctx.beginPath();ctx.moveTo(-220,y);ctx.lineTo(220,y);ctx.stroke()}
- ctx.save();ctx.translate(-210,-30);ctx.scale(18,18);
- const path=new Path2D(ECG_PATH);ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=2;ctx.strokeStyle="#159b8c";ctx.setLineDash([260,260]);ctx.lineDashOffset=-(time*90)%260;ctx.stroke(path);ctx.restore();
- const px=-210+((time*90)%420);ctx.fillStyle="#ee8e83";ctx.beginPath();ctx.arc(px,0,7,0,Math.PI*2);ctx.fill();
+ if(activitySvgImage.complete&&activitySvgImage.naturalWidth){ctx.drawImage(activitySvgImage,-220,-80,440,160)}else{ctx.strokeStyle="#159b8c";ctx.lineWidth=5;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-210,0);ctx.lineTo(-135,0);ctx.lineTo(-75,55);ctx.lineTo(0,-75);ctx.lineTo(75,0);ctx.lineTo(210,0);ctx.stroke()}
+ const px=-210+((time*90)%420);ctx.fillStyle="#ee8e83";ctx.shadowColor="#ee8e83";ctx.shadowBlur=14;ctx.beginPath();ctx.arc(px,0,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
  ctx.restore();
 }
 

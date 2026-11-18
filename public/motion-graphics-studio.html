@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <title>ZAIDA Motion Graphics Studio</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/apple-light.css">
+  <link rel="stylesheet" href="/motion-graphics-studio.css">
+</head>
+<body class="in-studio motion-page">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <a class="brand" href="/" aria-label="ZAIDA Voice beranda"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11.5C8 9.6 9.6 8 11.5 8h17C30.4 8 32 9.6 32 11.5v17c0 1.9-1.6 3.5-3.5 3.5h-17C9.6 32 8 30.4 8 28.5v-17Z" fill="currentColor" opacity=".18"/><path d="M12 25.5 25.5 12H14m2 16h12" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>ZAIDA <i>Voice</i></strong><small>CREATIVE WORKSPACE</small></span></a>
+        <button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">×</button>
+      </div>
+      <section class="sidebar-credit"><div class="sidebar-credit-top"><span>Kredit</span><b id="creditBalance">Memuat saldo…</b></div><a href="/harga.html">Lihat paket kredit <span>→</span></a></section>
+      <div class="nav-label">WORKSPACE</div>
+      <a class="nav-item" href="/">Voice Studio</a>
+      <a class="nav-item" href="/?view=video">AutoClip Studio</a>
+      <a class="nav-item" href="/?view=textToVideo">Video Generator AI</a>
+      <a class="nav-item" href="/image-studio.html">Image Studio</a>
+      <a class="nav-item active" href="/motion-graphics-studio.html" aria-current="page">Motion Graphics Studio</a>
+      <a class="nav-item" href="/?view=media">Media Library</a>
+      <div class="sidebar-bottom"><nav class="sidebar-links" aria-label="Informasi"><a href="/tentang.html">Tentang</a><a href="/syarat.html">Syarat &amp; Ketentuan</a><a href="/privasi.html">Kebijakan Privasi</a><a href="/kontak.html">Kontak</a></nav><div class="profile"><div class="avatar">Z</div><div><b>ZAIDA Labs</b><small>Creator workspace</small></div></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Buka menu">☰</button><div class="breadcrumb">Workspace <span>/</span> <b>Motion Graphics Studio</b></div><div class="top-actions"><span class="secure-label">⌑ API terlindungi</span><div class="top-avatar">Z</div></div></header>
+      <section class="motion-workspace">
+        <div class="motion-heading">
+          <div><div class="eyebrow"><span></span> ZAIDA CREATIVE STUDIO</div><h1>Cerita menjadi <em>gerak.</em></h1><p>Ubah naskah menjadi animasi edukatif dengan karakter, ilustrasi medis, diagram, dan gerakan visual.</p></div>
+          <div class="motion-pill"><span></span> HYBRID MOTION ENGINE · MVP</div>
+        </div>
+        <div class="motion-layout">
+          <section class="motion-left">
+            <div class="motion-panel script-panel">
+              <div class="motion-panel-head"><div><span class="motion-step">01</span><div><h2>Naskah &amp; arahan</h2><p>Masukkan naskah yang ingin dianimasikan.</p></div></div><span class="motion-tag">AI DIRECTOR</span></div>
+              <label for="motionScript">NASKAH VIDEO</label>
+              <textarea id="motionScript" maxlength="30000" placeholder="Tempel naskah voiceover di sini..."></textarea>
+              <div class="motion-form-row">
+                <div><label for="motionAudience">AUDIENS</label><select id="motionAudience"><option>Penonton umum</option><option>Mahasiswa keperawatan</option><option>Tenaga kesehatan</option><option>Pasien dan keluarga</option></select></div>
+                <div><label for="motionTone">NUANSA</label><select id="motionTone"><option value="edukatif dan menarik">Edukatif dan menarik</option><option value="ringan dan bersahabat">Ringan dan bersahabat</option><option value="dramatis dan sinematik">Dramatis dan sinematik</option><option value="ilmiah dan profesional">Ilmiah dan profesional</option></select></div>
+              </div>
+              <div class="motion-form-row">
+                <div><label for="motionFormat">FORMAT VIDEO</label><select id="motionFormat"><option value="9:16">Vertikal 9:16 · Reels</option><option value="16:9">Landscape 16:9 · YouTube</option></select></div>
+                <div><label for="motionScenes">JUMLAH ADEGAN</label><select id="motionScenes"><option value="auto">Otomatis mengikuti naskah</option><option value="4">4 adegan</option><option value="6">6 adegan</option><option value="8">8 adegan</option><option value="10">10 adegan</option><option value="12">12 adegan</option></select></div>
+              </div>
+              <div class="motion-audio">
+                <div><b>Voiceover</b><small>Opsional · unggah MP3 atau WAV untuk sinkronisasi durasi.</small></div>
+                <label class="motion-file-button" for="motionAudio">Pilih audio</label><input id="motionAudio" type="file" accept="audio/*" hidden>
+                <button id="removeAudio" class="motion-text-button" type="button" hidden>Hapus</button>
+              </div>
+              <div class="motion-audio-preview" id="audioPreviewWrap" hidden><audio id="motionAudioPlayer" controls></audio><span id="audioName"></span></div>
+              <button class="motion-primary" id="generateStoryboard"><span>✦</span> Buat storyboard AI <b>→</b></button>
+              <p class="motion-footnote">Pembuatan storyboard menggunakan kredit AI ZAIDA. Preview animasi dan render lokal tidak memerlukan kredit AI tambahan.</p>
+              <div class="motion-status" id="motionStatus" role="status" aria-live="polite">Masuk ke akun ZAIDA Voice untuk mulai membuat storyboard.</div>
+            </div>
+            <div class="motion-panel scenes-panel">
+              <div class="motion-panel-head"><div><span class="motion-step">02</span><div><h2>Storyboard</h2><p>Edit jenis visual untuk setiap adegan.</p></div></div><span class="motion-count" id="sceneCount">0 ADEGAN</span></div>
+              <div class="motion-empty" id="sceneEmpty"><div class="motion-empty-icon">▧</div><b>Belum ada storyboard</b><span>Masukkan naskah dan jalankan AI Director.</span></div>
+              <div class="motion-scene-list" id="motionSceneList"></div>
+            </div>
+          </section>
+          <section class="motion-right">
+            <div class="motion-panel preview-panel">
+              <div class="motion-panel-head"><div><span class="motion-step">03</span><div><h2>Live preview</h2><p>Pratinjau animasi dari scene terpilih.</p></div></div><span class="motion-live"><i></i> LIVE</span></div>
+              <div class="motion-stage-wrap">
+                <canvas id="motionCanvas" width="720" height="1280" aria-label="Preview animasi motion graphics"></canvas>
+                <div class="motion-stage-empty" id="stageEmpty"><div>✳</div><b>Preview animasi</b><span>Storyboard akan tampil di sini.</span></div>
+              </div>
+              <div class="motion-player-controls"><button id="previousScene" type="button" aria-label="Adegan sebelumnya">‹</button><button id="playPreview" type="button" class="motion-play" aria-label="Putar preview">▶</button><button id="nextScene" type="button" aria-label="Adegan berikutnya">›</button><span id="previewTime">00:00 / 00:00</span><span class="motion-preview-scene" id="previewSceneLabel">Belum ada adegan</span></div>
+              <div class="motion-progress"><i id="previewProgress"></i></div>
+            </div>
+            <div class="motion-panel export-panel">
+              <div class="motion-panel-head"><div><span class="motion-step">04</span><div><h2>Ekspor video</h2><p>Render animasi menjadi MP4.</p></div></div><span class="motion-tag">LOCAL RENDER</span></div>
+              <div class="export-specs"><div><span>Resolusi</span><b id="exportResolution">720 × 1280</b></div><div><span>Frame rate</span><b>30 FPS</b></div><div><span>Format</span><b>MP4 · H.264</b></div></div>
+              <button class="motion-export" id="exportMotion" disabled>↓ Render &amp; ekspor MP4</button>
+              <div class="motion-export-status" id="exportStatus">Storyboard minimal 2 adegan diperlukan untuk ekspor.</div>
+              <a class="motion-download" id="downloadMotion" hidden download="zaida-motion-graphics.mp4">Unduh video MP4 ↗</a>
+            </div>
+            <div class="motion-note"><b>Hybrid visual system</b><span>Stickman untuk narasi manusia, motion graphic untuk konsep dan data, ilustrasi medis untuk organ dan proses biologis. Setiap scene dapat diubah manual.</span></div>
+          </section>
+        </div>
+        <footer class="motion-footer">ZAIDA LABS · MOTION GRAPHICS STUDIO · MVP</footer>
+      </section>
+    </main>
+  </div>
+  <div class="motion-toast" id="motionToast" role="status" aria-live="polite"></div>
+  <script type="module" src="/motion-graphics-studio.js"></script>
+</body>
+</html>

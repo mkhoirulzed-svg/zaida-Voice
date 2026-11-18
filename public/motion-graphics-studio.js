@@ -1,5 +1,5 @@
 import {initializeApp,getApps,getApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getAuth,onAuthStateChanged,browserLocalPersistence,setPersistence,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {drawMotionFrame,inferMotionType} from "/motion-graphics-engine.js";
 import {renderMotionVideo} from "/motion-graphics-renderer.js";
 const firebaseConfig={apiKey:"AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",authDomain:"zaida-voice.firebaseapp.com",projectId:"zaida-voice",storageBucket:"zaida-voice.firebasestorage.app",messagingSenderId:"146292786794",appId:"1:146292786794:web:da865938c177b21d5d6c13"};
@@ -42,7 +42,12 @@ $("playPreview").addEventListener("click",()=>{if(!scenes.length)return;if(playi
 $("previousScene").addEventListener("click",()=>{if(!scenes.length)return;stopPreview();selected=Math.max(0,selected-1);playOffset=durations().slice(0,selected).reduce((a,b)=>a+b,0);paint(selected,0,0);renderSceneList()});
 $("nextScene").addEventListener("click",()=>{if(!scenes.length)return;stopPreview();selected=Math.min(scenes.length-1,selected+1);playOffset=durations().slice(0,selected).reduce((a,b)=>a+b,0);paint(selected,0,0);renderSceneList()});
 $("exportMotion").addEventListener("click",exportVideo);
-$("mobileMenu").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
-$("sidebarClose").addEventListener("click",()=>$("sidebar").classList.remove("open"));
-onAuthStateChanged(auth,async current=>{user=current&&current.emailVerified?current:null;$("motionAuthButton").textContent=user?"Keluar":"Masuk / Daftar";$("generateStoryboard").disabled=!user;if(!user){status(current?"Email belum diverifikasi. Klik Masuk/Daftar untuk mengirim ulang verifikasi.":"Silakan masuk ke akun ZAIDA Voice untuk menggunakan AI Director.");$("creditBalance").textContent=current?"Verifikasi email":"Belum masuk";return}status("Akun terhubung. Siap membuat storyboard.");try{const data=await api("/api/account");$("creditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit"}catch(error){$("creditBalance").textContent="Saldo tidak tersedia";status(error.message,true)}});
+function setSidebarOpen(open){$("sidebar").classList.toggle("open",open);$("motionSidebarBackdrop").hidden=!open;document.body.classList.toggle("sidebar-open",open)}
+$("mobileMenu").addEventListener("click",()=>setSidebarOpen(!$("sidebar").classList.contains("open")));
+$("sidebarClose").addEventListener("click",()=>setSidebarOpen(false));
+$("motionSidebarBackdrop").addEventListener("click",()=>setSidebarOpen(false));
+document.querySelectorAll("#sidebar .nav-item, #sidebar .brand").forEach(link=>link.addEventListener("click",()=>setSidebarOpen(false)));
+function handleAuthState(current){user=current&&current.emailVerified?current:null;$("motionAuthButton").textContent=user?(user.email||"Akun")+" · Keluar":"Masuk / Daftar";
+$("motionProfileName").textContent=user?(user.displayName||"Pengguna"):"Pengunjung";$("motionProfileEmail").textContent=user?(user.email||"Akun terverifikasi"):(current?"Email belum diverifikasi":"Belum masuk");$("motionProfileAvatar").textContent=user?(user.displayName||user.email||"U").slice(0,1).toUpperCase():"Z";$("motionTopAvatar").textContent=$("motionProfileAvatar").textContent;$("generateStoryboard").disabled=!user;if(!user){status(current?"Email belum diverifikasi. Klik Masuk/Daftar untuk mengirim ulang verifikasi.":"Silakan masuk ke akun ZAIDA Voice untuk menggunakan AI Director.");$("creditBalance").textContent=current?"Verifikasi email":"Belum masuk";return}status("Akun terhubung. Siap membuat storyboard.");try{const data=await api("/api/account");$("creditBalance").textContent=Number(data.credits).toLocaleString("id-ID")+" kredit"}catch(error){$("creditBalance").textContent="Saldo tidak tersedia";status(error.message,true)}});}
+setPersistence(auth,browserLocalPersistence).then(()=>onAuthStateChanged(auth,handleAuthState)).catch(error=>{status("Sesi login tidak dapat dipulihkan: "+(error.message||"Periksa pengaturan browser."),true);$("motionAuthButton").textContent="Masuk / Daftar";});
 resizeCanvas();

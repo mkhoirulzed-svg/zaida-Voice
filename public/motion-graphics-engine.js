@@ -10,7 +10,21 @@ function lungs(ctx,cx,cy,s,time){ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);
 function brain(ctx,cx,cy,s,time){ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);ctx.fillStyle="#e9b0a6";ctx.strokeStyle="#b87583";ctx.lineWidth=6;const lobes=[[-55,-15,58,55],[0,-45,65,62],[57,-8,58,55],[-35,42,58,52],[35,43,58,52]];lobes.forEach(([x,y,rx,ry],i)=>{ctx.beginPath();ctx.ellipse(x+Math.sin(time*1.5+i)*2,y,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.stroke()});ctx.restore()}
 function bloodCells(ctx,cx,cy,s,time){for(let i=0;i<12;i++){const a=i*Math.PI*2/12+time*.65,r=95+Math.sin(time*2+i)*12,x=cx+Math.cos(a)*r*s,y=cy+Math.sin(a)*r*s;ctx.fillStyle=i%3?COLORS.coral:COLORS.blue;ctx.beginPath();ctx.ellipse(x,y,13*s,9*s,Math.sin(a),0,Math.PI*2);ctx.fill()}}
 function chart(ctx,cx,cy,s,time){const vals=[.35,.58,.44,.8,.65,.94];const bw=42*s;vals.forEach((v,i)=>{const h=v*220*s*(.96+.04*Math.sin(time*2+i));rounded(ctx,cx+(i-3)*58*s,cy-h/2,bw,h,9,COLORS.teal)});ctx.strokeStyle="#77818a";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-210*s,cy+125*s);ctx.lineTo(cx+210*s,cy+125*s);ctx.stroke()}
-function visualType(scene){if(scene.motionType)return scene.motionType;const v=((scene.title||"")+" "+(scene.visual_description||"")+" "+(scene.narration||"")).toLowerCase();if(/jantung|heart|kardi|denyut/.test(v))return"heart";if(/paru|napas|pernapasan|oksigen|lung/.test(v))return"lungs";if(/otak|brain|saraf|neuron/.test(v))return"brain";if(/darah|sel darah|aliran darah|blood/.test(v))return"blood";if(/grafik|data|persen|angka|statistik/.test(v))return"chart";if(/menguap|pasien|perawat|dokter|orang|manusia|tidur|janin/.test(v))return"stickman";return"motion"}
+
+const ECG_PATH="M3 12h4l3 8l4 -16l3 8h4";
+function ecg(ctx,cx,cy,s,time){
+ ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);
+ rounded(ctx,-250,-105,500,210,28,"#ffffff","#dce8e5");
+ ctx.strokeStyle="#dce8e5";ctx.lineWidth=1;
+ for(let x=-210;x<=210;x+=30){ctx.beginPath();ctx.moveTo(x,-75);ctx.lineTo(x,75);ctx.stroke()}
+ for(let y=-75;y<=75;y+=30){ctx.beginPath();ctx.moveTo(-220,y);ctx.lineTo(220,y);ctx.stroke()}
+ ctx.save();ctx.translate(-210,-30);ctx.scale(18,18);
+ const path=new Path2D(ECG_PATH);ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=2;ctx.strokeStyle="#159b8c";ctx.setLineDash([260,260]);ctx.lineDashOffset=-(time*90)%260;ctx.stroke(path);ctx.restore();
+ const px=-210+((time*90)%420);ctx.fillStyle="#ee8e83";ctx.beginPath();ctx.arc(px,0,7,0,Math.PI*2);ctx.fill();
+ ctx.restore();
+}
+
+function visualType(scene){if(scene.motionType)return scene.motionType;const v=((scene.title||"")+" "+(scene.visual_description||"")+" "+(scene.narration||"")).toLowerCase();if(/ekg|ecg|elektrokardiogram/.test(v))return"ecg";if(/jantung|heart|kardi|denyut/.test(v))return"heart";if(/paru|napas|pernapasan|oksigen|lung/.test(v))return"lungs";if(/otak|brain|saraf|neuron/.test(v))return"brain";if(/darah|sel darah|aliran darah|blood/.test(v))return"blood";if(/grafik|data|persen|angka|statistik/.test(v))return"chart";if(/menguap|pasien|perawat|dokter|orang|manusia|tidur|janin/.test(v))return"stickman";return"motion"}
 export function drawMotionFrame(ctx,scene,width,height,elapsed=0,progress=0,index=0){
  const landscape=width>height,baseW=landscape?1280:720,baseH=landscape?720:1280;
  const type=visualType(scene),time=Math.max(0,elapsed),accent=type==="heart"?COLORS.coral:type==="brain"?COLORS.purple:type==="lungs"?COLORS.blue:COLORS.teal;
@@ -19,12 +33,12 @@ export function drawMotionFrame(ctx,scene,width,height,elapsed=0,progress=0,inde
  const w=baseW,h=baseH,cx=w/2,cy=landscape?285:535;
  if(landscape){
   rounded(ctx,45,28,w-90,66,20,"#ffffffcc","#e7e9e4");text(ctx,scene.title||"Adegan "+(index+1),cx,61,25,COLORS.ink);
-  if(type==="heart")heart(ctx,cx,cy,.82,time);else if(type==="lungs")lungs(ctx,cx,cy,.78,time);else if(type==="brain")brain(ctx,cx,cy,.9,time);else if(type==="blood")bloodCells(ctx,cx,cy,1,time);else if(type==="chart")chart(ctx,cx,cy,.72,time);else if(type==="stickman")drawFlatCharacter(ctx,cx,cy+75,.72,time,/menguap|yawn/.test((scene.narration||"").toLowerCase())?"yawn":/ngantuk|tidur/.test((scene.narration||"").toLowerCase())?"sleepy":"neutral");else{for(let i=0;i<5;i++){const x=300+i*170,y=cy+Math.sin(time*2+i)*25;ctx.fillStyle=[COLORS.teal,COLORS.blue,COLORS.coral,COLORS.purple,COLORS.gold][i];ctx.beginPath();ctx.arc(x,y,28+7*Math.sin(time*2+i),0,Math.PI*2);ctx.fill()}}
+  if(type==="ecg")ecg(ctx,cx,cy,.82,time);else if(type==="heart")heart(ctx,cx,cy,.82,time);else if(type==="lungs")lungs(ctx,cx,cy,.78,time);else if(type==="brain")brain(ctx,cx,cy,.9,time);else if(type==="blood")bloodCells(ctx,cx,cy,1,time);else if(type==="chart")chart(ctx,cx,cy,.72,time);else if(type==="stickman")drawFlatCharacter(ctx,cx,cy+75,.72,time,/menguap|yawn/.test((scene.narration||"").toLowerCase())?"yawn":/ngantuk|tidur/.test((scene.narration||"").toLowerCase())?"sleepy":"neutral");else{for(let i=0;i<5;i++){const x=300+i*170,y=cy+Math.sin(time*2+i)*25;ctx.fillStyle=[COLORS.teal,COLORS.blue,COLORS.coral,COLORS.purple,COLORS.gold][i];ctx.beginPath();ctx.arc(x,y,28+7*Math.sin(time*2+i),0,Math.PI*2);ctx.fill()}}
   rounded(ctx,65,495,w-130,135,20,"#ffffffdf","#e7e9e4");wrapText(ctx,scene.on_screen_text||scene.visual_description||scene.narration||"",cx,535,w-220,29,18,"#59636c");text(ctx,"ZAIDA MOTION GRAPHICS",cx,680,12,"#929b9e",700);
  }else{
   rounded(ctx,42,58,636,76,22,"#ffffffcc","#e7e9e4");text(ctx,scene.title||"Adegan "+(index+1),360,96,27,COLORS.ink);
-  if(type==="heart")heart(ctx,360,cy,1.3,time);else if(type==="lungs")lungs(ctx,360,cy,1.2,time);else if(type==="brain")brain(ctx,360,cy,1.35,time);else if(type==="blood")bloodCells(ctx,360,cy,1.4,time);else if(type==="chart")chart(ctx,360,cy,1,time);else if(type==="stickman")drawFlatCharacter(ctx,360,650,1.15,time,/menguap|yawn/.test((scene.narration||"").toLowerCase())?"yawn":/ngantuk|tidur/.test((scene.narration||"").toLowerCase())?"sleepy":"neutral");else{for(let i=0;i<5;i++){const x=150+i*105,y=520+Math.sin(time*2+i)*30;ctx.fillStyle=[COLORS.teal,COLORS.blue,COLORS.coral,COLORS.purple,COLORS.gold][i];ctx.beginPath();ctx.arc(x,y,35+8*Math.sin(time*2+i),0,Math.PI*2);ctx.fill()}}
-  if(type!=="stickman"&&type!=="chart"){for(let i=0;i<5;i++){const x=360+Math.cos(time*1.4+i*1.25)*170,y=cy+Math.sin(time*1.4+i*1.25)*170;ctx.fillStyle=i%2?COLORS.blue:COLORS.teal;ctx.globalAlpha=.7;ctx.beginPath();ctx.arc(x,y,5+(i%3)*2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}}
+  if(type==="ecg")ecg(ctx,360,cy,1.05,time);else if(type==="heart")heart(ctx,360,cy,1.3,time);else if(type==="lungs")lungs(ctx,360,cy,1.2,time);else if(type==="brain")brain(ctx,360,cy,1.35,time);else if(type==="blood")bloodCells(ctx,360,cy,1.4,time);else if(type==="chart")chart(ctx,360,cy,1,time);else if(type==="stickman")drawFlatCharacter(ctx,360,650,1.15,time,/menguap|yawn/.test((scene.narration||"").toLowerCase())?"yawn":/ngantuk|tidur/.test((scene.narration||"").toLowerCase())?"sleepy":"neutral");else{for(let i=0;i<5;i++){const x=150+i*105,y=520+Math.sin(time*2+i)*30;ctx.fillStyle=[COLORS.teal,COLORS.blue,COLORS.coral,COLORS.purple,COLORS.gold][i];ctx.beginPath();ctx.arc(x,y,35+8*Math.sin(time*2+i),0,Math.PI*2);ctx.fill()}}
+  if(type!=="stickman"&&type!=="chart"&&type!=="ecg"){for(let i=0;i<5;i++){const x=360+Math.cos(time*1.4+i*1.25)*170,y=cy+Math.sin(time*1.4+i*1.25)*170;ctx.fillStyle=i%2?COLORS.blue:COLORS.teal;ctx.globalAlpha=.7;ctx.beginPath();ctx.arc(x,y,5+(i%3)*2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}}
   rounded(ctx,55,890,610,185,24,"#ffffffd9","#e7e9e4");wrapText(ctx,scene.on_screen_text||scene.visual_description||scene.narration||"",360,945,540,36,21,"#59636c");text(ctx,"ZAIDA MOTION GRAPHICS",360,1140,13,"#929b9e",700);
  }
  ctx.restore();

@@ -7,7 +7,7 @@ function line(ctx,points,color,width){ctx.beginPath();points.forEach(([x,y],i)=>
 function smooth(t){return t*t*(3-2*t)}
 export function drawFlatCharacter(ctx,cx,cy,scale,time=0,expression="neutral"){
  const yawning=expression==="yawn",sleepy=expression==="sleepy",surprised=expression==="surprised";
- const cycle=((time%4)+4)%4,open=yawning?smooth(Math.min(1,Math.max(0,(cycle-.35)/.55)))*(1-smooth(Math.min(1,Math.max(0,(cycle-2.4)/.55)))):surprised?.8:0;
+ const cycle=((time%4)+4)%4,open=yawning?smooth(Math.min(1,Math.max(0,(cycle-.35)/.55)))*(1-smooth(Math.min(1,Math.max(0,(cycle-2.4)/.55)))):surprised ? 0.8 : 0;
  const blink=(Math.abs(time%3.7-3.45)<.12)?Math.max(.12,Math.abs(time%3.7-3.45)/.12):1;
  const bob=Math.sin(time*2.2)*3,tilt=yawning?Math.sin(time*1.7)*.035:Math.sin(time*1.2)*.012;
  ctx.save();ctx.translate(cx,cy+bob);ctx.scale(scale,scale);ctx.rotate(tilt);

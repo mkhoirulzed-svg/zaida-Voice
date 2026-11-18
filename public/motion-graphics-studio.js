@@ -1,10 +1,8 @@
-import {initializeApp,getApps,getApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { auth, authReady, signInWithGoogle } from "/auth-core.js?v=20261118-shared-auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {drawMotionFrame,inferMotionType} from "/motion-graphics-engine.js";
 import {renderMotionVideo} from "/motion-graphics-renderer.js";
-const firebaseConfig={apiKey:"AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-a8",authDomain:"zaida-voice.firebaseapp.com",projectId:"zaida-voice",storageBucket:"zaida-voice.firebasestorage.app",messagingSenderId:"146292786794",appId:"1:146292786794:web:da865938c177b21d5d6c13"};
-const firebaseApp=getApps().length?getApp():initializeApp(firebaseConfig);
-const auth=getAuth(firebaseApp),$=id=>document.getElementById(id);
+const $=id=>document.getElementById(id);
 let user=null,authMode="login",scenes=[],audioFile=null,audioDuration=0,selected=0,playing=false,raf=0,playStart=0,playOffset=0,downloadUrl=null;
 const canvas=$("motionCanvas"),ctx=canvas.getContext("2d");
 function status(message,error=false){$("motionStatus").textContent=message;$("motionStatus").classList.toggle("error",error)}
@@ -18,7 +16,7 @@ $("motionAuthClose").addEventListener("click",closeAuth);
 $("motionAuthOverlay").addEventListener("click",e=>{if(e.target===$("motionAuthOverlay"))closeAuth()});
 $("motionAuthSwitch").addEventListener("click",()=>showAuth(authMode==="login"?"register":"login"));
 $("motionAuthForm").addEventListener("submit",async e=>{e.preventDefault();const email=$("motionAuthEmail").value.trim(),password=$("motionAuthPassword").value,button=$("motionAuthSubmit");button.disabled=true;$("motionAuthMessage").textContent="Memproses…";try{if(authMode==="login"){const credential=await signInWithEmailAndPassword(auth,email,password);if(!credential.user.emailVerified){$("motionAuthMessage").textContent="Email belum diverifikasi. Periksa kotak masuk atau kirim ulang email verifikasi."; $("motionAuthResend").hidden=false;return;}}else{const credential=await createUserWithEmailAndPassword(auth,email,password);await sendEmailVerification(credential.user);$("motionAuthMessage").textContent="Akun berhasil dibuat. Silakan verifikasi email, lalu masuk kembali."; $("motionAuthResend").hidden=false;return;}closeAuth();}catch(error){const messages={"auth/invalid-credential":"Email atau password salah.","auth/email-already-in-use":"Email sudah terdaftar.","auth/invalid-email":"Format email tidak valid.","auth/weak-password":"Password minimal 6 karakter.","auth/too-many-requests":"Terlalu banyak percobaan. Coba lagi nanti."};$("motionAuthMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});
-$("motionGoogleAuth").addEventListener("click",async()=>{const button=$("motionGoogleAuth");button.disabled=true;$("motionAuthMessage").textContent="Menghubungkan ke Google…";try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);closeAuth();}catch(error){$("motionAuthMessage").textContent=error.message;}finally{button.disabled=false;}});
+$("motionGoogleAuth").addEventListener("click",async()=>{const button=$("motionGoogleAuth");button.disabled=true;$("motionAuthMessage").textContent="Menghubungkan ke Google…";try{await signInWithGoogle();closeAuth();}catch(error){$("motionAuthMessage").textContent=error.message;}finally{button.disabled=false;}});
 $("motionAuthResend").addEventListener("click",async()=>{try{if(!auth.currentUser)throw new Error("Masuk kembali menggunakan email dan password untuk mengirim verifikasi.");await sendEmailVerification(auth.currentUser);$("motionAuthMessage").textContent="Email verifikasi telah dikirim ulang.";}catch(error){$("motionAuthMessage").textContent=error.message;}});
 
 function fmt(seconds){const n=Math.max(0,Math.floor(seconds||0));return String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0")}
@@ -48,7 +46,7 @@ $("mobileMenu").addEventListener("click",()=>setSidebarOpen(!$("sidebar").classL
 $("sidebarClose").addEventListener("click",()=>setSidebarOpen(false));
 $("motionSidebarBackdrop").addEventListener("click",()=>setSidebarOpen(false));
 document.querySelectorAll("#sidebar .nav-item, #sidebar .brand").forEach(link=>link.addEventListener("click",()=>setSidebarOpen(false)));
-onAuthStateChanged(auth,async current=>{
+authReady.then(()=>onAuthStateChanged(auth,async current=>{
   user=current&&current.emailVerified?current:null;
   const allowed=Boolean(user);
   const display=allowed?(current.displayName||current.email||"U").slice(0,1).toUpperCase():"Z";
@@ -76,5 +74,5 @@ onAuthStateChanged(auth,async current=>{
     status(error.message,true);
     console.warn("Motion Graphics account refresh:",error);
   }
-});
+}));
 resizeCanvas();

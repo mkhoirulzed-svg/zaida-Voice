@@ -39,19 +39,9 @@ document.addEventListener("keydown", event => {
 });
 
 
-// Use the same Firebase project and persistent login session as the main ZAIDA app.
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-const firebaseConfig = {
-  apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-aP8",
-  authDomain: "zaida-voice.firebaseapp.com",
-  projectId: "zaida-voice",
-  storageBucket: "zaida-voice.firebasestorage.app",
-  messagingSenderId: "146292786794",
-  appId: "1:146292786794:web:da865938c177b21d5d6c13"
-};
-const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const imageAuth = getAuth(firebaseApp);
+// Shared ZAIDA authentication core.
+import { auth as imageAuth, authReady, signInWithGoogle } from "/auth-core.js?v=20261118-shared-auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 let imageAuthMode = "login";
 let imageCurrentUser = null;
 function showImageAuth(mode = "login") {
@@ -93,9 +83,7 @@ $("imageGoogleAuth")?.addEventListener("click", async () => {
   button.disabled = true;
   $("imageAuthMessage").textContent = "Menghubungkan ke Google…";
   try {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({prompt:"select_account"});
-    await signInWithPopup(imageAuth, provider);
+    await signInWithGoogle();
     closeImageAuth();
   } catch (error) { $("imageAuthMessage").textContent = error.message; }
   finally { button.disabled = false; }
@@ -257,7 +245,7 @@ $("imageStudioGenerate")?.addEventListener("click", async () => {
   }
 });
 
-onAuthStateChanged(imageAuth, async user => {
+authReady.then(() => onAuthStateChanged(imageAuth, async user => {
   imageCurrentUser = user && user.emailVerified ? user : null;
   const allowed = Boolean(imageCurrentUser);
   const display = allowed ? (user.displayName || user.email || "U").slice(0,1).toUpperCase() : "Z";
@@ -285,4 +273,4 @@ onAuthStateChanged(imageAuth, async user => {
     $("imageCreditBalance").textContent = "Kredit: —";
     console.warn("Image Studio account refresh:", error);
   }
-});
+}));

@@ -1,15 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-
-const firebaseApp = initializeApp({
-  apiKey: "AIzaSyDqzKq2OXQfYnG-DOSyuzo4xo0GjSb-aP8",
-  authDomain: "zaida-voice.firebaseapp.com",
-  projectId: "zaida-voice",
-  storageBucket: "zaida-voice.firebasestorage.app",
-  messagingSenderId: "146292786794",
-  appId: "1:146292786794:web:da865938c177b21d5d6c13"
-});
-const auth = getAuth(firebaseApp);
+import { auth, authReady, signInWithGoogle } from "/auth-core.js?v=20261118-shared-auth";
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 let authMode = "login";
 let currentUser = null;
 let accountInfo = null;
@@ -974,7 +964,7 @@ document.querySelectorAll(".choice-chip").forEach(button=>button.addEventListene
 syncChoiceChips();
 updateCount();loadVoices();
 $("authButton").addEventListener("click",()=>currentUser?signOut(auth):openAuth());
-$("googleAuthButton").addEventListener("click",async()=>{const button=$("googleAuthButton");button.disabled=true;$("authMessage").textContent="Menghubungkan ke Google…";try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);closeAuth();toast("Berhasil masuk dengan Google.");}catch(error){const messages={"auth/popup-closed-by-user":"Jendela login ditutup sebelum selesai.","auth/popup-blocked":"Popup diblokir browser. Izinkan popup lalu coba lagi.","auth/account-exists-with-different-credential":"Email ini sudah terdaftar dengan metode login lain."};$("authMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});
+$("googleAuthButton").addEventListener("click",async()=>{const button=$("googleAuthButton");button.disabled=true;$("authMessage").textContent="Menghubungkan ke Google…";try{await signInWithGoogle();closeAuth();toast("Berhasil masuk dengan Google.");}catch(error){const messages={"auth/popup-closed-by-user":"Jendela login ditutup sebelum selesai.","auth/popup-blocked":"Popup diblokir browser. Izinkan popup lalu coba lagi.","auth/account-exists-with-different-credential":"Email ini sudah terdaftar dengan metode login lain."};$("authMessage").textContent=messages[error.code]||error.message;}finally{button.disabled=false;}});
 $("resendVerification").addEventListener("click",async()=>{try{if(!auth.currentUser)throw new Error("Masuk kembali menggunakan email dan password.");await sendEmailVerification(auth.currentUser);$("authMessage").textContent="Email verifikasi telah dikirim ulang.";}catch(error){$("authMessage").textContent=error.message;}});
 $("authClose").addEventListener("click",closeAuth);
 $("authOverlay").addEventListener("click",e=>{if(e.target===$("authOverlay"))closeAuth()});
@@ -988,7 +978,7 @@ $("authForm").addEventListener("submit",async e=>{
   }catch(error){const messages={"auth/email-already-in-use":"Email sudah terdaftar.","auth/invalid-email":"Format email tidak valid.","auth/weak-password":"Password minimal 6 karakter.","auth/invalid-credential":"Email atau password salah.","auth/too-many-requests":"Terlalu banyak percobaan. Coba lagi nanti."};$("authMessage").textContent=messages[error.code]||error.message;}
   finally{$("authSubmit").disabled=false;}
 });
-onAuthStateChanged(auth,user=>{
+authReady.then(()=>onAuthStateChanged(auth,user=>{
   currentUser=user&&user.emailVerified?user:null;
   const allowed=Boolean(currentUser);
   // Public-first: the studio shell remains accessible to visitors.
@@ -1003,7 +993,7 @@ onAuthStateChanged(auth,user=>{
   if(user&&!user.emailVerified){
     $("authMessage").textContent="Email belum diverifikasi. Verifikasi email sebelum masuk untuk menggunakan fitur berbayar.";
   }
-});
+}));
 
 // Allow standalone ZAIDA workspace pages to deep-link into the requested SPA section.
 const initialWorkspaceView=new URLSearchParams(location.search).get("view");

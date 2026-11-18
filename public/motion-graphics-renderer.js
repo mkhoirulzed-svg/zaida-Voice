@@ -1,4 +1,4 @@
-import {drawMotionFrame} from "/motion-graphics-engine.js?v=20261118-flat-cartoon";
+import {drawMotionFrame} from "/motion-graphics-engine.js?v=20261118-svg-ecg-test";
 const VERSION="1.61.6";let libraryPromise;
 export async function renderMotionVideo({scenes,audioFile=null,format="9:16",onProgress=()=>{}}){
  if(!Array.isArray(scenes)||scenes.length<2)throw new Error("Storyboard minimal 2 adegan diperlukan.");

@@ -25,7 +25,8 @@ export const auth = getAuth(firebaseApp);
 // Firebase restores persisted credentials asynchronously. Consumers can await
 // this promise before showing a logged-out state or requesting account data.
 export const authReady = new Promise(resolve => {
-  const unsubscribe = onAuthStateChanged(auth, user => {
+  let unsubscribe = () => {};
+  unsubscribe = onAuthStateChanged(auth, user => {
     unsubscribe();
     resolve(user);
   }, error => {

@@ -1,6 +1,6 @@
 import { auth, authReady, signInWithGoogle } from "/auth-core.js?v=20261118-shared-auth";
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {drawMotionFrame,inferMotionType} from "/motion-graphics-engine.js";
+import {drawMotionFrame,inferMotionType} from "/motion-graphics-engine.js?v=20261118-flat-cartoon";
 import {renderMotionVideo} from "/motion-graphics-renderer.js";
 const $=id=>document.getElementById(id);
 let user=null,authMode="login",scenes=[],audioFile=null,audioDuration=0,selected=0,playing=false,raf=0,playStart=0,playOffset=0,downloadUrl=null;

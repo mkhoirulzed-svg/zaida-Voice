@@ -1,0 +1,28 @@
+name: ZAIDA Asset Collector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout ZAIDA Voice
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Collect licensed medical SVG assets
+        run: node scripts/asset-collector.mjs
+      - name: Upload collected asset pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: zaida-medical-svg-starter
+          path: assets/collected/tabler/
+          if-no-files-found: error
+          retention-days: 30
